@@ -1,0 +1,65 @@
+<?php
+ini_set('display_errors', 1);
+include_once('../funciones.php');
+
+$respuesta = 0;
+$remision = $_POST['remision'];
+$ruta = '../img/remisiones/';
+
+if ($_FILES['archivos']['name']) {  
+  for ($i = 0; $i <= count($_FILES['archivos']['name']); $i++) {
+    //Recogemos el archivos enviado por el formulario
+    $archivos = $_FILES['archivos']['name'][$i];
+    //echo $archivos."\n";
+    $max = getmax('ra_id', 'remisiones_adjuntos');
+    $extension = pathinfo($archivos, PATHINFO_EXTENSION);
+    $nombre = pathinfo($archivos, PATHINFO_FILENAME);
+    $nuevo_nombre = $nombre . '-' . $max;
+    //Si el archivos contiene algo y es diferente de vacio
+    if (isset($archivos) && $archivos != "") {
+      //Obtenemos algunos datos necesarios sobre el archivos
+      $tipo = $_FILES['archivos']['type'][$i];
+      $tamano = $_FILES['archivos']['size'][$i];
+      $temp = $_FILES['archivos']['tmp_name'][$i];
+
+      //list($archivosw, $archivosh, $tipox, $atributos) = getimagesize($_FILES['archivos']['tmp_name']); 2000000
+      //Se comprueba si el archivos a cargar es correcto observando su extensión y tamaño
+      //die($tipo);
+      if (!($tamano < (300000000))) {
+            $respuesta = 2;  //Error. La extensión o el tamaño de los pdf no es correcta. Se permiten .gif, .jpg, .png. y de 200 kb como máximo
+      } else {
+        //Si la archivos es correcta en tamaño y tipo
+        //Se intenta subir al servidor
+        $destination_path = getcwd() . DIRECTORY_SEPARATOR;
+        $target_path = $ruta . $nuevo_nombre . '.' . $extension;
+        /* echo "path: ".$target_path;
+        die(); */
+        if (move_uploaded_file($temp, $target_path)) {
+          //Cambiamos los permisos del archivos a 777 para poder modificarlo posteriormente
+          chmod($target_path, 0777);
+          //Mostramos el mensaje de que se ha subido co éxito
+          //die ('<div><b>Se ha subido correctamente la imagen.</b></div>');
+          //Mostramos la imagen subida
+          //die ('<p><img src="img/imagens/'.$imagen.'"></p>');
+          //$ruta = $rutatipo.$nuevo_nombre;
+
+          
+          $sql = 'INSERT INTO remisiones_adjuntos SET
+          ra_remision = "' . $remision . '",
+          ra_nmb = "' . $nuevo_nombre . '",
+          ra_ext = "' . $extension . '"';  
+          setq($sql);
+        } else {
+          //Si no se ha podido subir la imagen, mostramos un mensaje de error
+          
+          $respuesta = 1;  //Ocurrió algún error al subir los archivos. No pudo guardarse.
+        }
+      }
+    }
+  }
+} else{
+  $respuesta = 3;
+}
+
+echo $respuesta
+?>

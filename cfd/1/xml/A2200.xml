@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd  http://www.sat.gob.mx/CartaPorte20 http://www.sat.gob.mx/sitio_internet/cfd/CartaPorte/CartaPorte20.xsd" xmlns:cartaporte20="http://www.sat.gob.mx/CartaPorte20" Version="4.0" Serie="A" Folio="2200" Fecha="2023-02-02T16:53:23" Sello="P+cFMDeh266r1ghUUMba1ks21milHkqi0R/VKpnVhnooaiT4UxPCmodzcQAwW2Kaq9P7ykEM/K1xCpoMbdrjgpQtkWcfEBEK76MeBbEi8KOHeAqi9BuWqzrt/H/aElijIGSr0+gdUXR6pf2RhqDkKMQk/O2AKK82+wG5fNsphn/ISpfDu12/UCRWmijG7AYrTnglrXogfE9jgMZz6FdldtJsIu2pAEJpoaWi0Kgnf6Q4UoSNvbklpsQKKwE+JX82AieQgTjakgLq+b9dJ4jAxMrA11B3eydvVVY/6M4yhmZIpkPiSmKzCGAx/x0FVpITHwKD03/aAXmTNu4u26zuXw==" FormaPago="01" NoCertificado="00001000000501445542" Certificado="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" CondicionesDePago="CONTADO" SubTotal="3447.41" Moneda="MXN" TipoCambio="1" Total="3999.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="42084">
+  <cfdi:Emisor Rfc="REBL8905188J8" Nombre="JOSE LUIS REYES BENITEZ" RegimenFiscal="612"/>
+  <cfdi:Receptor Rfc="GUMJ990813J86" Nombre="JORGE GUERREROMARIN" DomicilioFiscalReceptor="42088" RegimenFiscalReceptor="616" UsoCFDI="S01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="43231500" ClaveUnidad="H87" NoIdentificacion="6" Cantidad="1.000000" Unidad="PIEZA" Descripcion="JD STORE LICENCIA TIPO SERVIDOR" ValorUnitario="3447.413793" Importe="3447.413793" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="3447.41" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="551.586207"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="551.59">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="3447.41" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="551.59"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <cartaporte20:CartaPorte Version="2.0" TranspInternac="No" TotalDistRec="236.25">
+      <cartaporte20:Ubicaciones>
+        <cartaporte20:Ubicacion TipoUbicacion="Origen" RFCRemitenteDestinatario="REBL8905188J8" NombreRemitenteDestinatario="T&amp;E" FechaHoraSalidaLlegada="2023-02-02T14:02:49">
+          <cartaporte20:Domicilio Calle="VOLCAN DE CHACAHUA" NumeroExterior="126" NumeroInterior="5" Colonia="0165" Localidad="03" Municipio="048" Estado="HID" Pais="MEX" CodigoPostal="42088"/>
+        </cartaporte20:Ubicacion>
+        <cartaporte20:Ubicacion TipoUbicacion="Destino" RFCRemitenteDestinatario="GUMJ990813H16" NombreRemitenteDestinatario="JORGE GUERRERO" FechaHoraSalidaLlegada="2023-02-02T15:00:00" DistanciaRecorrida="236.25">
+          <cartaporte20:Domicilio Calle="VOLCAN DE CHACAHUA" NumeroExterior="127" Colonia="0155" Localidad="03" Municipio="048" Estado="HID" Pais="MEX" CodigoPostal="42084"/>
+        </cartaporte20:Ubicacion>
+      </cartaporte20:Ubicaciones>
+      <cartaporte20:Mercancias PesoBrutoTotal="1.680" UnidadPeso="KGM" NumTotalMercancias="2">
+        <cartaporte20:Mercancia BienesTransp="43231500" Descripcion="JD STORE LICENCIA TIPO SERVIDOR" Cantidad="1.00" ClaveUnidad="H87" PesoEnKg="0.320"/>
+        <cartaporte20:Mercancia BienesTransp="43211509" Descripcion="TABLETS NUEVAS DE IMPORTACION" Cantidad="2.00" ClaveUnidad="XPK" PesoEnKg="1.360"/>
+        <cartaporte20:Autotransporte PermSCT="TPAF01" NumPermisoSCT="KJDKF56SAD3">
+          <cartaporte20:IdentificacionVehicular ConfigVehicular="VL" PlacaVM="JD55SD" AnioModeloVM="2015"/>
+          <cartaporte20:Seguros AseguraRespCivil="SEGUROS TYE" PolizaRespCivil="S5165S456A1"/>
+        </cartaporte20:Autotransporte>
+      </cartaporte20:Mercancias>
+      <cartaporte20:FiguraTransporte>
+        <cartaporte20:TiposFigura TipoFigura="02" RFCFigura="JTHD950625H23" NumLicencia="55" NombreFigura="ROBERTO ISLAS"/>
+      </cartaporte20:FiguraTransporte>
+    </cartaporte20:CartaPorte>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

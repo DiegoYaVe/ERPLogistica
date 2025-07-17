@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="FI" Folio="201" Fecha="2025-02-17T18:03:11" Sello="t3PmGp92MEXvqzJ7WC2vIdD1uaMF2+9AgfGv/SI2aQPINoLbyqeyAZk/qPwIGT6RmEAnVzFamdTgDc4Zt0g15PvN7un/VZqil5aM/DkIx6Hf/CE7gURcFXHUBVLmIh125U3nHbvmH2xzyhQV3wzlsdXVpBkoamFJRgyHRfcqauVumDPFUFHOxamkaWa7lPJTGT+w7jqC9l9Es4blF/de6ABj3vLwgUcLvr75EnU5ixVcqB1otBiogaYBvMxUUGVRNh+QVqc4Pv0R0nUFSC72+H/Rs8Fg+tg/TGiUQNcCOulSE1NQ+Urv5H6TOsUJCI70gkSOaxM+98g3d06P72SV6A==" FormaPago="03" NoCertificado="00001000000508503918" Certificado="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" CondicionesDePago="CONTADO" SubTotal="62672.41" Moneda="MXN" TipoCambio="1" Total="72700.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="42088">
+  <cfdi:Emisor Rfc="FII210622542" Nombre="LA FABRICA DE INFLABLES INFLALANDIA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="ROAV920412DN7" Nombre="VALERIA JOHANA RODRIGUEZ AMPARAN" DomicilioFiscalReceptor="31140" RegimenFiscalReceptor="612" UsoCFDI="G01"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 AMARILLA" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 VERDE" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 AZUL" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 ROJA" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141000" ClaveUnidad="NMP" NoIdentificacion="271" Cantidad="2.000000" Unidad="PAQUETES" Descripcion="100 PELUCHES MIXTOS" ValorUnitario="2586.206897" Importe="5172.413794" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="5172.41" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="827.586207"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141000" ClaveUnidad="NMP" NoIdentificacion="270" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="50 PELUCHES MIXTOS" ValorUnitario="1293.103448" Importe="1293.103448" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="1293.10" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="206.896552"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 NARANJA" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="48121100" ClaveUnidad="H87" NoIdentificacion="265" Cantidad="1.000000" Unidad="PIEZA" Descripcion="MAQUINA TANCK MAN 2025 ROSA" ValorUnitario="9051.724138" Importe="9051.724138" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="9051.72" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1448.275862"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="78101802" ClaveUnidad="E48" Cantidad="1.000000" Unidad="SERVICIO" Descripcion="COSTO DE ENVÍO" ValorUnitario="1896.551724" Importe="1896.551724" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="1896.55" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="303.448276"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="10027.59">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="62672.38" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="10027.59"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="E4B133F5-ED8B-11EF-97FE-00155D014009" FechaTimbrado="2025-02-17T18:04:16" RfcProvCertif="TBN040609RKA" SelloCFD="t3PmGp92MEXvqzJ7WC2vIdD1uaMF2+9AgfGv/SI2aQPINoLbyqeyAZk/qPwIGT6RmEAnVzFamdTgDc4Zt0g15PvN7un/VZqil5aM/DkIx6Hf/CE7gURcFXHUBVLmIh125U3nHbvmH2xzyhQV3wzlsdXVpBkoamFJRgyHRfcqauVumDPFUFHOxamkaWa7lPJTGT+w7jqC9l9Es4blF/de6ABj3vLwgUcLvr75EnU5ixVcqB1otBiogaYBvMxUUGVRNh+QVqc4Pv0R0nUFSC72+H/Rs8Fg+tg/TGiUQNcCOulSE1NQ+Urv5H6TOsUJCI70gkSOaxM+98g3d06P72SV6A==" NoCertificadoSAT="00001000000708361114" SelloSAT="FndmOTn/xvFg7stt9u24XqoMKCmNkym4P+T2hlekww1pJtfbiw9GLWVJnJxRaJG5cZpjzp7iTj6xZDwevs+n6Q0q8w1jWoqtqxDfFZJn8AWojV3BsEpH7I+OgMCf5IGWMwW19lNEWWEq+Y7AEFISd//AkUKhkCxCUEWEbuTPQlfTLaqFN6UCNG5E7J9/H1EwfhNtoZpLaw8VwLjg8J5O7cJ4zmi4Q6ECQDd5LpRsWPhT08i8Qx7rwu21x6VY0d8IghN7DoqNutykqbC44ITHLf9RzKJM2mrCouMuwQyb9DucAMifrxt+F6yS3TmaFkDfSvnyzeFcegmTqp7PplLFRw=="/>
+	</cfdi:Complemento>
+</cfdi:Comprobante>

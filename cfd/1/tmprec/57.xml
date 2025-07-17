@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Version="4.0" Serie="T" Folio="1278" Fecha="2022-07-13T17:40:03" Sello="fsuxn7yZj7ilGVK1btwbqsL6ZFO1YiAGj5TniIc6n90X7sDdwjmbMosJ7SScpaaOGjLVgUqav18kC00CYSQ5766nzJ1XF6cIcs1TcKeYUu4pds/h6whLK2XxUPMIXlbK6joU3G7AdC5/18LjoJ2XEn9+UYk2uEpLizsuCC5NABO6akgG7+cvgrjjdcWGP/HLx2bVTtqUZrjfk4nwWRYUulXJnLVq4YA8wTJEIbqRAls1V2I3puXLh5+mp+DeTyVPDoeo9w+rAD7h/YqxBnySw5auQC1KMzbItYyak/dc2S4KWcIRDIUEQ5uk3VS6sAUg9F0UUD+01s1IJdqFr7UZig==" FormaPago="03" NoCertificado="00001000000411973273" Certificado="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" SubTotal="1648.28" Moneda="MXN" Total="1912.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="42000">
+  <cfdi:Emisor Rfc="CEH1805029P5" Nombre="CAPITAL ESTRATEGICO HG" RegimenFiscal="601" />
+  <cfdi:Receptor Rfc="REBL8905188J8" Nombre="JOSE LUIS REYES BENITEZ" DomicilioFiscalReceptor="42084" RegimenFiscalReceptor="612" UsoCFDI="G03" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="82121500" Cantidad="1" ClaveUnidad="E48" Unidad="SERVICIO" Descripcion="SERVICIO ESPECIAL&#xA;SERVICIO DE IMPRESIÓN EN ALTA DEFINICIÓN Y ACABADOS DE: 1 PZ DE TELA CANVAS DE 1.00 X 1.00 M, CON BASTIDOR DE MADERA" ValorUnitario="413.80" Importe="413.80" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="413.79" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="66.2064" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="82121500" Cantidad="1" ClaveUnidad="E48" Unidad="SERVICIO" Descripcion="SERVICIO ESPECIAL&#xA;SERVICIO DE IMPRESIÓN EN ALTA DEFINICIÓN Y ACABADOS DE: 3 PZ DE TELA CANVAS DE 0.50 X 0.50 CM CON BASTIDOR DE MADERA" ValorUnitario="510.344828" Importe="510.34" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="510.34" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="81.6544" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="82121500" Cantidad="1" ClaveUnidad="E48" Unidad="SERVICIO" Descripcion="SERVICIO ESPECIAL&#xA;SERVICIO DE IMPRESIÓN EN ALTA DEFINICIÓN Y ACABADOS DE: 6 PZ DE TELA CANVAS DE 0.20 X 0.20 CM CON BASTIDOR DE MADERA" ValorUnitario="724.137931" Importe="724.14" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="724.14" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="115.8624" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="263.72">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="1648.27" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="263.72" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+<cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="1.1" UUID="B17071EF-D04C-AF4F-9CFD-17EFD9A86EBE" FechaTimbrado="2022-07-13T17:40:09" RfcProvCertif="SCD110105654" SelloCFD="fsuxn7yZj7ilGVK1btwbqsL6ZFO1YiAGj5TniIc6n90X7sDdwjmbMosJ7SScpaaOGjLVgUqav18kC00CYSQ5766nzJ1XF6cIcs1TcKeYUu4pds/h6whLK2XxUPMIXlbK6joU3G7AdC5/18LjoJ2XEn9+UYk2uEpLizsuCC5NABO6akgG7+cvgrjjdcWGP/HLx2bVTtqUZrjfk4nwWRYUulXJnLVq4YA8wTJEIbqRAls1V2I3puXLh5+mp+DeTyVPDoeo9w+rAD7h/YqxBnySw5auQC1KMzbItYyak/dc2S4KWcIRDIUEQ5uk3VS6sAUg9F0UUD+01s1IJdqFr7UZig==" NoCertificadoSAT="00001000000502000436" SelloSAT="hJEPGM4CwYhNZcTTuR05uZ3t1KBSbzCCTfIK8saWgbMpEluMlfPeNCr1gXOVS4RjmuhLiNZpcc5wb2eSVk3vvNNdjDgOWiJ6auE6p2H8bk3P4jKktjjZL0jmVmxSeO6VknwH5jmYN+uZ+PWjIStQp1n2lCgE4lHpFbFg9y02vCzZH/e32hRqafvaCDAMEf2dZx34t+4hii6uNys5q9U0+dxDf8euBO9i9Mhw+vWdLgmIaA+s3lJ4+BWTe4RNRCBzWMYjhUS9zPhsz1J1LSaEs58GGUXwKkJVlB7OBJvgZ9W+ZwPCyVcRYmX3zjhjpTSphqeCflq1rZFAjpBqGdpGmg==" />
+</cfdi:Complemento></cfdi:Comprobante>

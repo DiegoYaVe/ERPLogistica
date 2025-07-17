@@ -1,0 +1,604 @@
+<?php
+//ini_set('display_errors','on');
+session_start();
+
+ini_set("memory_limit","64M");
+require('lib/fpdf/fpdf.php');
+
+include 'lib/QR/phpqrcode.php';
+//include('funciones.php');
+
+date_default_timezone_set("America/Mexico_City");
+
+class PDF extends FPDF
+{
+function header(){
+$id = $_GET['id'];
+$cpago = $_GET['id'];
+$emp = busca($_GET['id'],'cpago','c_id','c_empresa');
+$empres = busca($_GET['id'],'cpago','c_id','c_empresa');
+
+    include_once('modulos/config.php');
+    $empresa = new modelconfig();
+    $empresa->select($emp);
+
+    include_once("modulos/compago.php");
+    $compago = new ModelCompago();
+    $compago->select($id);
+
+    if(file_exists('../'.$empresa->logo) && $emp->logo != NULL) $img = '../'.$empresa->logo;
+    else $img = NULL;
+
+
+/*
+   $sellocfd =  str_pad("X",42,"X");
+   $foliosat =  str_pad("X",42,"X");
+   $uuid =  $uuid =  "12345678-ABCD-0987-EFGH-A1B2C3D4E5F6";;
+   $certisat =  "XXXXXXXXXXXXXXXXX";
+   $certicsd =  "XXXXXXXXXXXXXXXXX";
+   $fechatimbrado =  date('Y-m-d').'T'.date('H:i:s');
+   $fechaemision =  date('Y-m-d').'T'.date('H:i:s');
+*/
+   $version =  "2.0";
+
+   $sellocfd =  sacarcadena('Sello="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $foliosat =  sacarcadena('SelloSAT="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $uuid =  sacarcadena('Version="1.1" UUID="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $certisat =  sacarcadena('NoCertificadoSAT="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $certicsd =  sacarcadena('NoCertificado="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $fechatimbrado =  sacarcadena('FechaTimbrado="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $fechaemision =  sacarcadena('Fecha="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+
+
+    $imgfondo = NULL;
+      $this->SetFillColor(0, 128, 0);
+
+    $this->SetDrawColor(0,0,0);    // Arial bold 15
+
+    if($img != NULL)
+        $this->Image($img,10,8,35,20);
+    if($compago->estatus == "C")
+        $this->Image('images/cancel.gif',30,25,164,164);
+
+   $this->SetTextColor(0, 0, 0);
+   $this->SetFont('Arial','',9);
+
+   $this->Cell(40);
+   $this->Cell(85,5,utf8_decode(substr($empresa->nmb,0,40)),0,0,"C");
+
+   $this->SetFont('Arial','',10);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(65,5,"Factura",1,0,"C",1);
+
+   $this->Ln();
+   $this->Cell(40);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(85,5,utf8_decode(substr($empresa->razons,0,40)),0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(25,5,"Serie y Folio","LR",0,"L",1);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,5,$compago->folio,"LR",0,"R");
+
+
+   $this->Ln();
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40);
+   $this->Cell(85,5,"R.F.C. ".$empresa->rfc,0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(25,4,utf8_decode("Versión"),"LR",0,"L",1);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,4,str_replace(" ","T",$version),"LR",0,"R");
+
+
+   $this->Ln();
+   $this->Cell(40);
+   $this->Cell(85,4,$empresa->calle.' '.$empresa->nume.' '.$empresa->numi,0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(25,4,utf8_decode("Fecha de emisión"),"LR",0,"L",1);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,4,str_replace(" ","T",$fechaemision),"LR",0,"R");
+
+
+   $this->Ln();
+   $this->Cell(40);
+   $this->Cell(85,4,utf8_decode('COL. '.$empresa->colonia.' '.$empresa->ciudad),0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(0, 0, 0);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(25,4,utf8_decode("Certificado CSD"),"LR",0,"L",1);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,4,$certicsd,"LR",0,"R");
+
+   $this->Ln();
+   $this->Cell(40);
+   $this->Cell(85,4,utf8_decode($empresa->estado." ".$empresa->cp),0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(255,255,255);
+   $this->Cell(25,4,utf8_decode("Certificado SAT"),"LR",0,"L",1);
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,4,$certisat,"LR",0,"R");
+
+   $regimen = $empresa->regimen.' - '.busca($empresa->regimen,'cfdi_regimenfiscal','cr_id','cr_nmb');
+   $this->Ln();
+   $this->Cell(40);
+   $this->SetFont('Arial','',7);
+   $this->Cell(85,4,utf8_decode(substr($regimen,0,53)),0,0,"C");
+   $this->SetTextColor(255,255,255);
+   $this->SetFont('Arial','',8);
+   $this->Cell(25,4,utf8_decode("Certificación"),"LBR",0,"L",1);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(40,4,$fechatimbrado,"LR",0,"R");
+
+   $this->Ln();
+   $this->Cell(40);
+   $this->SetFont('Arial','',7);
+   $this->Cell(85,4,utf8_decode(substr($regimen,53,50)),0,0,"C");
+   $this->SetFont('Arial','',8);
+   $this->SetTextColor(0, 0, 0);
+   $this->Cell(65,4,$uuid,"LRB",0,"C");
+
+
+
+   $this->Ln(7);
+}
+
+function Footer()
+{
+    $this->SetFont('Arial','B',6);
+    // Go to 1.5 cm from bottom
+    $this->SetTextColor(204, 0, 0);
+    // Print centered page number
+    $this->SetY(270);
+    $this->Cell(190,5,utf8_decode("Este documento es una representación gráfica de un CFDI"),0,0,'C');
+    $this->SetTextColor(0, 0, 0);
+}
+
+/*Funciones Creadas para generar salto de linea*/
+function SetWidths($w)
+{
+  //Ajustar la gama del ancho de columna
+  $this->widths=$w;
+}
+
+function SetAligns($a)
+{
+  //ajusta la alineacion en el arreglo
+  $this->aligns=$a;
+}
+
+function Row($data,$bandera=false)
+{
+  //Calcular la altura de la fila
+  $nb=0;
+  for($i=0;$i<count($data);$i++)
+    $nb=max($nb,$this->NbLines($this->widths[$i],$data[$i]));
+  $h=4*$nb;
+  //Emitir un salto de p�gina primera, si es necesario
+  $this->CheckPageBreak($h);
+    if($bandera==true) $rellenar ='FD';
+    if($bandera==false) $rellenar ='D';
+  //Dibuja las celdas de la fila
+  for($i=0;$i<count($data);$i++)
+  {
+    $w=$this->widths[$i];
+        $a=isset($this->aligns[$i]) ? $this->aligns[$i] : 'L';
+    //Guardar la posici�n actual
+    $x=$this->GetX();
+    $y=$this->GetY();
+      //dibuja la tabla
+    $this->Rect($x,$y,$w,$h,$rellenar);
+    //solo imprime el texto
+    $this->MultiCell($w,4,$data[$i],0,$a);
+    //Put the position to the right of the cell
+    $this->SetXY($x+$w,$y);
+  }
+  //Ir a la siguiente l�nea
+  $this->Ln($h);
+    $bandera=!$bandera;
+}
+
+function RowPC($data,$bandera=false)
+{
+  //Calcular la altura de la fila
+  $nb=0;
+  for($i=0;$i<count($data);$i++)
+    $nb=max($nb,$this->NbLines($this->widths[$i],$data[$i]));
+  $h=4*$nb;
+  //Emitir un salto de p�gina primera, si es necesario
+  $this->CheckPageBreak($h);
+    if($bandera==true) $rellenar ='FD';
+    if($bandera==false) $rellenar ='D';
+  //Dibuja las celdas de la fila
+  for($i=0;$i<count($data);$i++)
+  {
+    $w=$this->widths[$i];
+        $a=isset($this->aligns[$i]) ? $this->aligns[$i] : 'L';
+    //Guardar la posici�n actual
+    $x=$this->GetX();
+    $y=$this->GetY();
+      //dibuja la tabla
+    $this->Rect($x,$y,$w,$h,$rellenar);
+    //solo imprime el texto
+    $this->MultiCell($w,4,$data[$i],0,$a);
+    //Put the position to the right of the cell
+    $this->SetXY($x+$w,$y);
+  }
+  //Ir a la siguiente l�nea
+  $this->Ln($h);
+    $bandera=!$bandera;
+}
+
+function CheckPageBreak($h)
+{
+  //Si la altura h provocar�a un desbordamiento, a�adir una nueva p�gina de inmediato
+  if($this->GetY()+$h>$this->PageBreakTrigger)
+    $this->AddPage($this->CurOrientation);
+}
+
+function NbLines($w,$txt)
+{
+  //Calcula el n�mero de l�neas de un MultiCell de anchura w tomar�
+  $cw=&$this->CurrentFont['cw'];
+  if($w==0)
+    $w=$this->w-$this->rMargin-$this->x;
+  $wmax=($w-2*$this->cMargin)*1000/$this->FontSize;
+  $s=str_replace("\r",'',$txt);
+  $nb=strlen($s);
+  if($nb>0 and $s[$nb-1]=="\n")
+    $nb--;
+  $sep=-1;
+  $i=0;
+  $j=0;
+  $l=0;
+  $nl=1;
+  while($i<$nb)
+  {
+    $c=$s[$i];
+    if($c=="\n")
+    {
+      $i++;
+      $sep=-1;
+      $j=$i;
+      $l=0;
+      $nl++;
+      continue;
+    }
+    if($c==' ')
+      $sep=$i;
+    $l+=$cw[$c];
+    if($l>$wmax)
+    {
+      if($sep==-1)
+      {
+        if($i==$j)
+          $i++;
+      }
+      else
+        $i=$sep+1;
+      $sep=-1;
+      $j=$i;
+      $l=0;
+      $nl++;
+    }
+    else
+      $i++;
+  }
+  return $nl;
+}
+/*FIN DE Funciones Creadas para generar salto de linea*/
+
+}
+
+$id = $_GET['id'];
+$cpago = $_GET['id'];
+$empresa = busca($_GET['id'],'cpago','c_id','c_empresa');
+$empres = busca($_GET['id'],'cpago','c_id','c_empresa');
+
+    include_once("modulos/compago.php");
+    $compago = new ModelCompago();
+    $compago->select($id);
+
+    include_once("modulos/clientes.php");
+    $cliente = new modelclientes();
+    $cliente->selectfisc($compago->cliente,$compago->fiscales);
+
+    $orden = 0;
+
+$pdf = new PDF("P","mm", "Letter");
+$pdf->AddPage();
+$pdf->SetFont('Arial','B',11);
+
+$pdf->SetFillColor(0, 128, 0);
+$pdf->SetDrawColor(0,0,0);    // Arial bold 15
+$pdf->SetTextColor(255,255,255);
+
+$pdf->Cell(5);
+
+$pdf->Cell(185,5,"RECEPTOR",1,0,"C",1);
+$pdf->Ln();
+$pdf->SetTextColor(0,0,0);
+$pdf->SetFont('Arial','B',8);
+$pdf->Cell(5);
+$pdf->Cell(30,4,"R.F.C ",0,0,"L");
+$pdf->SetFont('Arial','',8);
+
+    if($orden == 0)
+        $pdf->Cell(155,4,$cliente->rfc,0,0,"L");
+    else
+        $pdf->Cell(115,4,utf8_decode($cliente->rfc),0,0,"L").$pdf->Cell(40,4,"","LR",0,"L");
+
+$pdf->Ln();
+$pdf->SetTextColor(0,0,0);
+$pdf->SetFont('Arial','B',8);
+$pdf->Cell(5);
+$pdf->Cell(30,4,"NOMBRE ",0,0,"L");
+$pdf->SetFont('Arial','',8);
+
+if($orden == 0)
+    $pdf->Cell(155,4,utf8_decode($cliente->razonsocial),0,0,"L");
+else
+    $pdf->Cell(115,4,utf8_decode($cliente->razonsocial),0,0,"L").$pdf->Cell(40,4,"","LR",0,"L");
+
+
+$domcliente = $cliente->calle.' '.$cliente->nume.' '.$cliente->numi.' '.$cliente->colonia.' '.$cliente->municipio.' '.$cliente->estado.' '.$cliente->pais.' '.$cliente->cp;
+
+$pdf->Ln();
+$pdf->SetTextColor(0,0,0);
+$pdf->SetFont('Arial','B',8);
+$pdf->Cell(5);
+$pdf->Cell(30,4,"DIRECCION ",0,0,"L");
+$pdf->SetFont('Arial','',8);
+
+    if($orden == 0){
+      if(strlen($domcliente) > 82){
+        $pdf->MultiCell(155,4,utf8_decode($domcliente),0,"L");
+      }
+      else{
+        $pdf->Cell(155,4,utf8_decode($domcliente),0,0,"L");
+        $pdf->Ln();
+      }
+    }
+    else{
+        if(strlen($domcliente) > 60){
+          $y = $pdf->GetY();
+          $pdf->MultiCell(115,4,utf8_decode($domcliente),"","L");
+          $pdf->SetFont('Arial','B',14);
+          $pdf->SetXY(160,$y);
+          $pdf->MultiCell(40,4,trim(substr($compago->ordenc,13,13)),"LR","C");
+          $pdf->SetX(160);
+          $pdf->Cell(40,4,"","LR",1,"C");
+        }
+        else{
+          $pdf->Cell(115,4,utf8_decode($domcliente),0,0,"L");
+          $pdf->SetFont('Arial','B',14);
+          $pdf->Cell(40,4,trim(substr($compago->ordenc,13,13)),"LR",0,"C");
+          $pdf->Ln();
+        }
+    }
+
+$pdf->SetTextColor(0,0,0);
+$pdf->SetFont('Arial','B',8);
+$pdf->Cell(5);
+$pdf->Cell(30,4,utf8_decode("RÉGIMEN FISCAL"),0,0,"L");
+$pdf->SetFont('Arial','',8);
+$pdf->Cell(155,4,utf8_decode($cliente->regimen.' - '.busca($cliente->regimen,'cfdi_regimenfiscal','cr_id','cr_nmb')),0,0,"L");
+
+
+//Documentos Relacionados
+if(busca($id,'cpago_relacion','cr_origen','COUNT(*)') > 0){
+  $pdf->SetFont('Arial','B',11);
+  $pdf->SetDrawColor(0,0,0);    // Arial bold 15
+  $pdf->SetTextColor(255,255,255);
+  $pdf->Ln(7);
+  $pdf->Cell(5);
+  $pdf->Cell(185,5,"cpago Relacionadas",1,0,"C",1);
+  $pdf->Ln();
+  $pdf->SetFont('Arial','',7);
+  $pdf->SetTextColor(255,255,255);
+  $pdf->Cell(5);
+  $pdf->Cell(25,5,"Folio",1,0,"C",1);
+  $pdf->Cell(65,5,"UUID",1,0,"C",1);
+  $pdf->Cell(95,5,"Tipo de Relacion",1,0,"C",1);
+  $pdf->SetTextColor(0,0,0);
+
+  $pdf->SetWidths(array('25','65','95'));
+  $pdf->Ln();
+
+  $sqlr = 'SELECT * FROM cpago_relacion WHERE cr_origen = "'.$id.'"';
+  $resultr = setq($sqlr) or die($sqlr);
+  while($rwr = $resultr->fetch_array()){
+    $folior = busca($rwr['cr_cpago'],'cpago','c_id','c_folio');
+    $uuidr = $rwr['cr_uuid'];
+    $tipor = busca($rwr['cr_tiporelacion'],'cfdi_relaciones','cr_id','cr_nmb');
+    $pdf->Cell(5);
+    $pdf->Row(array($folior,$uuidr,utf8_decode($tipor)));
+  }
+}
+
+$pdf->SetTextColor(0,0,0);
+$pdf->Cell(5);
+$pdf->Cell(30);
+$pdf->SetFont('Arial','',8);
+
+$sqld = 'SELECT * FROM cpagod WHERE cd_cpago = "'.$id.'" ORDER BY cd_id ASC';
+$result = setq($sqld) or die($sqld);
+
+$pdf->Ln(7);
+
+$pdf->SetFont('Arial','',6);
+$pdf->SetTextColor(255,255,255);
+
+$pdf->Cell(5);
+$pdf->Cell(15,5,"Factura",1,0,"C",1);
+$pdf->Cell(55,5,"UUID",1,0,"C",1);
+$pdf->Cell(20,5,"Metodo de Pago",1,0,"C",1);
+$pdf->Cell(20,5,"Moneda",1,0,"C",1);
+$pdf->Cell(20,5,"Importe",1,0,"C",1);
+$pdf->Cell(55,5,"Saldos",1,0,"C",1);
+
+$pdf->SetTextColor(0,0,0);
+$subtotal = 0;
+$iva = 0;
+$pdf->SetWidths(array('15','55','20','20','20','55'));
+
+
+srand(microtime()*1000000);
+$bandera=true;
+$pdf->Ln();
+$iva = 0;
+$reti = 0;
+$isr = 0;
+$metodopago = array("PUE" => "Pago en una sola exhibición", "PPD" => "Pago en parcialidades");
+while($row= $result->fetch_array()){
+  $pdf->SetFont('Arial','',7);
+//  $subtotal+=$importe;
+  $pdf->Cell(5);
+  $pdf->SetAligns(array('C','C','C','C','R','R'));
+
+  $foliof = busca($row['cd_uuid'],'facturas','f_uuid','f_folio');
+  if(!$foliof) $foliof = busca($row['cd_uuid'],'ncredito','n_uuid','n_folio');
+
+/*
+  $uuid = busca($row['cd_factura'],'facturas','f_id','f_uuid');
+  if(!$uuid)
+*/$uuid = $row['cd_uuid'];
+  $metodo = $row['cd_metodo'].' - '.$metodopago[$row['cd_metodo']];
+
+  $saldin = $row['cd_impsaldoant']-$row['cd_imppagado'];
+
+    $textsaldo = "Saldo Anterior $ ".number_format($row['cd_impsaldoant'],2).'
+Saldo Insoluto $ ' .number_format($saldin,2);
+
+  $pdf->Row(array($foliof,$uuid,utf8_decode($metodo),utf8_decode($row['cd_moneda']),'$ '.number_format($row['cd_imppagado'],2),$textsaldo));
+  if($row['cd_moneda'] != "MXN"){ $moneda = "DOLARES AMERICANOS"; $tipomon = $row['cd_moneda']; }
+  else{  $moneda = "PESOS";  $tipomon = "M.N."; }
+}
+
+  $fechap = busca($cpago,'cpago','c_id','c_fecha');
+  $fechapago = explode(" ",$fechap);
+  $fechapag = $fechapago[0].'T'.$fechapago[1];
+
+  $formapagop = busca($cpago,'cpago','c_id','c_fpago');
+  $numoperacion = busca($cpago,'cpago','c_id','c_confirmacion');
+  $formapp = busca($formapagop,'cfdi_fpago','cf_id','cf_nmb');
+  $formapnmb = busca($formapagop,'cfdi_fpago','cf_id','cf_descripcion');
+
+  $monto = number_format(busca($cpago,'cpagod','cd_cpago','SUM(cd_imppagado)'),2,'.','');
+//  $monto = 0;
+
+  $monto = $montod;
+  $decimales = explode(".",number_format($monto,2,'.',''));
+  $cantletra = num2letras($monto);
+  $decimas = $decimales[1].'/100 '.$tipomon;
+
+  $pdf->Ln();
+  $pdf->Cell(5);
+  $pdf->Cell(185,5,"","T");
+
+  $pdf->Ln();
+  $pdf->SetFont('Arial','B',7);
+  $pdf->SetTextColor(255,255,255);
+  $pdf->Cell(5);
+  $pdf->Cell(185,5,utf8_decode("CANTIDAD CON LETRA"),1,0,"C","LR");
+  $pdf->Ln();
+  $pdf->SetFont('Arial','B',7);
+  $pdf->Cell(5);
+  $pdf->SetTextColor(0,0,0);
+  $pdf->Cell(185,5,utf8_decode(strtoupper($cantletra.' '.$moneda.' '.$decimas)),"LRB",0,"C");
+
+  $pdf->Ln();
+
+  $arrmetodopago = array("PUE" => "PAGO EN UNA SOLA EXHIBICIÓN", "PPD" => "PAGO EN PARCIALIDADES O DIFERIDO");
+  $pdf->SetFont('Arial','',6);
+  $pdf->Cell(5);
+  $pdf->Cell(185,3,"EFECTOS FISCALES AL PAGO","TLR");
+
+  $pdf->Ln();
+  $pdf->SetFont('Arial','',6);
+  $pdf->Cell(5);
+  $pdf->Cell(185,3,utf8_decode("FORMA DE PAGO: ".$formapp.' - '.$formapnmb),"LR");
+  $pdf->Ln();
+  $pdf->Cell(5);
+  $pdf->Cell(15,3,"USO DE CFDI ","LB",0,"L");
+  $uso = busca($id,'cpago','c_id','c_uso');
+  $pdf->Cell(170,3,utf8_decode($uso.' - '.mb_strtoupper(busca($uso,'cfdi_uso','cu_id','cu_nmb'))),"RB",0,"L");
+  $pdf->Ln();
+
+/*
+   $sellocfd =  str_pad("X",42,"X");
+   $foliosat =  str_pad("X",42,"X");
+   $uuid =  "12345678-ABCD-0987-EFGH-A1B2C3D4E5F6";
+   $certisat =  "XXXXXXXXXXXXXXXXX";
+   $certicsd =  "XXXXXXXXXXXXXXXXX";
+   $fechatimbrado =  date('Y-m-d').'T'.date('H:i:s');
+   $fechaemision =  date('Y-m-d').'T'.date('H:i:s');
+*/
+
+   $sellocfd =  sacarcadena('Sello="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $foliosat =  sacarcadena('SelloSAT="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $uuid =  sacarcadena('Version="1.1" UUID="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $certisat =  sacarcadena('NoCertificadoSAT="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $certicsd =  sacarcadena('NoCertificado="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $fechatimbrado =  sacarcadena('FechaTimbrado="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+   $fechaemision =  sacarcadena('Fecha="','"',file_get_contents('cfd/'.$empres.'/cpago/xml/'.busca($id,'cpago','c_id','c_folio').'.xml'));
+
+
+    $cadenaor = '||1.1|'.$uuid.'|'.$fechatimbrado.'|'.$sellocfd.'|'.$certisat.'||';
+    $pdf->Ln(8);
+    $pdf->SetFont('Arial','B',7);
+    $pdf->Cell(5);
+    $pdf->Cell(185,3,utf8_decode("Sello Dígital Del CFDI"));
+    $pdf->Ln();
+    $pdf->SetFont('Arial','B',6);
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($sellocfd,0,105)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($sellocfd,105,105)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($sellocfd,210,105)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($sellocfd,315,105));
+
+    $pdf->Ln(6);
+    $pdf->SetFont('Arial','B',7);
+    $pdf->Cell(5);
+    $pdf->Cell(185,3,utf8_decode("Sello del SAT"));
+    $pdf->Ln();
+    $pdf->SetFont('Arial','B',6);
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($foliosat,0,100)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($foliosat,100,100)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($foliosat,200,100));
+
+    $y = $pdf->GetY();
+    $pdf->Ln(6);
+    $pdf->SetFont('Arial','B',7);
+    $pdf->Cell(5);
+    $pdf->Cell(185,3,utf8_decode("Cadena Original"));
+    $pdf->Ln();
+    $pdf->SetFont('Arial','B',6);
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($cadenaor,0,110)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($cadenaor,110,110)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($cadenaor,220,110)).$pdf->Ln();
+    $pdf->Cell(5).$pdf->Cell(185,3,substr($cadenaor,330,110));
+
+    if (!is_dir('cfd/'.$empresa.'/cpago/qr')) {
+        @mkdir('cfd/'.$empresa.'/cpago/qr', 0777);
+    }
+
+    if (!is_dir('cfd/'.$empresa.'/cpago/pdf')) {
+        @mkdir('cfd/'.$empresa.'/cpago/pdf', 0777);
+    }
+
+    $sqluu = 'UPDATE cpago SET c_uuid = "'.$uuid.'" WHERE c_id = "'.$id.'"';
+
+    if($uuid != "12345678-ABCD-0987-EFGH-A1B2C3D4E5F6") setq($sqluu) or die($sqluu);
+
+    $u8d = substr($sellocfd,-8);
+    QRcode::png('https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?id='.$uuid.'&re='.busca($empresa,'empresas','e_id','e_rfc').'&rr='.$cliente->rfc.'&tt='.number_format($totalf,2,'.','').'&fe='.$u8d,'cfd/'.$empresa.'/cpago/qr/'.busca($id,'cpago','c_id','c_folio').'.png');
+    $pdf->Image('cfd/'.$empresa.'/qr/'.busca($id,'cpago','c_id','c_folio').'.png',170,($y-15),30,30);
+//
+
+    $pdf->Output('cfd/'.$empresa.'/cpago/pdf/'.busca($id,'cpago','c_id','c_folio').'.pdf');
+//    $pdf->Output();
+    $pdf->Close();
+?>

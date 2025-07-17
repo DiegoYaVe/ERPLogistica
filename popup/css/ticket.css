@@ -1,0 +1,15 @@
+.imprimir{
+    background: green;
+    margin-right: 200px;
+    margin-left: 200px;
+    padding: 60px;
+    max-width: 100%;
+    border: 1px solid #000;
+}
+.imprimir table{
+    max-width: 960px;
+    border: 1px solid #000;
+}
+.imprimir thead th{
+  font-family: 'Rock Salt', cursive;
+}

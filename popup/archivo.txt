@@ -1,0 +1,2 @@
+SELECT * FROM articulos_tamanos WHERE at_nmbtamano LIKE "%pulga%" OR at_alias LIKE "%pulga%"
+                AND at_empresa = "1" ORDER BY at_nmbtamano ASC 

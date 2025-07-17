@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="FI" Folio="194" Fecha="2025-02-07T18:14:01" Sello="sho2aDnp+6IItkMu1DJPLnIyncUBqyJq1IJR34bUgohsy2IfMQD4s60Mk9+Vib/jth0S+nZHbOoR/xKtPFLezYnxMIPVb7TFMjXwFzEvdI/gvHZN+YT4w2OPMcuxUj1cdRFXeonThq9YKp0O3wUJb1+zs1XJ5yRwOLMG67adP2glwyfSuSFs4sXVYM2tIf4KMHERJ6aZGuiInodyttYNtb0Fma3rWJ7aXASHUzr1A8dQC6VIAdH/npimeS2kP0f9r03jl9f+69G145ikM4241lztCXORendV8LHfUNQ7iMVXq3u4K0ULuKZ+Zf19FGhU9eiJ+LLly3WQ901fjDS/QQ==" FormaPago="03" NoCertificado="00001000000508503918" Certificado="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" CondicionesDePago="CONTADO" SubTotal="27490.52" Moneda="MXN" TipoCambio="1" Total="31889.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="42088">
+  <cfdi:Emisor Rfc="FII210622542" Nombre="LA FABRICA DE INFLABLES INFLALANDIA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="SEHA870228J58" Nombre="ARACELI SEVERIANO HERNANDEZ" DomicilioFiscalReceptor="72000" RegimenFiscalReceptor="612" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="10" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="MULTIRAMPA PARTY COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA" ValorUnitario="20171.551724" Importe="20171.551724" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="20171.55" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="3227.448276"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="66" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="ALBERCA COSIDA 3X3 COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA" ValorUnitario="7318.965517" Importe="7318.965517" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="7318.97" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1171.034483"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="4398.48">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="27490.52" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="4398.48"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="C0211460-E5B1-11EF-94EC-00155D012007" FechaTimbrado="2025-02-07T18:15:06" RfcProvCertif="TBN040609RKA" SelloCFD="sho2aDnp+6IItkMu1DJPLnIyncUBqyJq1IJR34bUgohsy2IfMQD4s60Mk9+Vib/jth0S+nZHbOoR/xKtPFLezYnxMIPVb7TFMjXwFzEvdI/gvHZN+YT4w2OPMcuxUj1cdRFXeonThq9YKp0O3wUJb1+zs1XJ5yRwOLMG67adP2glwyfSuSFs4sXVYM2tIf4KMHERJ6aZGuiInodyttYNtb0Fma3rWJ7aXASHUzr1A8dQC6VIAdH/npimeS2kP0f9r03jl9f+69G145ikM4241lztCXORendV8LHfUNQ7iMVXq3u4K0ULuKZ+Zf19FGhU9eiJ+LLly3WQ901fjDS/QQ==" NoCertificadoSAT="00001000000708361114" SelloSAT="Nk3wLNZ9KG8EzgQOwlWiJ/bJXTUn5ViLcvEsW3RZpv0orkKeuLgD3sOmfZDRqiH/PXlLLPCFH6egN+ZqqHpPIi5YapjMTMPTLgGJtxDzjYy7UJCbZaPhZKxQIVJ+rSFPp02Xm5gMOqB01xh5BVyzOL2FZi8ARwsL+79/hxzFetZlVljw8MBWY3AIQAROtW2WNEnmgFbjOtjvfKXRB1asjjMHtmNmxUyzq3aNxU3Pl6c1UmON3Ejg9lkSBoLtPH/HZ0pa3FR+jFejVK2tB1rSs2z6CqK79HgPhRbGUAbYhXM5MpkkrwyfuL1bqmQ9Bh/K7SwKTggaP6mwDB/L/EHBOw=="/>
+	</cfdi:Complemento>
+</cfdi:Comprobante>

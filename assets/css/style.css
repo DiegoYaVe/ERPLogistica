@@ -1,0 +1,1450 @@
+/*================================================================================
+	Item Name: Robust - Responsive Admin Theme
+	Version: 1.0
+	Author: PIXINVENT
+	Author URL: http://www.themeforest.net/user/pixinvent
+================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+/*body{
+  line-height: 1;
+}*/
+
+.displaytool{
+  display: flex!important;
+}
+
+@media (max-width: 800px) {
+  .displaytool{
+    display: block!important;
+  }
+}
+
+
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  background-color: #ffffff;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidebar a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  color: #00ff7b;
+}
+
+.sidebar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+.openbtn {
+  font-size: 20px;
+  cursor: pointer;
+  background-color: #ffffff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+}
+
+.openbtn:hover {
+  background-color: #444;
+}
+
+#main {
+  transition: margin-right .5s;
+  padding: 16px;
+}
+/*/////////////////*/
+
+.nowrap{
+  display: flex; 
+  flex-wrap: wrap
+}
+
+
+.message-item {
+  margin-bottom: 25px;
+  margin-left: 40px;
+  position: relative;
+  }
+  .message-item .message-inner {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 10px;
+  position: relative;
+  }
+  .message-item .message-inner:before {
+  border-right: 10px solid #ddd;
+  border-style: solid;
+  border-width: 10px;
+  color: rgba(0,0,0,0);
+  content: "";
+  display: block;
+  height: 0;
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 0;
+  }
+  .message-item .message-inner:after {
+  border-right: 10px solid #fff;
+  border-style: solid;
+  border-width: 10px;
+  color: rgba(0,0,0,0);
+  content: "";
+  display: block;
+  height: 0;
+  position: absolute;
+  left: -18px;
+  top: 6px;
+  width: 0;
+  }
+  .message-item:before {
+  background: #fff;
+  border-radius: 2px;
+  bottom: -30px;
+  box-shadow: 0 0 3px rgba(0,0,0,0.2);
+  content: "";
+  height: 100%;
+  left: -30px;
+  position: absolute;
+  width: 3px;
+  }
+  .message-item:after {
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  content: "";
+  height: 15px;
+  left: -36px;
+  position: absolute;
+  top: 10px;
+  width: 15px;
+  }
+  .clearfix:before, .clearfix:after {
+  content: " ";
+  display: table;
+  }
+  .message-item .message-head {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  }
+  .message-item .message-head .avatar {
+  margin-right: 20px;
+  }
+  .message-item .message-head .user-detail {
+  overflow: hidden;
+  }
+  .message-item .message-head .user-detail h5 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0;
+  }
+  .message-item .message-head .post-meta {
+  float: left;
+  padding: 0 15px 0 0;
+  }
+  .message-item .message-head .post-meta >div {
+  color: #333;
+  font-weight: bold;
+  text-align: right;
+  }
+  .post-meta > div {
+  color: #777;
+  font-size: 12px;
+  line-height: 22px;
+  }
+  .message-item .message-head .post-meta >div {
+  color: #333;
+  font-weight: bold;
+  text-align: right;
+  }
+  .post-meta > div {
+  color: #777;
+  font-size: 12px;
+  line-height: 22px;
+  }
+  img.img-chat {
+   min-height: 40px;
+   max-height: 40px;
+  }
+
+.nomargin{
+  margin: 0;
+}
+.nopadding{
+  padding: 0;
+}
+.activado{
+  background: #0288d1;
+}
+.activado2{
+  background: #0288d1;
+  color: white!important;
+}
+.blanquito{
+  color: white !important;
+}
+.desactivado{
+  background: #77c8e5;
+}
+.desactivado2{
+  background: #B2BDC2;
+}
+.desactivado2.activado{
+  background: #0288d1;
+}
+.desactivado.activado{
+  background: #0288d1;
+}
+
+
+.btn-flotanteright {
+  cursor: pointer;
+  clip-path: polygon(0% 0%, 100% 0%, calc(110% - 0px) 50%, 100% 100%, 0% 100%);
+	font-size: 16px; /* Cambiar el tamaño de la tipografia */
+	text-transform: uppercase; /* Texto en mayusculas */
+  border-radius: 6px;
+	font-weight: bold; /* Fuente en negrita o bold */
+	color: #ffffff; /* Color del texto */
+	letter-spacing: 2px; /* Espacio entre letras */
+	background-color: #620000; /* Color de fondo */
+	position: fixed;
+	bottom: 480px;
+	right: -110px;
+	transition: all 300ms ease 0ms;
+	box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+	z-index: 99;  
+  padding: 3px;
+  padding-left: 9px;
+
+}
+.btn-flotanteright:hover {
+	background-color: #010101; /* Color de fondo al pasar el cursor */
+	box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.3);
+	transform: translateX(-117px);
+}
+@media only screen and (max-width: 600px) {
+ 	.btn-flotanteright {
+		font-size: 14px;
+		bottom: 20px;
+		right: 20px;
+	}
+} 
+
+.btn-flotante {
+	font-size: 16px; /* Cambiar el tamaño de la tipografia */
+	text-transform: uppercase; /* Texto en mayusculas */
+	font-weight: bold; /* Fuente en negrita o bold */
+	color: #ffffff; /* Color del texto */
+	border-radius: 50px; /* Borde del boton */
+	letter-spacing: 2px; /* Espacio entre letras */
+	background-color: #51e91e; /* Color de fondo */
+	position: fixed;
+	bottom: 50px;
+	right: 50px;
+	transition: all 300ms ease 0ms;
+	box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+	z-index: 99;
+}
+.btn-flotante:hover {
+	background-color: #2c2fa5; /* Color de fondo al pasar el cursor */
+	box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.3);
+	transform: translateY(-7px);
+}
+@media only screen and (max-width: 600px) {
+ 	.btn-flotante {
+		font-size: 14px;
+		bottom: 20px;
+		right: 20px;
+	}
+} 
+
+
+/*#77c8e5;*/
+
+/* HIDE RADIO */
+/* [type=radio] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+} */
+
+/* IMAGE STYLES */
+[type=radio] + img {
+  cursor: pointer;
+}
+
+/* CHECKED STYLES */
+[type=radio]:checked + img {
+  outline: 2px solid #1F8FE7;
+}
+.modaltext{
+  font-size: 15px;
+}
+.modal-title{
+  font-size: 22px;
+}
+.fentrada{
+  font-size: 18px;
+  text-transform: uppercase;
+}
+.imgauto{
+  width: 60%;
+  height: 60%;
+}
+.fsalida{
+  font-size: 19px;
+  text-transform: uppercase;
+}
+.card-header{
+  margin-top: 2px;
+  margin-bottom: 2px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.titlecob{
+  font-size: 22px;
+}
+#montoc{
+  font-size: 20px;
+}
+table{
+  border-spacing: 0px;
+}
+table td{
+  position: relative;
+  vertical-align: middle;
+}
+.noshowtab {
+  display: block;
+}
+@media (max-width: 900px) {
+  .noshowtab {
+    display: none;
+  }
+}
+
+/*! ========================================================================
+ * Bootstrap Toggle: bootstrap-toggle.css v2.2.0
+ * http://www.bootstraptoggle.com
+ * ========================================================================
+ * Copyright 2014 Min Hur, The New York Times Company
+ * Licensed under MIT
+ * ======================================================================== */
+.checkbox label .toggle,.checkbox-inline .toggle{margin-left:-20px;margin-right:5px}
+.toggle{position:relative;overflow:hidden}
+.toggle input[type=checkbox]{display:none}
+.toggle-group{position:absolute;width:200%;top:0;bottom:0;left:0;transition:left .35s;-webkit-transition:left .35s;-moz-user-select:none;-webkit-user-select:none}
+.toggle.off .toggle-group{left:-100%}
+.toggle-on{position:absolute;top:0;bottom:0;left:0;right:50%;margin:0;border:0;border-radius:0}
+.toggle-off{position:absolute;top:0;bottom:0;left:50%;right:0;margin:0;border:0;border-radius:0}
+.toggle-handle{position:relative;margin:0 auto;padding-top:0;padding-bottom:0;height:100%;width:0;border-width:0 1px}
+.toggle.btn{min-width:-webkit-fill-available;min-height:34px}
+.toggle-on.btn{padding-right:24px}
+.toggle-off.btn{padding-left:24px}
+.toggle.btn-lg{min-width:79px;min-height:45px}
+.toggle-on.btn-lg{padding-right:31px}
+.toggle-off.btn-lg{padding-left:31px}
+.toggle-handle.btn-lg{width:40px}
+.toggle.btn-sm{min-width:50px;min-height:30px}
+.toggle-on.btn-sm{padding-right:20px}
+.toggle-off.btn-sm{padding-left:20px}
+.toggle.btn-xs{min-width:35px;min-height:22px}
+.toggle-on.btn-xs{padding-right:12px}
+.toggle-off.btn-xs{padding-left:12px}
+
+/* Confirmar contrase�as iguales */
+.pascf{display:block;font-size:.8em;margin:0px 0 10px;padding:5px 0 5px 11px;width:200px}
+.confirmacion{background:#C6FFD5;border:1px solid green;}
+.negacion{background:#ffcccc;border:1px solid red}
+.mayus{
+  text-transform: uppercase;
+}
+.bordertb{
+  border-bottom: 1px solid #474747;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-top: 1px solid #474747;
+  min-height: 45px;
+  margin: auto;
+}
+.align-wbtn{
+  padding: 0.9rem 1rem;
+}
+
+.flipswitch
+{
+    position: relative;
+    background: white;
+    width: 100%;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 14px;
+    font-family: Trebuchet, Arial, sans-serif;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitch:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:white;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitch:after
+{
+    left:2%;
+    content: "INACTIVO";
+    background: #c42737;
+}
+.flipswitch:checked:after
+{
+    left:40%;
+    content: "ACTIVO";
+    background: #37BC9B;
+}
+
+.flipswitch-imagen
+{
+    position: relative;
+    background: white;
+    width: 100%;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 14px;
+    font-family: Trebuchet, Arial, sans-serif;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitch-imagen:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:white;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitch-imagen:after
+{
+    left:2%;
+    content: "SUBIR";
+    background: #2768c4;
+}
+.flipswitch-imagen:checked:after
+{
+    left:40%;
+    content: "EXISTENTE";
+    background: #37BC9B;
+}
+
+.flipswitch2
+{
+    position: relative;
+    background: white;
+    width: 100%;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 14px;
+    font-family: Trebuchet, Arial, sans-serif;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitch2:after
+{
+    position:absolute;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:white;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitch2:after
+{
+    position: absolute; 
+    left: 2%;
+    top: 50%;
+    transform: translateY(-50%); 
+    content: "NO";
+    background: #c42737;
+
+    display: flex; 
+    align-items: center; 
+    align-content: center;
+    justify-content: center;
+    line-height: 1;
+}
+.flipswitch2:checked:after
+{
+    left:40%;
+    content: "SI";
+    background: #37BC9B;
+    position: absolute; 
+    top: 50%; 
+    transform: translateY(-50%); 
+}
+
+.flipswitchtipocron
+{
+    position: relative;
+    background: white;
+    width: 100%;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 8px;
+    font-family: Trebuchet, Arial, sans-serif;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchtipocron:after
+{
+    position:absolute;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:white;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchtipocron:after
+{
+    position: absolute; 
+    left: 2%;
+    top: 50%;
+    transform: translateY(-50%); 
+    content: "CRONOMETRO";
+    background: #2763c4;
+    display: flex; 
+    align-items: center; 
+    align-content: center;
+    justify-content: center;
+    line-height: 1;
+}
+.flipswitchtipocron:checked:after
+{
+    left:40%;
+    content: "MANUAL";
+    background: rgb(3, 154, 88);
+    position: absolute; 
+    top: 50%; 
+    transform: translateY(-50%); 
+}
+
+.flipswitchcot
+{
+    position: relative;
+    background: white;
+    width: 100%;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 14px;
+    font-family: Trebuchet, Arial, sans-serif;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchcot:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:white;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchcot:after
+{
+    left:2%;
+    content: "A DOMICILIO";
+    background: #6d0dcd;
+}
+.flipswitchcot:checked:after
+{
+    left:40%;
+    content: "OCURRE";
+    background: #37BC9B;
+}
+
+.flipswitchrecep
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 14px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchrecep:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchrecep:after
+{
+    left:2%;
+    content: "INACTIVO";
+    background: #CC0000;
+}
+.flipswitchrecep:checked:after
+{
+    left:40%;
+    content: "ACTIVO";
+    background: #00CC33;
+}
+
+.flipswitchalm
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchalm:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchalm:checked:after
+{
+    left:40%;
+    content: "VENDIBLE";
+    background: #00CC33;
+}
+
+.flipswitchalm:after
+{
+    left:2%;
+    content: "RESGUARDO";
+    background: #CC0000;
+}
+
+.flipswitchalmdos
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchalmdos:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchalmdos:checked:after
+{
+    left:40%;
+    content: "INFLABLES";
+    background: #00CC33;
+}
+
+.flipswitchalmdos:after
+{
+    left:2%;
+    content: "MATERIA P";
+    background: #CC0000;
+}
+
+.flipswitchoc
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 8px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchoc:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchoc:checked:after
+{
+    left:40%;
+    content: "ORDEN DE COMPRA";
+    background: #00CC33;
+}
+
+.flipswitchoc:after
+{
+    left:2%;
+    content: "REQUISICIÓN";
+    background: #d7e604da;
+}
+/**/
+.flipswitchop
+{
+    position: relative;
+    background: white;
+    width: 90px;
+    height: 35px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchop:after
+{
+    position:absolute;
+    top:7%;
+    display:block;
+    line-height:25px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchop:checked:after
+{
+    left:40%;
+    content: "Egreso";
+    background: #00CC33;
+}
+
+.flipswitchop:after
+{
+    left:2%;
+    content: "Ingreso";
+    background: #d7e604da;
+}
+/**/
+.flipswitchnotafac
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchnotafac:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchnotafac:checked:after
+{
+    left:40%;
+    content: "FACTURA";
+    background: #00CC33;
+}
+
+.flipswitchnotafac:after
+{
+    left:2%;
+    content: "NOTA";
+    background: #0066CC;
+}
+
+.flipswitchok
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchok:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchok:checked:after
+{
+    left:40%;
+    content: "MOSTRAR";
+    background: #00CC33;
+}
+
+.flipswitchok:after
+{
+    left:2%;
+    content: "OCULTAR";
+    background: #CC0000;
+}
+
+#flipcl1:after{
+    content: "INACTIVOS";
+}
+#flipcl1:checked:after{
+    content: "ACTIVOS";
+}
+
+.flipswitchsn
+{
+    position: relative;
+    background: white;
+    width: 80px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchsn:after
+{
+    position:absolute;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchsn:after
+{
+    left:2%;
+    content: "NO";
+    background: #CC0000;
+}
+.flipswitchsn:checked:after
+{
+    left:40%;
+    content: "SI";
+    background: #00CC33;
+}
+
+/*********Flip modalidad comodato*/
+.flipswitchcomod
+{
+    position: relative;
+    background: white;
+    width: 80px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchcomod:after
+{
+    position:absolute;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchcomod:after
+{
+    left:2%;
+    content: "RENTA";
+    background: #FF9900;
+}
+.flipswitchcomod:checked:after
+{
+    left:20%;
+    content: "CONSIGNA";
+    background: #00CC33;
+}
+
+/*Flipswitch peque�o*/
+.flipswitchpodi
+{
+    position: relative;
+    background: white;
+    width: 40px;
+    height: 20px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 10px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchpodi:after
+{
+    position:absolute;
+    display:block;
+    line-height:15px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchpodi:after
+{
+    left:2%;
+    content: "$";
+    background: #CC9900;
+}
+.flipswitchpodi:checked:after
+{
+    left:40%;
+    content: "%";
+    background: #3399FF;
+}
+/***** Fin Flipswitch peque�o*/
+
+.flipswitchmame
+{
+    position: relative;
+    background: white;
+    width: 40px;
+    height: 20px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 10px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchmame:after
+{
+    position:absolute;
+    display:block;
+    line-height:15px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchmame:after
+{
+    left:2%;
+    content: "-";
+    background: #CC0000;
+}
+.flipswitchmame:checked:after
+{
+    left:40%;
+    content: "+";
+    background: #00CC33;
+}
+
+.flipswitchliquidar
+{
+    position: relative;
+    background: white;
+    width: 140px;
+    height: 40px;
+    -webkit-appearance: initial;
+    border-radius: 3px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    outline:none;
+    font-size: 12px;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    cursor:pointer;
+    border:1px solid #ddd;
+}
+.flipswitchliquidar:after
+{
+    position:absolute;
+    top:5%;
+    display:block;
+    line-height:32px;
+    width:60%;
+    height:90%;
+    background:#fff;
+    box-sizing:border-box;
+    text-align:center;
+    transition: all 0.3s ease-in 0s;
+    color:black;
+    border:#888 1px solid;
+    border-radius:3px;
+}
+.flipswitchliquidar:checked:after
+{
+    left:40%;
+    content: "SI";
+    background: #00CC33;
+}
+
+.flipswitchliquidar:after
+{
+    left:2%;
+    content: "NO";
+    background: #CC0000;
+}
+
+
+/***** Fin Flipswitch peque�o*/
+
+.accordion-dir .accordion-toggle:hover {
+        text-decoration: none;
+    }
+    .accordion-dir .accordion-toggle:hover span,
+    .accordion-dir .accordion-toggle:hover strong {
+        text-decoration: underline;
+    }
+    .accordion-dir .accordion-toggle:before {
+        font-size: 25px;
+        vertical-align: -3px;
+    }
+    .accordion-dir .accordion-toggle:not(.collapsed):before {
+        content: "?";
+        margin-right: 0px;
+    }
+    .accordion-dir .accordion-toggle.collapsed:before {
+        content: "?";
+        margin-right: 0px;
+    }
+.imgth{
+  height: 150px;
+  width: 100%;
+  object-fit: contain;
+}
+.number-align{
+  text-align: right;
+}
+.check30{
+  font-size: 100px;
+}
+#suggestions .suggest-element.active{
+  background-color: #94eafe;
+  transition: background .2s ease-in .0s;
+}
+
+#suggestions {
+    box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+    height: auto;
+    position: absolute;
+    z-index: 9999;
+}
+
+#suggestions .suggest-element {
+    background-color: #EEEEEE;
+    border-top: 1px solid #d6d4d4;
+    cursor: pointer;
+    padding: 8px;
+    width: 100%;
+    float: left;
+}
+
+#suggestions-block {
+    box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+    height: auto;
+    position: absolute;
+    top: 45px;
+    z-index: 9999;
+    width: 206px;
+}
+
+#suggestions-block .suggest-element {
+    background-color: #EEEEEE;
+    border-top: 1px solid #d6d4d4;
+    cursor: pointer;
+    padding: 8px;
+    width: 100%;
+    float: left;
+}
+select{
+-webkit-appearance: listbox !important
+}
+.bodytb{
+  font-size: 14px;
+  color: #666666;
+  font-weight: bolder;
+  border-radius: 5px;
+  text-align: center;
+  border-bottom: 1px solid;
+  align-self: center;
+}
+.headtb{
+  font-size: 15px;
+  color: #666666;
+  font-weight: bolder;
+  align-self: center;
+  border-radius: 5px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  text-align: center;
+}
+.tfill-blue{
+  font-size: 13px;
+  background: #002061;
+  color: #E0E0E0;
+  opacity: 6;
+  font-weight: bolder;
+  align-self: center;
+  border-radius: 20%;
+  text-align: center;
+}
+.sinpadding [class*="col-"] {
+    padding: 0px;
+}
+.padding-min{
+  padding: 3px;
+}
+.text-medium{
+  font-size: 12px;
+  font-weight: thin;
+  text-align: justify;
+}
+.divayuda {
+  color: #222;
+  text-align: center;
+  padding: 2rem 3rem;
+  box-shadow: 0 0 25px #222;
+  backdrop-filter: blur(10px);
+  top: 0;
+  left: 0;
+  position: absolute;
+  height: 100%;
+  text-align: center;
+  word-wrap: break-word;
+  width: 100%;
+}
+/*
+Estilos para el calendario
+*/
+.fc .fc-toolbar-title{
+  text-transform: uppercase;
+}
+.fc-scrollgrid-sync-inner{
+  text-transform: uppercase;
+}
+.fc .fc-cell-shaded, .fc .fc-day-disabled{
+  text-transform: uppercase;
+}
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+  .checkbox-wrapper-13 input[type=checkbox] {
+    --active: #275EFE;
+    --active-inner: #fff;
+    --focus: 2px rgba(39, 94, 254, .3);
+    --border: #BBC1E1;
+    --border-hover: #275EFE;
+    --background: #fff;
+    --disabled: #F6F8FF;
+    --disabled-inner: #E1E6F9;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    height: 21px;
+    outline: none;
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+    border: 1px solid var(--bc, var(--border));
+    background: var(--b, var(--background));
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:after {
+    content: "";
+    display: block;
+    left: 0;
+    top: 0;
+    position: absolute;
+    transition: transform var(--d-t, 0.3s) var(--d-t-e, ease), opacity var(--d-o, 0.2s);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:checked {
+    --b: var(--active);
+    --bc: var(--active);
+    --d-o: .3s;
+    --d-t: .6s;
+    --d-t-e: cubic-bezier(.2, .85, .32, 1.2);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:disabled {
+    --b: var(--disabled);
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:disabled:checked {
+    --b: var(--disabled-inner);
+    --bc: var(--border);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:disabled + label {
+    cursor: not-allowed;
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:hover:not(:checked):not(:disabled) {
+    --bc: var(--border-hover);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:focus {
+    box-shadow: 0 0 0 var(--focus);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch) {
+    width: 21px;
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch):after {
+    opacity: var(--o, 0);
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch):checked {
+    --o: 1;
+  }
+  .checkbox-wrapper-13 input[type=checkbox] + label {
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch) {
+    border-radius: 7px;
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch):after {
+    width: 5px;
+    height: 9px;
+    border: 2px solid var(--active-inner);
+    border-top: 0;
+    border-left: 0;
+    left: 7px;
+    top: 4px;
+    transform: rotate(var(--r, 20deg));
+  }
+  .checkbox-wrapper-13 input[type=checkbox]:not(.switch):checked {
+    --r: 43deg;
+  }
+}
+
+.checkbox-wrapper-13 * {
+  box-sizing: inherit;
+}
+.checkbox-wrapper-13 *:before,
+.checkbox-wrapper-13 *:after {
+  box-sizing: inherit;
+}
+.centrar-contenido{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn{
+  padding:.55rem 1.25rem;
+  font-size:12px;
+  border-radius:.475rem
+}
+.seleccionado{
+  border: 2px solid #0494ec;
+  border-radius: 8px;
+}
+
+.seleccionado-dos{
+  border: 2px solid #d9e4eb;
+  border-radius: 8px;
+}

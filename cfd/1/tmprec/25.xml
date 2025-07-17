@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:catCFDI="http://www.sat.gob.mx/sitio_internet/cfd/catalogos" xmlns:tdCFDI="http://www.sat.gob.mx/sitio_internet/cfd/tipoDatos/tdCFDI" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" Serie="HM" Folio="179251" Fecha="2022-07-19T14:31:00" Sello="bKsqof/dWTk3MVQh+C/8bQ5HkDxG4TuknhoDr8o+oVXNLjtQ6vtBi2RwQ18QW8ZpiyoRJvmztm07oV16mnxy9Qf6Goh9qdThLHuRCJS7g28yhLTaJg/aCPv+IadBp0B9WT/9X/M+gPAvWtkNuJXqRBVYmtO1sNrf6HgLuvLfyk8wtU+Q3JctI+2CkRLu/Rivr25K/ftRmS4qtLiiPxbHONGrD9ZRh/VvXhOkvnsQfSw/dUdZ9vZK8tazH7kU1F+OXI15RWpRtbj/p8oxCyvvC1LYAiNwrBOS/FkNPaF6nzqiQn7FFjc/1Lgj6RoVD+LOJfG2eUq/Qb3R49LUKx1sXA==" FormaPago="01" NoCertificado="00001000000505221903" Certificado="MIIF0DCCA7igAwIBAgIUMDAwMDEwMDAwMDA1MDUyMjE5MDMwDQYJKoZIhvcNAQELBQAwggGEMSAwHgYDVQQDDBdBVVRPUklEQUQgQ0VSVElGSUNBRE9SQTEuMCwGA1UECgwlU0VSVklDSU8gREUgQURNSU5JU1RSQUNJT04gVFJJQlVUQVJJQTEaMBgGA1UECwwRU0FULUlFUyBBdXRob3JpdHkxKjAoBgkqhkiG9w0BCQEWG2NvbnRhY3RvLnRlY25pY29Ac2F0LmdvYi5teDEmMCQGA1UECQwdQVYuIEhJREFMR08gNzcsIENPTC4gR1VFUlJFUk8xDjAMBgNVBBEMBTA2MzAwMQswCQYDVQQGEwJNWDEZMBcGA1UECAwQQ0lVREFEIERFIE1FWElDTzETMBEGA1UEBwwKQ1VBVUhURU1PQzEVMBMGA1UELRMMU0FUOTcwNzAxTk4zMVwwWgYJKoZIhvcNAQkCE01yZXNwb25zYWJsZTogQURNSU5JU1RSQUNJT04gQ0VOVFJBTCBERSBTRVJWSUNJT1MgVFJJQlVUQVJJT1MgQUwgQ09OVFJJQlVZRU5URTAeFw0yMDA5MjkxODM1MDdaFw0yNDA5MjkxODM1MDdaMIGeMRYwFAYDVQQDEw1DT0VMIFNBIERFIENWMRYwFAYDVQQpEw1DT0VMIFNBIERFIENWMRYwFAYDVQQKEw1DT0VMIFNBIERFIENWMSUwIwYDVQQtExxDT0U5NTEwMDU1UjYgLyBUQUdGNTQwNzI2Nk4zMR4wHAYDVQQFExUgLyBUQUdGNTQwNzI2SERGTVJSMDMxDTALBgNVBAsTBENPRUwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCb8y9n6l9O6N0j0qJ/xlb0M2VdC6kSbwNETu8gf1rZJAcrsvh3+WSthmlLjdAbNEFLtZ/G4O9JFtD3qNQhS3pWL8pD/rYrR0UKSLr4dnTrXWbafffWiwab33fiM+Ci7BmkGEUQwJQJYeAfK7MVcas2LwSsdUvcN1fB2LLBCF6Z/pg6R/2HhtpxHw+mzK2PpxOZE9mPSQ4dPQZvyV7I37wE9XUs6kijuCZVFgXllI1XZ7mdU1tWwG2Q/YrFITvzlwRFC46SCmmeyIslIjRIRTpPIuNdo2HSKGLT58h8bkQO/ZGtuobVOt0ssQNLD2w1MhzE0roiUZIMETxNDNgiSbrrAgMBAAGjHTAbMAwGA1UdEwEB/wQCMAAwCwYDVR0PBAQDAgbAMA0GCSqGSIb3DQEBCwUAA4ICAQC+r6cyyoiUPhfOkbVMHASr9rxr/QAdz7gmvB/KL80+9IXZ/BzHq1wJh7C8vpHN/A4Ga9fUtihnSnV8r7vAhraP3oucFv4hfDitGmYM+w8EpXKdQGGIXA3ngDWsl4o3taNH/D4Tz7BVneUZtlIQ1+MYroVdtSix4SnvgI2Yj54T0eLm51iqnZafjqcRcBmO3iPy1HSxnshLnUUttCvGOckW1m/nR/5BjCqpcI1PvnV4Z5VczNrCChhNxlli1h2sE61sOyTs7BC1ubA3G8YUVf78ikpAqr0qNVkmfE6BBYLBgYDl9dvhwMFhVeTHgAbD6NMPFdaAZNaAYcmaCcpvv0LDcOetZ+toDlZ7FRj6ZVjWEI8rca7UeqIoPdInFNd+PFCLu43BZ4kc0mWa37hGPgYWJCbtXaf3zDqnciwC/fiPkvMAQdL4P/7S66cOeTgYdI70K63SSuAQ0HLoXABYwq/8vPqdGNNKMZR3CoTFTVO0tnAO80hVU3LG/I65kfua0cR0rkdSFs64ZaLVpQANwmo7Ywq2gOlcD3QviEpGa1/ocsTyedSLpTLiuR+bYQSB8qKvrFhro3ZIcoEKtDm4nYae03Abfp/CDLR/XyFTugNYKYxO+VEGIz1rvxVTiV52e98uYdrPFZsBBodOBLlm0JzGRM9iUAc/hsLENBBDrCTM9A==" CondicionesDePago="Contado Especial" SubTotal="140.42" Moneda="MXN" TipoCambio="1" Total="162.89" TipoDeComprobante="I" MetodoPago="PUE" LugarExpedicion="42080">
+  <cfdi:Emisor Rfc="COE9510055R6" Nombre="COEL S.A. DE C.V." RegimenFiscal="601" />
+  <cfdi:Receptor Nombre="JOSE LUIS REYES BENITEZ" Rfc="REBL8905188J8" UsoCFDI="G03" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="39121402" NoIdentificacion="WDL1010S" Cantidad="2.000000" ClaveUnidad="H87" Unidad="PZA" Descripcion="WDL1010S Caja Estancas IP65 100x100x55 con lados cerrados y placa con tornillos" ValorUnitario="44.640000" Importe="89.280000">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="89.280000" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="14.284800" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="39121402" NoIdentificacion="500" Cantidad="2.000000" ClaveUnidad="H87" Unidad="PZA" Descripcion="WD0500 Clavija sencilla negro 15A 127V" ValorUnitario="12.260000" Importe="24.520000">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="24.520000" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="3.923200" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="39121100" NoIdentificacion="504" Cantidad="2.000000" ClaveUnidad="H87" Unidad="PZA" Descripcion="WD0504 CONTACTO COLGANTE HULE OVALADO 15A 127V ROYER 2 Nov 09 / 9.7" ValorUnitario="13.310000" Importe="26.620000">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="26.620000" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="4.259200" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="22.47">
+    <cfdi:Traslados>
+      <cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="22.47" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+<cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="51AC722F-0799-11ED-AE89-1D38D11A02F1" FechaTimbrado="2022-07-19T14:31:09" SelloCFD="bKsqof/dWTk3MVQh+C/8bQ5HkDxG4TuknhoDr8o+oVXNLjtQ6vtBi2RwQ18QW8ZpiyoRJvmztm07oV16mnxy9Qf6Goh9qdThLHuRCJS7g28yhLTaJg/aCPv+IadBp0B9WT/9X/M+gPAvWtkNuJXqRBVYmtO1sNrf6HgLuvLfyk8wtU+Q3JctI+2CkRLu/Rivr25K/ftRmS4qtLiiPxbHONGrD9ZRh/VvXhOkvnsQfSw/dUdZ9vZK8tazH7kU1F+OXI15RWpRtbj/p8oxCyvvC1LYAiNwrBOS/FkNPaF6nzqiQn7FFjc/1Lgj6RoVD+LOJfG2eUq/Qb3R49LUKx1sXA==" NoCertificadoSAT="00001000000505600468" SelloSAT="KuNMy7TuqxbWaOY8hPFt6YOjG/PQBzffINnuQpbkIAf2tZvMCNu2G8+DByYLwDZy7i0lsM8fpQxRGNZAUlAYYcW6gZeDwXLO3WW6nCOilDKZ3DoMnm1feDe9OYy10QsOlV3EUSl/istLmHF+zJvsUubLKNd6AtoXWgGcXnn+gbscwvqeW9OSSzUCdluWsy/0GpbpQ/zNlP8in60NYKJDNrepY2JB13I8F2xqtCAQCVhUt5kU6eV8k3u3dX+ro6e+74O0GBvQTnj1P24zqL6lrDOp/GH+zVjRgVqW1UYmppFKs0cNIbYk4WgMaAAZ9iJoZ9k4LG5Gi5A6JfkG2NKFuQ==" RfcProvCertif="EME000602QR9" /></cfdi:Complemento></cfdi:Comprobante>

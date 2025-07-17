@@ -1,0 +1,11 @@
+- Determinar stock ideal de las 3 sucursales, de cada insumo
+- En insumos determinar cuales se piden directo a almacen y cuales a proveedor
+- Refresco 
+
+
+Pedidos a proveedor y almacen
+
+
+
+Realizar pedido de carnes frias 
+Definir Stock máximo por sucursal

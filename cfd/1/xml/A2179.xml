@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Folio="2179" Fecha="2022-08-02T17:49:55" FormaPago="03" NoCertificado="00001000000501445542" Sello="d3PspgJaQBlygLhZbXKF7fyF/YniUMALiqCuDEUdKeuQlkcQd6Q7vTnuctA3wvW/YlMLP8iJEsLkeg8sBTFvnPAqzxIRZMUteND5XYXU5m/GKyYf9zN42TGXFckymw1PSAlVBiQthDpC5Sr5lw+8IYF5xlOtYn7vAOmDV/Ty3kcEM8IMejVQjQKeKdya3xsaOg4e6Dk1a+MkzSuzWnyGD9LV7i1uk8sCLQsOz+CubHLBDti12InGYe2dKSVaB2AEZmty7UAgd5djR+tc4t9mdgUG39Wox+waMxTJ5/RXy2t4HYiwL6mVEg2gU42momA6DIhpnVMaWeLuZ2PZR99Gfw==" Certificado="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" CondicionesDePago="CONTADO" SubTotal="14094.07" Moneda="MXN" TipoCambio="1" Total="16349.12" TipoDeComprobante="I" MetodoPago="PUE" LugarExpedicion="42084" Exportacion="01">
+  <cfdi:Emisor Rfc="REBL8905188J8" Nombre="JOSE LUIS REYES BENITEZ" RegimenFiscal="612"/>
+  <cfdi:Receptor Rfc="CCR001108BA9" Nombre="CONSTRUCTORA CRIMSA" DomicilioFiscalReceptor="42082" RegimenFiscalReceptor="601" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="44103100" ClaveUnidad="H87" NoIdentificacion="0" Cantidad="1.000000" Unidad="PIEZA" Descripcion="TÓNER PARA EL MULTIFUNCIONAL KONIKA MINOLTA, CON NÚMERO DE SERIE: BIZHUB 287 COLOR NEGRO" ValorUnitario="1601.600000" Importe="1601.600000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="1601.60" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="256.256000"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="44103100" ClaveUnidad="H87" NoIdentificacion="0" Cantidad="1.000000" Unidad="PIEZA" Descripcion="TÓNER PARA EL MULTIFUNCIONAL KONIKA MINOLTA, CON NÚMERO DE SERIE: BIZHUB 287 COLOR CYAN" ValorUnitario="4164.155172" Importe="4164.155172" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="4164.16" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="666.264828"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="44103100" ClaveUnidad="H87" NoIdentificacion="0" Cantidad="1.000000" Unidad="PIEZA" Descripcion="TÓNER PARA EL MULTIFUNCIONAL KONIKA MINOLTA, CON NÚMERO DE SERIE: BIZHUB 287 COLOR MAGENTA" ValorUnitario="4164.155172" Importe="4164.155172" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="4164.16" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="666.264828"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="44103100" ClaveUnidad="H87" NoIdentificacion="0" Cantidad="1.000000" Unidad="PIEZA" Descripcion="TÓNER PARA EL MULTIFUNCIONAL KONIKA MINOLTA, CON NÚMERO DE SERIE: BIZHUB 287 COLOR AMARILLO" ValorUnitario="4164.155172" Importe="4164.155172" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="4164.16" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="666.264828"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="2255.05">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="14094.08" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2255.05"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="928EB625-12B5-11ED-B7FA-00155D012007" FechaTimbrado="2022-08-02T17:50:57" RfcProvCertif="TBN040609RKA" SelloCFD="d3PspgJaQBlygLhZbXKF7fyF/YniUMALiqCuDEUdKeuQlkcQd6Q7vTnuctA3wvW/YlMLP8iJEsLkeg8sBTFvnPAqzxIRZMUteND5XYXU5m/GKyYf9zN42TGXFckymw1PSAlVBiQthDpC5Sr5lw+8IYF5xlOtYn7vAOmDV/Ty3kcEM8IMejVQjQKeKdya3xsaOg4e6Dk1a+MkzSuzWnyGD9LV7i1uk8sCLQsOz+CubHLBDti12InGYe2dKSVaB2AEZmty7UAgd5djR+tc4t9mdgUG39Wox+waMxTJ5/RXy2t4HYiwL6mVEg2gU42momA6DIhpnVMaWeLuZ2PZR99Gfw==" NoCertificadoSAT="00001000000504587508" SelloSAT="SulFWpXVOu9FnSsDGW6sIZ9rIrx6ZOvsH2qoDBXjtw+EpPNW681o1gRvs6dcjHUuIZghO90TAfKiJm6ydk1nFs9ju+46n0/eqzBJqVSLNCm7bE20HABgsrkpOsDGD/JxwwAVp88Ei8rzedDWxc2XZSb5FZX1hMTVR+9k43fnvVH6wwL0g16eQZ5Zg88hGr5DIuXzblF9vnrS4Wg86ju+Yhpk1q2VSbKhJn5e70at7nueIhSFQ1MWoj0jmhkMVuy5evWTIC0wbTH8rvVN641/0fhtErq2G6ngpALOSGCFE5gOYCqoPK2LV9DYkaCnMEXEGw6YhtpY2sdd0H2z4VZ+4g=="/>
+	</cfdi:Complemento>
+</cfdi:Comprobante>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="FI" Folio="222" Fecha="2025-03-11T17:25:48" Sello="XZ9VN9Hy8IC1qT+FyDF8QFU7x6uO+PoQyVYE+WCWk18U3pWPND2yLqr/QQK3yLPUTRirRZISfaZYitaWDijgRC1eUYtrTNg0crP5RhFZh20JmECRIl4VDDVoajyItbyXCbo8hEbEuEFQ8uvsFfLtyPc3bzFYb1ytfC9eZMja/0Sa5vEYlApV3xoq9vcTznlUfCoxLeolkQQ4+DTyPTsQX+Exzbq/9SfJJqniyhvUNvNPgB4WbaoJ9pbUyJ1fvzo9tSt2IUvd62DaoBBeAO7f1wUK1Z96+AgcJ1Zi7rrL09jWGECjoUU8UON+voYfhWTWqjJ45jZXw5HTYvzToi5BCw==" FormaPago="03" NoCertificado="00001000000508503918" Certificado="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" CondicionesDePago="CONTADO" SubTotal="96897.41" Moneda="MXN" TipoCambio="1" Total="112401.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PUE" LugarExpedicion="42088">
+  <cfdi:Emisor Rfc="FII210622542" Nombre="LA FABRICA DE INFLABLES INFLALANDIA" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="MEOI901211GV3" Nombre="ISMAEL MEZA OLIVARES" DomicilioFiscalReceptor="12200" RegimenFiscalReceptor="612" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="10" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="MULTIRAMPA ROJA COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA" ValorUnitario="21483.620690" Importe="21483.620690" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="21483.62" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="3437.379310"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="9" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="CASTILLO DE OLAS MICKEY COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA" ValorUnitario="21052.586207" Importe="21052.586207" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="21052.59" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="3368.413793"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="1" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="MULTICASTILLO PARTY COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA" ValorUnitario="12862.931034" Importe="12862.931034" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="12862.93" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2058.068965"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="228" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="MULTICASTILLO BLANCO COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA - 1 CINTAS DE SEGURIDAD" ValorUnitario="12777.586207" Importe="12777.586207" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="12777.59" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="2044.413793"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141012" ClaveUnidad="NMP" NoIdentificacion="8" Cantidad="1.000000" Unidad="PAQUETES" Descripcion="COMBO TUNELES AZUL CON ROJO COMPLEMENTOS: - 1 BOLSA DE TRANSPORTE - 1 MOTOR 1 HP - 1 KIT DE EMERGENCIA - 1 ETIQUETA GENERICA" ValorUnitario="21052.586207" Importe="21052.586207" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="21052.59" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="3368.413793"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141111" ClaveUnidad="XPK" NoIdentificacion="73" Cantidad="4.000000" Unidad="KIT" Descripcion="KIT DE ANCLAS ARENA" ValorUnitario="656.900000" Importe="2627.600000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="2627.60" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="420.416000"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141111" ClaveUnidad="XPK" NoIdentificacion="252" Cantidad="1.000000" Unidad="KIT" Descripcion="KIT DE ANCLAS DE ARENA BLANCAS" ValorUnitario="656.900000" Importe="656.900000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="656.90" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="105.104000"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="60141001" ClaveUnidad="NMP" NoIdentificacion="127" Cantidad="3.000000" Unidad="PAQUETES" Descripcion="BOLSA 500 PELOTAS MULTICOLOR" ValorUnitario="857.760000" Importe="2573.280000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="2573.28" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="411.724800"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+    <cfdi:Concepto ClaveProdServ="78101802" ClaveUnidad="E48" Cantidad="1.000000" Unidad="SERVICIO" Descripcion="COSTO DE ENVÍO" ValorUnitario="1810.320000" Importe="1810.320000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="1810.32" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="289.651200"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="15503.59">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="96897.42" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="15503.59"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+	<cfdi:Complemento>
+		<tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="516FD1A1-FED0-11EF-B378-00155D014009" FechaTimbrado="2025-03-11T17:26:54" RfcProvCertif="TBN040609RKA" SelloCFD="XZ9VN9Hy8IC1qT+FyDF8QFU7x6uO+PoQyVYE+WCWk18U3pWPND2yLqr/QQK3yLPUTRirRZISfaZYitaWDijgRC1eUYtrTNg0crP5RhFZh20JmECRIl4VDDVoajyItbyXCbo8hEbEuEFQ8uvsFfLtyPc3bzFYb1ytfC9eZMja/0Sa5vEYlApV3xoq9vcTznlUfCoxLeolkQQ4+DTyPTsQX+Exzbq/9SfJJqniyhvUNvNPgB4WbaoJ9pbUyJ1fvzo9tSt2IUvd62DaoBBeAO7f1wUK1Z96+AgcJ1Zi7rrL09jWGECjoUU8UON+voYfhWTWqjJ45jZXw5HTYvzToi5BCw==" NoCertificadoSAT="00001000000708361114" SelloSAT="B9djM2LtzHtja5Eo8LIO4tJvs2Fnx/RUUQWk9YZqijCmE1crRjfW3PVS9QCA2D6aC+eI16RXpaIVEPxslrAjvXfNA3eyEjHn9OJmv+NKr2Ec9KCnRuS1A/E4Sua0tQ5bkxg+kTwt6yK1hsFTcB1/l8r3uUH5rL7e1CHtY1TxZ14NggKy0W4UcgOrm617PH1ksQQbkpy1aL3SbC+aq5W7CKFLbmgnoF4pd5+iZEzotoPh9LZZyHgN7OKTNJ+1DFaHlp/uCWyO1iKkHXTxcrUyxFtHZUWAbMpbKwoW4lgAgYKQIhQhsmUs072F3cP5S7dirFuYH8TKqC3S9Z7nsNtfwA=="/>
+	</cfdi:Complemento>
+</cfdi:Comprobante>

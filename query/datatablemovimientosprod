@@ -1,0 +1,67 @@
+<?php
+include_once('../funciones.php');
+/* ini_set('display_errors',1); */
+session_start();
+
+$origen = $_POST['origen'];
+$destino = $_POST['destino'];
+$tipomov = $_POST['tipomov'];
+
+$sqlf = '';
+$arreglo = array();
+if(!empty($origen)){
+  $sqlf = ' WHERE pm_almacen = "'.$origen.'"';
+} 
+if(!empty($destino)){
+  if(!empty($origen)){
+    $sqlf .= ' AND pm_almacendest = "'.$destino.'"';
+  } else{
+    $sqlf = ' WHERE pm_almacendest = "'.$destino.'"'; 
+  }
+} 
+
+if(empty($origen) && empty($destino) && !empty($tipomov)){
+    $sqlf = ' WHERE pm_tipo = "'.$tipomov.'"'; 
+}
+
+/* $listAlmacenes = $_POST['arregloJS']; */
+$sql = 'SELECT * FROM pr_movimientos'.$sqlf;
+$sql.=' ORDER BY pm_fecha ASC';
+$result = setq($sql);
+while ($row = $result->fetch_array()) {
+
+  if($row['pm_tipo'] == "E"){
+    $tipo = "Entrada";
+  } else if($row['pm_tipo'] == "S"){
+    $tipo = "Salida";
+  } else{
+    $tipo = "Traspaso";
+  }
+
+  if($row['pm_tipo'] == "A"){
+    $estatus = "Finalizado";
+  } else{
+    $estatus = "Captura";
+  }
+  $acciones = '
+  <a href="?modulo=movimientosprod&accion=show&tipo='.$row['pm_tipo'].'&id='.$row['pm_id'].'">
+    <button type="button" class="btn-sm btn-info btn"><i class="fa fa-eye"></i> Detalle</button>
+  </a>';
+  /* if($row['pm_estatus'] == "A"){
+    $acciones = '<a target="_BLANK" href="formats/pdfmovimiento.php?tipo='.$row['pm_tipo'].'&id='.$row['pm_id'].'">
+      <button type="button" class="btn btn-sm btn-secondary"><i class="fas fa-print"></i> Imprimir</button>
+    </a>';
+  } */
+
+  
+
+  $almorigen = busca($row['pm_almacen'], "pr_almacenes", "pa_id", "pa_nmb");
+  $almdestino = busca($row['pm_almacendest'], "pr_almacenes", "pa_id", "pa_nmb");
+  $arreglo[] = array($row['pm_folio'], $tipo, $row['pm_motivo'], $row['pm_fecha'], $row['pm_fechaap'], $row['pm_usuario'], $almorigen, $almdestino, $estatus, $acciones);
+
+}
+
+$new_array  = array("data"=>$arreglo);
+echo json_encode($new_array);
+
+?>
