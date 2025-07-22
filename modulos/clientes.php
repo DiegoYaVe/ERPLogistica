@@ -219,7 +219,7 @@ class clientes{
 
   function expediente(){
     $this->model->select($_GET['cliente']);
-    $this->model->resultexpediente();
+    //$this->model->resultexpediente();
     $this->view = new viewclientes($this->model);
     $this->view->expediente();
   }
@@ -291,6 +291,59 @@ class clientes{
     setq($sql);
     redirect('?modulo=clientes&accion=reasignacion&id='.$_GET['id']);
   }  
+
+  function insertdocumento(){
+    $id = $_GET['cliente'];
+    if($_FILES['archivo']['name']){
+      $max = intval(busca($id, 'crm_documentos', 'cd_cliente', 'COUNT(*)'))+1;
+      $nuevoid= $id.'-'.$max;
+      $img = $_FILES['archivo']['name'];
+      $extension = pathinfo($img, PATHINFO_EXTENSION);
+      $nuevo_nombre = 'documento'.$nuevoid.'.'.$extension;
+      if (isset($img) && $img != "") {
+        $temp = $_FILES['archivo']['tmp_name'];
+        if (move_uploaded_file($temp, 'docs/clientes/'.$nuevo_nombre)) {
+          chmod('docs/clientes/'.$nuevo_nombre, 0777);
+          $sql = 'INSERT INTO crm_documentos SET cd_cliente = "'.$id.'",
+                                                 cd_descripcion = "'.$_POST['descripcion'].'",
+                                                 cd_tipo = "'.$_POST['tipo'].'",
+                                                 cd_estatus = "N",
+                                                 cd_ugen = "'.$_SESSION['uid'].'",
+                                                 cd_fgen = "'.date('Y-m-d H:i:s').'",
+                                                 cd_archivo = "'.$nuevo_nombre.'"';
+          setq($sql);
+        }
+        else {
+          die('<div><b>Ocurrió algún error al subir el fichero. No pudo guardarse.</b></div>');
+        }
+        
+      }
+    } else {
+      echo alert_back('Error al recibir la información');
+    }
+
+    redirect('?modulo=clientes&accion=expediente&cliente='.$_GET['cliente']);
+  }
+
+  function autorizardoc(){
+    $id = $_GET['id'];
+    $cliente = $_GET['cliente']; 
+
+    $sql = 'UPDATE crm_documentos SET cd_estatus = "A", cd_fcambio = "'.date('Y-m-d H:i:s').'", cd_ucambio = "'.$_SESSION['uid'].'" WHERE cd_id = "'.$id.'"';
+    setq($sql);
+
+    redirect('?modulo=clientes&accion=expediente&cliente='.$_GET['cliente']);
+  }
+
+  function denegardoc(){
+    $id = $_GET['id'];
+    $cliente = $_GET['cliente']; 
+
+    $sql = 'UPDATE crm_documentos SET cd_estatus = "C", cd_fcambio = "'.date('Y-m-d H:i:s').'", cd_ucambio = "'.$_SESSION['uid'].'" WHERE cd_id = "'.$id.'"';
+    setq($sql);
+
+    redirect('?modulo=clientes&accion=expediente&cliente='.$_GET['cliente']);
+  }
 }
 
 class modelclientes{
@@ -744,6 +797,7 @@ class viewclientes{
           <th class="">Telefono</th>
           <th class="">Correo</th>
           <th class="">Fecha de registro</th>
+          <th class="">Estatus</th>
           <th class="">Acciones</th>
         </tr>
       </thead>
@@ -776,7 +830,18 @@ class viewclientes{
           },
           pageLength: "50",
           responsivePriority: 1,
+          createdRow: function(row, data, dataIndex) {
+          const texto = data[4]; // Índice 4 = 5ta columna
 
+          // Aplica color según el contenido del texto
+          if (texto === "DOCUMENTACIÓN EN REVISION") {
+            $("td", row).eq(4).css("background-color", "#f8d7da"); // rojo claro
+          } else if (texto === "CLIENTE LOGRADO") {
+            $("td", row).eq(4).css("background-color", "#d4edda"); // verde claro
+          } else if (texto === "CLIENTE NUEVO") {
+            $("td", row).eq(4).css("background-color", "#d1ecf1"); // azul claro
+          }
+        }
       });
     </script>
     
@@ -1888,7 +1953,7 @@ class viewclientes{
 
  }
 
- function expediente(){
+ function expedientes(){
 
   echo '
     <script>
@@ -2348,7 +2413,11 @@ echo '
                       <th><a href="?modulo=clientes&accion=fiscales&cliente='.$this->model->id.'">
                         <i class="fas fa-list-alt warning"></i> Datos fiscales</th>
                       </a></tr>
-                    <tr>
+                    <tr '.$alertfisc.'>
+                      <th><a href="?modulo=clientes&accion=expediente&cliente='.$this->model->id.'">
+                      <i class="fas fa-folder"></i> Expediente</th>
+                    </a></tr>';
+                    /* echo '<tr>
                       <th '.$alertbtc.'>
                       <a target="_BLANK" href="?modulo=clientes&accion=bitacora&id='.$this->model->id.'">
                         <i class="fas fa-list-alt warning"></i> Ver bitácora
@@ -2385,9 +2454,9 @@ echo '
                       <a href="?modulo=clientes&accion=comodato&cliente='.$this->model->id.'">
                         <i class="fas fa-hand-paper warning"></i> Comodato
                       </a>
-                    </tr>
+                    </tr>'; */
 
-                  </tbody>
+                  echo '</tbody>
                 </table>
               </div>
             </div>
@@ -2494,6 +2563,293 @@ echo '<div class="col-12">
 </div>
 ';
 
+
+  echo $this->actividades();
+
+}
+
+function expediente(){
+
+  $atras = '
+  <a href="?modulo=clientes&accion=index">
+    <button class="mb-2 mr-2 btn btn-sm btn-warning"><i class="fa fa-arrow-left"></i>Regresar</button>
+  </a>';
+
+  toolbar($_GET['modulo'], $atras);
+  ?>
+  <script>
+    function sendval(){
+      document.getElementById("sologas").value = "1";
+    }
+
+    function enviarform(){
+      var form= document.getElementById("insasignacion");
+      form.submit();
+    }
+  </script>
+  <style>
+    /* Ocultamos el checkbox original */
+    .custom-checkbox {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      padding-left: 35px;
+      margin: 10px;
+      font-size: 16px;
+      user-select: none;
+    }
+
+    .custom-checkbox input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Cuadro base del checkbox */
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 25px;
+      width: 25px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+      transition: background 0.3s, border 0.3s;
+      text-align: center;
+      line-height: 25px;
+      font-weight: bold;
+    }
+
+    input:disabled + .checkmark {
+       background-color: #e0e0e0; /* Gris claro */
+      border-color: #aaa;        /* Opcional: cambia también el borde */
+      cursor: not-allowed;
+    }
+
+    /* Estilo cuando está seleccionado (Autorizar) */
+    .custom-checkbox.autorizar input:checked ~ .checkmark {
+      background-color: #4CAF50; /* verde */
+      border-color: #4CAF50;
+      color: white;
+      content: "✓";
+    }
+
+    .custom-checkbox.autorizar input:checked ~ .checkmark::after {
+      content: "✓";
+    }
+
+    /* Estilo cuando está seleccionado (Denegar) */
+    .custom-checkbox.denegar input:checked ~ .checkmark {
+      background-color: #f44336; /* rojo */
+      border-color: #f44336;
+      color: white;
+    }
+
+    .custom-checkbox.denegar input:checked ~ .checkmark::after {
+      content: "✕";
+    }
+
+    /* El ::after para mostrar el ícono */
+    .custom-checkbox .checkmark::after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+  </style>
+  <?php
+
+$vendedor  = busca($this->model->uregistro, 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+echo '
+<div class="row mt-5">
+  <div class="col-md-9">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title" id="basic-layout-form">Expediente del cliente '.$this->model->nmb.' '.$this->model->apellidos.'</h4>
+        <a class="heading-elements-toggle"><i class="icon-ellipsis font-medium-3"></i></a>
+        <div class="heading-elements">
+          <ul class="list-inline mb-0">
+            <li><a data-bs-action="collapse"><i class="icon-minus4"></i></a></li>
+            <li><a data-bs-action="expand"><i class="icon-expand2"></i></a></li>
+            <li><a data-bs-action="close"><i class="icon-cross2"></i></a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="container mt-5">
+        <h2 class="mb-4">Añadir documento</h2>
+        <form action="?modulo=clientes&accion=insertdocumento&cliente=1" method="post" enctype="multipart/form-data">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="descripcion" class="form-label">Descripción:</label>
+              <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripción del archivo" required>
+            </div>
+
+            <div class="col-md-4">
+              <label for="archivo" class="form-label">Archivo:</label>
+              <input type="file" class="form-control" id="archivo" name="archivo" required>
+            </div>
+
+            <div class="col-md-3">
+              <label for="tipo" class="form-label">Tipo de documento:</label>
+              <select class="form-control" id="tipo" name="tipo" required>
+                <option value="1">Documento del cliente</option>
+                <option value="2">Documento interno</option>
+              </select>
+            </div>
+
+            <div class="col-md-1 mt-11">
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+
+          
+        </form>
+      </div>
+      <div class="row mt-10">';
+$sql = 'SELECT  * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "1"'; 
+$result = setq($sql);
+echo '<div class="col-12 col-md-6">
+<center><h2>Documentos del cliente</h2>
+  <div class="col-11">
+  <table class="table">                    
+    <thead class="bg-primary text-white">
+      <tr>
+        <th>Archivo</th>
+        <th>Descripción</th>          
+        <th>Aceptar</th>
+        <th>Denegar</th>
+      </tr>
+      <tbody>';
+      if($result -> num_rows > 0){
+        while($row = $result -> fetch_array()){
+          $dis = '';
+          $check = '';
+          $rec = '';
+          $accionau = 'onclick="autorizardoc('.$row['cd_id'].')"';
+          $accionde = 'onclick="denegardoc('.$row['cd_id'].')"';
+          if($row['cd_estatus'] == "A"){
+            $dis ='disabled';
+            $check = 'checked';
+            $accionau = '';
+          } else if($row['cd_estatus'] == "C"){
+            $dis ='disabled';
+            $accion = 'background-color=#ffffff';
+            $rec = 'checked';
+            $accionde = '';
+          }
+          echo '<tr>
+            <td><a target="_BLANK" href="docs/clientes/'.$row['cd_archivo'].'" class="btn btn-secondary"><i class="fas fa-eye"></i>Ver</a> </td>
+            <td>'.$row['cd_descripcion'].' </td>
+            <td><label class="custom-checkbox autorizar">
+                <input type="checkbox" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
+                <span class="checkmark"></span>
+              </label>
+            </td>
+            <td><label class="custom-checkbox denegar">
+              <input type="checkbox" name="autorizacion"  '.$dis.' '.$rec.' '.$accionde.'>
+              <span class="checkmark"></span>
+            </label>
+            </td>
+          </tr>';
+        }
+      } else {
+        echo '<tr>
+          <td colspan="4" class="bg-success"><center> Sin documentos registrados </center></td>
+        </tr>';
+      }
+      echo '</tbody>                  
+    </thead>
+  </table>
+  </div>
+</center>
+</div>';
+
+$sql = 'SELECT * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "2"'; 
+$result = setq($sql);
+echo '<div class="col-12 col-md-6">
+<center><h2>Documentos internos</h2>
+  <div class="col-11">
+  <table class="table">                    
+    <thead class="bg-primary text-white">
+      <tr>
+        <th>Archivo</th>
+        <th>Descripción</th>          
+        <th>Aceptar</th>
+        <th>Denegar</th>
+      </tr>
+      <tbody>';
+      if($result -> num_rows > 0){
+        while($row = $result -> fetch_array()){
+          $dis = '';
+          $check = '';
+          $rec = '';
+          $accionau = 'onclick="autorizardoc('.$row['cd_id'].')"';
+          $accionde = 'onclick="denegardoc('.$row['cd_id'].')"';
+          if($row['cd_estatus'] == "A"){
+            $dis ='disabled';
+            $check = 'checked';
+            $accionau = '';
+          } else if($row['cd_estatus'] == "C"){
+            $dis ='disabled';
+            $accion = 'background-color=#ffffff';
+            $rec = 'checked';
+            $accionde = '';
+          }
+          echo '<tr>
+            <td><a target="_BLANK" href="docs/clientes/'.$row['cd_archivo'].'" class="btn btn-secondary"><i class="fas fa-eye"></i>Ver</a> </td>
+            <td>'.$row['cd_descripcion'].' </td>
+            <td><label class="custom-checkbox autorizar">
+                <input type="checkbox" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
+                <span class="checkmark"></span>
+              </label>
+            </td>
+            <td><label class="custom-checkbox denegar">
+              <input type="checkbox" name="autorizacion"  '.$dis.' '.$rec.' '.$accionde.'>
+              <span class="checkmark"></span>
+            </label>
+            </td>
+          </tr>';
+        }
+      } else {
+        echo '<tr>
+          <td colspan="4" class="bg-success"><center> Sin documentos registrados </center></td>
+        </tr>';
+      }
+      echo '</tbody>                  
+    </thead>
+  </table>
+  </div>
+</center>
+</div>';
+
+echo '</div></div>
+</div>
+';
+?>
+  <script>
+    
+      function autorizardoc(id){
+        const confirmacion = confirm("¿Estás seguro de autorizar este documento?");
+        if (confirmacion) {
+          window.location.href = '?modulo=clientes&accion=autorizardoc&cliente=1&id='+id;
+        }
+      }
+
+      function denegardoc(id){
+        const confirmacion = confirm("¿Estás seguro de denegar este documento?");
+        if (confirmacion) {
+          window.location.href = '?modulo=clientes&accion=denegardoc&cliente=1&id='+id;
+        }
+      }
+
+  </script>
+<?php
 
   echo $this->actividades();
 
