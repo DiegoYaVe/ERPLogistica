@@ -145,7 +145,20 @@
         $sql .= ' AND cl_estatus IN ("R", "A")';
       }
       $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-
+      if($grupo == 'ADMIN' || $grupo == 'GERENCIA' ){ //|| $grupo == 'MERCA'
+        if(!empty($ugen)){
+          $sql .= ' AND cl_vendedor = "'.$ugen.'"';
+        } else{
+          $sql .= '';
+        }
+      } else {
+        if(!empty($ugen) && $ugen != $_SESSION['uid']){
+          $sql .= '';
+          $caso = 1;
+        } else{
+          $sql .= ' AND cl_vendedor = "'.$_SESSION['uid'].'"';
+        }
+      }
       if($telefono){
         $sql.=' AND cl_telefono LIKE "%'.$telefono.'%"';
       }
@@ -320,7 +333,7 @@
         $this->estatust = array("N"=>"Abierto","P"=>"Construcción","G"=>"Negociación","L"=>"Aplazado","A"=>"Vendido","F"=>"Finalizado","C"=>"Cancelado","O"=>"En Linea","X"=>"Perdido","W"=>"Ganados");
         $this->colestatust = array("N"=>"bg-yellow bg-accent-1","P"=>"bg-orange bg-accent-2","G"=>"bg-indigo bg-accent-3","L"=>"bg-amber bg-darken-4","A"=>"bg-success bg-accent-3","C"=>"bg-red bg-accent-4","F"=>"bg-blue bg-darken-2","X"=>"bg-red bg-darken-2");
     }
-    function browse($vendedor,$estatus,$hini,$hfin,$page, $telefono){
+function browse($vendedor,$estatus,$hini,$hfin,$page, $telefono){
 
         $filtro = '
         <form autocomplete="off" action="?modulo=leadscapturados&accion=index" method="post" id="filtro" class="">
@@ -568,9 +581,17 @@
                             <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero"><i class="fas fa-book-open"></i> Iniciar</button>
                           </div>
                           <div class="col-7">
-                            <a data-fancybox data-type="ajax" data-src="popup/setperdido.php?id='.$row['cl_id'].'" href="javascript:;">
-                              <button type="button" class="btn btn-sm btn-secondary" data-toggle="tooltip" title="Sin negociación"><i class="fas fa-user-slash"></i>Sin negociación</button>
-                            </a>
+                           <select class="form-control form-control-sm" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
+                            <option value="">Seleccionar</option>
+                            <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
+                            <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
+                            <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
+                            <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
+                            <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
+                            <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
+                            <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
+                            <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
+                          </select>
                           </div>
                         </div>';
                       $checkb = '<center><input class="form-check-input consult-check" onclick="marcarAcercamiento('.$row['cl_id'].')" type="checkbox" name="select'.$row['cl_id'].'" id="select'.$row['cl_id'].'" '.$check.'></center>';
@@ -812,6 +833,34 @@
       });
       }
       //mandar(0);
+
+      function cambiarEstatusLead(select, idLead) {
+        const nuevoEstatus = select.value;
+
+        $.ajax({
+          url: "query/actualiza_estatus_observacion.php",
+          type: "POST",
+          data: {
+            id: idLead,
+            estatus: nuevoEstatus
+          },
+          success: function(response) {
+            //Swal.fire({
+              //icon: "success",
+              //title: "Actualizado",
+              //text: "Estatus actualizado correctamente."
+            //});
+          },
+          error: function() {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "No se pudo actualizar el estatus."
+            });
+          }
+        });
+      }
+
     </script>';
 
 
@@ -840,9 +889,9 @@
       </script>
       '; */
 
-    }
+}
     
-    function show(){
+function show(){
     $estatus = busca($_GET['id'], "crm_capturaleads", "cc_id", "cc_estatus");
     echo '
       <!-- Incluye la biblioteca Sortable -->
@@ -1384,6 +1433,6 @@
     }
     </script>
           ';
-    }
+}
   }
 ?>

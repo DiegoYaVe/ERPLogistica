@@ -53,7 +53,7 @@ while($row = $result->fetch_array()){
     </div>';
     }
   $acciones .= '</div>';
-  $arreglo[] = array($row['cc_id'],$row['cc_ugen'],busca($row['cc_id'], "crm_leads", "cl_lead", "COUNT(*)"),fecha_formato($row['cc_fini'],false,true),$row['cc_hini'],$horafin, $row['cc_observacion'], $estatus, $acciones);
+  $arreglo[] = array($row['cc_id'], $row['cc_estado'], $row['cc_ugen'],busca($row['cc_id'], "crm_leads", "cl_lead", "COUNT(*)"),fecha_formato($row['cc_fini'],false,true),$row['cc_hini'],$horafin, $row['cc_observacion'], $estatus, $acciones);
 }
 
 $new_array  = array("data"=>$arreglo);

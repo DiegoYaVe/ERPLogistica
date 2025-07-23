@@ -1,5 +1,5 @@
 <?php
-/* ini_set('display_errors', 1); */
+ini_set('display_errors', 0);
 session_start();
 include_once('../funciones.php');
 include_once('../modulos/prospectos.php');
