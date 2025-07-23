@@ -2683,7 +2683,7 @@ echo '
       </div>
       <div class="container mt-5">
         <h2 class="mb-4">Añadir documento</h2>
-        <form action="?modulo=clientes&accion=insertdocumento&cliente=1" method="post" enctype="multipart/form-data">
+        <form action="?modulo=clientes&accion=insertdocumento&cliente='.$_GET['cliente'].'" method="post" enctype="multipart/form-data">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="descripcion" class="form-label">Descripción:</label>
@@ -2731,8 +2731,8 @@ echo '<div class="col-12 col-md-6">
           $dis = '';
           $check = '';
           $rec = '';
-          $accionau = 'onclick="autorizardoc('.$row['cd_id'].')"';
-          $accionde = 'onclick="denegardoc('.$row['cd_id'].')"';
+          $accionau = 'onclick="autorizardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
+          $accionde = 'onclick="denegardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
           if($row['cd_estatus'] == "A"){
             $dis ='disabled';
             $check = 'checked';
@@ -2789,8 +2789,8 @@ echo '<div class="col-12 col-md-6">
           $dis = '';
           $check = '';
           $rec = '';
-          $accionau = 'onclick="autorizardoc('.$row['cd_id'].')"';
-          $accionde = 'onclick="denegardoc('.$row['cd_id'].')"';
+          $accionau = 'onclick="autorizardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
+          $accionde = 'onclick="denegardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
           if($row['cd_estatus'] == "A"){
             $dis ='disabled';
             $check = 'checked';
@@ -2834,17 +2834,17 @@ echo '</div></div>
 ?>
   <script>
     
-      function autorizardoc(id){
+      function autorizardoc(id, cliente){
         const confirmacion = confirm("¿Estás seguro de autorizar este documento?");
         if (confirmacion) {
-          window.location.href = '?modulo=clientes&accion=autorizardoc&cliente=1&id='+id;
+          window.location.href = '?modulo=clientes&accion=autorizardoc&cliente='+cliente+'&id='+id;
         }
       }
 
-      function denegardoc(id){
+      function denegardoc(id, cliente){
         const confirmacion = confirm("¿Estás seguro de denegar este documento?");
         if (confirmacion) {
-          window.location.href = '?modulo=clientes&accion=denegardoc&cliente=1&id='+id;
+          window.location.href = '?modulo=clientes&accion=denegardoc&cliente='+cliente+'&id='+id;
         }
       }
 
