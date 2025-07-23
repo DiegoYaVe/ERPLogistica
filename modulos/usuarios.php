@@ -65,10 +65,27 @@
       $this->model->setdata($nuser,$_POST['id'],$_POST['nmb'],$_POST['apellidos'],$_POST['correo'],$_POST['telefono'],$_POST['puesto'],$_POST['nacimiento'],$_POST['grupo'],$_POST['comment'],$_POST['estatus'],$_POST['mailcorp'],$_POST['passcorp'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas'],$_POST['remitente'],$_POST['color'], $notificaciones,$_POST['saludo']);
       $this->model->setusuario();
       $this->model->setusuariosorden();
-      if(!isset($_GET['id'])) $this->model->usuarioemp();
+
+      $sqlgrupo = 'SELECT * FROM grupos WHERE g_estatus = "A"';
+      $resultgrupo = setq($sqlgrupo);
+      while($rowgrupo = $resultgrupo -> fetch_array()){
+        if(isset($_POST['rol'.$rowgrupo['g_id']])){
+          $check = busca($rowgrupo['g_id'], 'usuarios_rol', 'ur_usuario = "'.$this->model->id.'" AND ur_rol', 'COUNT(*)');
+          if(!$check){
+            $sqlins ='INSERT INTO usuarios_rol SET ur_usuario = "'.$this->model->id.'", ur_rol = "'.$rowgrupo['g_id'].'"';
+            setq($sqlins);
+          }
+        } else {
+          $sqldel = 'DELETE FROM usuarios_rol WHERE ur_usuario = "'.$this->model->id.'" AND ur_rol = "'.$rowgrupo['g_id'].'"';
+          setq($sqldel);
+        }
+      }
+      //if(!isset($_GET['id'])) $this->model->usuarioemp();
       if($_POST['chpass'] == "1"){
         $okpass = $this->model->setpass($_POST['id'],$_POST['password'],$_POST['password2']);
       }else $okpass = 1;
+
+
 
       if (isset($_FILES['avatar']['name'])) {
         $nombre_archivo = $_FILES['avatar']['name'];
@@ -780,22 +797,21 @@ class viewusuarios{
             <div class="card-block">
               <div class="form-body">
                 <div class="row">
-                  <div class="col-md-6 col-sm-6 col-xs-12">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
                     <div class="mb-5">
                       <label class="required">Rol del empleado </label>
-                      <select class="mb-5 form-select form-select-solid" onchange="setNotify();" name="grupo" id="grupo" required="required" >
-                        <option value="">Seleccione un grupo</option>
+                        <br>
                         <?php
                           $sql = 'SELECT * FROM grupos WHERE g_estatus = "A" AND g_id != "SUPER"';
                           $result = setq($sql);
                           while($row = $result->fetch_array()){
-                            if($row['g_id'] == $this->model->grupo) $sel = 'selected'; else $sel = '';
+                            $sel = busca($row['g_id'], 'usuarios_rol', 'ur_usuario = "'.$_GET['id'].'" AND ur_rol', 'COUNT(*)');
+                            if($sel > 0) $sel = 'checked';
                             ?>
-                              <option value="<?php echo $row['g_id'] ?>" <?php echo $sel ?> ><?php echo $row['g_nmb'] ?></option>
+                            <input type="checkbox" name="rol<?php echo $row['g_id'] ?>" value="<?php echo $row['g_id']?>" <?php echo $sel?>><?php echo $row['g_nmb']?></input><br>
                             <?php
                           }
                         ?>
-                      </select>
                     </div>
                   </div>
                   <?php
