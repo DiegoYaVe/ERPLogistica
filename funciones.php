@@ -274,13 +274,13 @@ function setq($sql, $die = false)
 
 function setqemojis($sql, $die = false)
 { //Realizar una consulta a BD en primer nivel
-  $dbuser = "inflalandia"; // El usuario
-  $dbpass = "InflaSis24#"; // El Pass
+  $dbuser = "root"; // El usuario
+  $dbpass = ""; // El Pass
 
   // $dbuser = "root"; // El usuario
   // $dbpass = ""; // El Pass
 
-  $dbhost = "162.240.156.74"; // El host
+  $dbhost = "localhost"; // El host
   $db = "inflalandia_fabricai"; // Nombre de la base
   $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $db);
   $mysqli->query("SET CHARACTER SET utf8mb4");
