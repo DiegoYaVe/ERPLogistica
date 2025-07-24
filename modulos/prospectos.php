@@ -674,7 +674,7 @@ function finalizar(id) {
                 <div class="modal-header">
                   <h4 class="modal-title" id="myModalLabel33">Nueva hoja de prospectos</h4>
                 </div>
-                <form method="post" action="?modulo=prospectos&accion=insert" autocomplete="off" >
+                <form method="post" action="?modulo=prospectos&accion=insert" autocomplete="off" id="formNuevaHoja">
                   <div class="modal-body row">
                   <div class="col-md-12 col-xs-12">
                     <label>Estado de la República:</label>
@@ -727,7 +727,11 @@ function finalizar(id) {
 
                   </div>
                   <div class="modal-footer p-2">
-                    <center><button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Registrar hoja nueva</button></center>
+                    <center>
+                      <button type="button" id="btnRegistrarHoja" class="btn btn-primary">
+                        <i class="fa fa-check"></i> Registrar hoja nueva
+                      </button>
+                    </center>
                   </div>
                 </form>
               </div>
@@ -865,6 +869,45 @@ function finalizar(id) {
         responsivePriority: 1
       });
     
+      document.getElementById("btnRegistrarHoja").addEventListener("click", function (e) {
+      e.preventDefault();
+      
+      let estadoInput = document.getElementById("estado");
+      let form = document.getElementById("formNuevaHoja");
+
+      if (!estadoInput || estadoInput.value.trim() === "") {
+        Swal.fire("Error", "Debes ingresar un estado.", "warning");
+        return;
+      }
+
+      let estado = estadoInput.value.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      $.ajax({
+        url: "query/validarestadohoja.php",
+        type: "POST",
+        data: { estado: estado },
+        dataType: "json",
+        success: function (data) {
+          if (data.existe) {
+            Swal.fire({
+              icon: "warning",
+              title: "Estado duplicado",
+              text: "Ya existe una hoja activa para ese estado. ¿Deseas ser redirigido a la hoja?",
+              showCancelButton: true,
+              confirmButtonText: "Ir a la hoja",
+              cancelButtonText: "Cancelar"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                window.location.href = "?modulo=prospectos&accion=show&id=" + data.id;
+              }
+            });
+          } else {
+            form.submit();
+          }
+        }
+      });
+    });
+
     </script>';
 
 
@@ -1038,39 +1081,6 @@ function show(){
       
       $fechahoja = busca($_GET['id'], "crm_capturaleads", "cc_id", "cc_fini");
     
-    if($fechahoja != date("Y-m-d")){
-      echo '
-      <script>
-      // Mostrar la alerta
-      const alert = Swal.fire({
-        title: "Atención",
-        html: "Cierre la página del día anterior<br>e inicie una nueva para poder capturar prospectos",
-        icon: "error",
-        showCancelButton: false,
-        confirmButtonText: "OK",
-        allowOutsideClick: false // Evita que se cierre haciendo clic fuera de la alerta
-      });
-
-      // Función para redirigir
-      function redirectToPage() {
-        window.location.href = "?modulo=prospectos&accion=index";
-      }
-
-      // Redirigir después de 5 segundos
-      setTimeout(() => {
-        redirectToPage();
-      }, 5000); // 5000 milisegundos = 5 segundos
-
-      // Escuchar el evento de clic en el botón "OK"
-      alert.then((result) => {
-        if (result.isConfirmed) {
-          redirectToPage();
-        }
-      });
-
-      </script>
-      ';
-    }
       $disb = "disabled";
       if($registros >= 2){
         $disb = "";

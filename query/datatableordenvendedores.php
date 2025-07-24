@@ -1,6 +1,6 @@
 <?php
 include_once('../funciones.php');
-/* ini_set('display_errors',1); */
+ini_set('display_errors',0);
 
 
 $sqlu = 'SELECT * FROM usuarios WHERE u_grupo = "VENTAS" AND u_estatus = "A"';

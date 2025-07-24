@@ -3,7 +3,7 @@ session_start();
 include('funciones.php');
 require_once("lib/mailer/class.phpmailer.php");
 require_once("lib/mailer/class.smtp.php");
-
+ini_set('display_errors', 0);
 //$sql = 'SELECT * FROM usuarios WHERE u_id = "'.$_SESSION['uid'].'"';
 $sql = 'SELECT * FROM usuarios WHERE u_id = "'.$_GET['id'].'"';
 $result = setq($sql);
