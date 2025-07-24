@@ -670,7 +670,11 @@ function browse($vendedor,$estatus,$hini,$hfin,$page, $telefono){
     }
 
     $bloque = 50;
-    $sql = 'SELECT COUNT(*) FROM crm_leads WHERE'.$sqlf.'';
+    if(trim($sqlf) == ""){
+      $sql = 'SELECT COUNT(*) FROM crm_leads';
+    } else {
+      $sql = 'SELECT COUNT(*) FROM crm_leads WHERE '.$sqlf.'';
+    }
     
     $resultpg = setq($sql);
     list($numg) =  $resultpg->fetch_array();

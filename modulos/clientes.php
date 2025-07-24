@@ -61,21 +61,48 @@ class clientes{
       $descb = "REGISTRO BÁSICO DE CLIENTE";
       $sql = 'SELECT COUNT(*) FROM crm_clientes WHERE 1=1 '.$sqladd.'';
     }
+    
     $result = setq($sql);
     list($existe) = $result ->fetch_array(); 
     if(!$existe){
       $this->model->setdata($id,$_POST['nmb'],$_POST['apellidos'],$_POST['alias'],$_POST['correo1'],$telefono1,$telefono2,$_POST['obs'],$_POST['almacen'],$_POST['precio'], date('Y-m-d H:i:s'), $_SESSION['uid']);
       $ok = $this->model->setuser();
 
-      if($ok){
-        $archivo = fopen('bitacora/clientes'.$_SESSION['emp'].'.txt','a');
-        fwrite($archivo,''.date('Y-m-d').'|CLIU001|'.date('H:i:s').'|'.$this->model->id.'|'.$this->model->id.'|'.$_SESSION['uid'].'|C|'.PHP_EOL);
-        fclose($archivo);
-        $sqlupd = 'UPDATE crm_cotizaciones SET cc_destino ="'.$_POST['nmb'].' '.$_POST['apellidos'].'", cc_mensaje = "Hola "'.$_POST['nmb'].' '.$_POST['apellidos'].'"
-        A continuación encontrarás listados los productos de acuerdo con tu solicitud de cotización" 
-        WHERE cc_cliente = "'.$this->model->id.'" AND cc_estatus NOT IN ("V", "A")';
+      if ($ok) {
+        // Ruta absoluta a la carpeta "bitacora" dentro de "modulos"
+        $dir = __DIR__ . DIRECTORY_SEPARATOR . 'bitacora';
+        $file = $dir . DIRECTORY_SEPARATOR . 'clientes' . $_SESSION['emp'] . '.txt';
+
+        // Crear carpeta si no existe
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        // Abrir archivo en modo append
+        $archivo = @fopen($file, 'a');
+        if ($archivo !== false) {
+            // Construir la línea de bitácora
+            $linea = date('Y-m-d') . '|CLIU001|' . date('H:i:s') . '|' .
+                    $this->model->id . '|' . $this->model->id . '|' .
+                    $_SESSION['uid'] . '|C|' . PHP_EOL;
+
+            // Escribir y cerrar archivo
+            fwrite($archivo, $linea);
+            fclose($archivo);
+        } else {
+            // Opcional: log para detectar errores de apertura
+            error_log("No se pudo abrir archivo de bitácora: $file");
+        }
+
+        // Continuar con actualización
+        $sqlupd = 'UPDATE crm_cotizaciones 
+                  SET cc_destino = "' . $_POST['nmb'] . ' ' . $_POST['apellidos'] . '", 
+                      cc_mensaje = "Hola ' . $_POST['nmb'] . ' ' . $_POST['apellidos'] . '\nA continuación encontrarás listados los productos de acuerdo con tu solicitud de cotización"
+                  WHERE cc_cliente = "' . $this->model->id . '" 
+                  AND cc_estatus NOT IN ("V", "A")';
         setq($sqlupd);
-      }
+    }
+
       if($ok) bitacora($this->model->id,"CLIENTES",$descb,NULL,NULL);
       
       if(isset($_POST['flag'])){
