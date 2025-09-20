@@ -1,6 +1,7 @@
 <?php
+ini_set('display_errors',0);
 //$mysqli = new mysqli("localhost",'tyesolut_root','Wptyeall.0','tyesolutions_jdceo');
-$mysqli = new mysqli("localhost",'tyesolut_root','Wptyeall.0','inflalandia_fabricai');
+$mysqli = new mysqli("localhost",'tyesolut_root','Wptyeall.0','erp_logistica_dvl');
 
 
 if($_POST['marcado'] == "true"){

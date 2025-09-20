@@ -56,7 +56,7 @@ if($_SESSION['uid'] == "ADMIN" || $grupo == "ADMIN" || $grupo == "GERENCIA"){
   setq($sql0);
   setq($sql1);
 }
-
+//die("modulo: ".$modulo." y accion: ".$accion);
 $seguridad = new Seguridad($modulo,$accion);
 $privilegio = $seguridad->privilegio();
 

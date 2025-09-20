@@ -1,146 +1,194 @@
 <?php
 ini_set('display_errors', 0);
-  class usuarios{ 
-    var $model;
-    var $view;
-    function __construct(){
-      $this->model = new modelusuarios(isset($obj));
-    }
-    
-    function index(){
-      if(!isset($_REQUEST['page'])) $_REQUEST['page'] = NULL;
-      if(!isset($_REQUEST['nmb'])) $_REQUEST['nmb'] = NULL;
-      if(!isset($_REQUEST['grupo'])) $_REQUEST['grupo'] = NULL;
+class usuarios{ 
+  var $model;
+  var $view;
+  function __construct(){
+    $this->model = new modelusuarios(isset($obj));
+  }
+  
+  function index(){
+    if(!isset($_REQUEST['page'])) $_REQUEST['page'] = NULL;
+    if(!isset($_REQUEST['nmb'])) $_REQUEST['nmb'] = NULL;
+    if(!isset($_REQUEST['grupo'])) $_REQUEST['grupo'] = NULL;
 
-      /*if(!isset($_REQUEST['update'])){ $estatus = "A"; }
-      else{
-        if(isset($_REQUEST['estatus'])) $estatus = "A";
-        else $estatus  = "I";
-      }*/
-      if(!isset($_REQUEST['estatus'])) $_REQUEST['estatus'] = "A";
+    /*if(!isset($_REQUEST['update'])){ $estatus = "A"; }
+    else{
+      if(isset($_REQUEST['estatus'])) $estatus = "A";
+      else $estatus  = "I";
+    }*/
+    if(!isset($_REQUEST['estatus'])) $_REQUEST['estatus'] = "A";
 
-      $this->model->result($_REQUEST['page'],trim($_REQUEST['nmb']),$_REQUEST['grupo'],$_REQUEST['estatus']);
-      $this->view = new viewusuarios($this->model);
-      $this->view->browse($_REQUEST['page'],$_REQUEST['nmb'],$_REQUEST['grupo'],$_REQUEST['estatus']);
-    }
-    function edit(){
-      if(!isset($_GET['id'])) $_GET['id'] = NULL;
+    $this->model->result($_REQUEST['page'],trim($_REQUEST['nmb']),$_REQUEST['grupo'],$_REQUEST['estatus']);
+    $this->view = new viewusuarios($this->model);
+    $this->view->browse($_REQUEST['page'],$_REQUEST['nmb'],$_REQUEST['grupo'],$_REQUEST['estatus']);
+  }
+  function edit(){
+    if(!isset($_GET['id'])) $_GET['id'] = NULL;
 
-      if($_SESSION['emp'] != 1) $licenciausu = busca($_SESSION['emp'],'empresa_licencia','el_empresa','el_usuarios');
-      else $licenciausu = 1000;
-      $sqltotusu = 'SELECT COUNT(*) FROM usuarios WHERE u_empresa = "'.$_SESSION['emp'].'"';
-      $resultusu = setq($sqltotusu);
-      list($usuarios) = $resultusu->fetch_array();
-      if($usuarios >= $licenciausu && $_GET['id'] == NULL){
-        echo '
-        <script>
-            alert("La cantidad de usuarios en tu licencia ha sido superado. No puedes agregar nuevos usuarios. Contacta a tu agente de JDCEO.");
-            window.location.href = "?modulo=usuarios&accion=index";
-        </script>
-        ';
-      }else {
-        $this->model->select($_GET['id']);
-        $this->view = new viewusuarios($this->model);
-        $this->view->edit();
-      }
-    }
-    function setusuario(){
-      if(isset($_POST['notificaciones'])){
-        $notificaciones = 1;
-      } else {
-        $notificaciones = 0;
-      }
-      $countusu = busca($_SESSION['emp'],'usuarios','u_estatus = "A" AND u_empresa','COUNT(*)');
-      $usulicencia = busca($_SESSION['emp'],'empresa_licencia','el_empresa','el_usuarios');
-      if($countusu == $usulicencia && isset($_POST['estatus'])) {
-        echo '<script>
-          alert("La cantidad de usuarios en tu licencia ha sido superado. No puedes activar el usuario actual. Contacta a tu agente de JD CEO");
+    if($_SESSION['emp'] != 1) $licenciausu = busca($_SESSION['emp'],'empresa_licencia','el_empresa','el_usuarios');
+    else $licenciausu = 1000;
+    $sqltotusu = 'SELECT COUNT(*) FROM usuarios WHERE u_empresa = "'.$_SESSION['emp'].'"';
+    $resultusu = setq($sqltotusu);
+    list($usuarios) = $resultusu->fetch_array();
+    /*
+    if($usuarios >= $licenciausu && $_GET['id'] == NULL){
+      echo '
+      <script>
+          alert("La cantidad de usuarios en tu licencia ha sido superado. No puedes agregar nuevos usuarios. Contacta a tu agente de JDCEO.");
           window.location.href = "?modulo=usuarios&accion=index";
-        </script>';
-        die();
-      }
-
-      if(isset($_POST['nuser'])) $nuser = $_POST['nuser']; else $nuser = getmax("u_nuser","usuarios");
-      
-      $this->model->setdata($nuser,$_POST['id'],$_POST['nmb'],$_POST['apellidos'],$_POST['correo'],$_POST['telefono'],$_POST['puesto'],$_POST['nacimiento'],$_POST['grupo'],$_POST['comment'],$_POST['estatus'],$_POST['mailcorp'],$_POST['passcorp'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas'],$_POST['remitente'],$_POST['color'], $notificaciones,$_POST['saludo']);
-      $this->model->setusuario();
-      $this->model->setusuariosorden();
-
-      $sqlgrupo = 'SELECT * FROM grupos WHERE g_estatus = "A"';
-      $resultgrupo = setq($sqlgrupo);
-      while($rowgrupo = $resultgrupo -> fetch_array()){
-        if(isset($_POST['rol'.$rowgrupo['g_id']])){
-          $check = busca($rowgrupo['g_id'], 'usuarios_rol', 'ur_usuario = "'.$this->model->id.'" AND ur_rol', 'COUNT(*)');
-          if(!$check){
-            $sqlins ='INSERT INTO usuarios_rol SET ur_usuario = "'.$this->model->id.'", ur_rol = "'.$rowgrupo['g_id'].'"';
-            setq($sqlins);
-          }
-        } else {
-          $sqldel = 'DELETE FROM usuarios_rol WHERE ur_usuario = "'.$this->model->id.'" AND ur_rol = "'.$rowgrupo['g_id'].'"';
-          setq($sqldel);
-        }
-      }
-      //if(!isset($_GET['id'])) $this->model->usuarioemp();
-      if($_POST['chpass'] == "1"){
-        $okpass = $this->model->setpass($_POST['id'],$_POST['password'],$_POST['password2']);
-      }else $okpass = 1;
-
-
-
-      if (isset($_FILES['avatar']['name'])) {
-        $nombre_archivo = $_FILES['avatar']['name'];
-        $tipo_archivo = $_FILES['avatar']['type'];
-        $tamano_archivo = $_FILES['avatar']['size'];
-        if($tamano_archivo > 3000000) $error = "6XMUE2";
-        else{
-          if (!((strpos($tipo_archivo, "gif") || strpos($tipo_archivo, "jpeg") || strpos($tipo_archivo, "jpg") || strpos($tipo_archivo, "png")))) {
-            $error = "6XMUE3";
-          }
-          else{
-            if (move_uploaded_file($_FILES['avatar']['tmp_name'],  'images/avatares/'.$nombre_archivo)){
-              $sql = 'UPDATE usuarios SET u_avatar = "'.$nombre_archivo.'" WHERE u_id = "'.$_POST['id'].'"';
-              setq($sql);
-              $error="1";
-            }
-            else $error = "6XMUE4";
-          }
-        }
-      }else{
-        $error = "1";
-      }
-
-      redirect("?modulo=usuarios&accion=edit&id=".$this->model->id.'&error='.$okpass.'&avatar='.$error);
-    }
-    function delavatar(){
-      unlink('images/avatares/'.busca($_GET['id'],'usuarios','u_id','u_avatar'));
-
-      $sql = 'UPDATE usuarios SET u_avatar = NULL WHERE u_id = "'.$_GET['id'].'"';
-      setq($sql);
-
-      redirect("?modulo=usuarios&accion=edit&id=".$_GET['id']);
-    }
-
-    function setorden(){
-      for($i = 0; $i < $_POST['tamano']; $i++){
-        // Cadena original con comillas dobles
-        $cadenaConComillas = $_POST['uid'.$i];
-
-        // Utilizando la función str_replace() para quitar las comillas dobles
-        $cadenaSinComillas = str_replace('"', '', $cadenaConComillas);
-        $this->model->setdataorden($cadenaSinComillas, ($i+1));
-        $this->model->setorden();
-      }
-      redirect("?modulo=usuarios&accion=show");
-      
-    }
-
-    function show(){
+      </script>
+      ';
+    }else {
+      $this->model->select($_GET['id']);
       $this->view = new viewusuarios($this->model);
-      $this->view->show();
+      $this->view->edit();
+    } */
+      $this->model->select($_GET['id']);
+      $this->view = new viewusuarios($this->model);
+      $this->view->edit();
+  }
+  function setusuario(){
+    if(isset($_POST['notificaciones'])){
+      $notificaciones = 1;
+    } else {
+      $notificaciones = 0;
     }
+    $countusu = busca($_SESSION['emp'],'usuarios','u_estatus = "A" AND u_empresa','COUNT(*)');
+    $usulicencia = busca($_SESSION['emp'],'empresa_licencia','el_empresa','el_usuarios');
+    /*
+    if($countusu == $usulicencia && isset($_POST['estatus'])) {
+      echo '<script>
+        alert("La cantidad de usuarios en tu licencia ha sido superado. No puedes activar el usuario actual. Contacta a tu agente de JD CEO");
+        window.location.href = "?modulo=usuarios&accion=index";
+      </script>';
+      die();
+    }
+    */
+
+    if(isset($_POST['nuser'])) $nuser = $_POST['nuser']; else $nuser = getmax("u_nuser","usuarios");
+    
+    $this->model->setdata($nuser,$_POST['id'],$_POST['nmb'],$_POST['apellidos'],$_POST['correo'],$_POST['telefono'],$_POST['puesto'],$_POST['nacimiento'],$_POST['grupo'],$_POST['comment'],$_POST['estatus'],$_POST['mailcorp'],$_POST['passcorp'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas'],$_POST['remitente'],$_POST['color'], $notificaciones,$_POST['saludo']);
+    $this->model->setusuario();
+    $this->model->setusuariosorden();
+
+    // === Firma (imagen) ===
+    if (isset($_FILES['u_firma']) && $_FILES['u_firma']['error'] === UPLOAD_ERR_OK) {
+        // id del usuario que estás editando
+        $uid = $this->model->id ?: (isset($_POST['id']) ? $_POST['id'] : '');
+
+        // Carpeta destino (dentro del módulo)
+        $uploadDir = __DIR__ . "/uploads/firmas/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $tmpName  = $_FILES['u_firma']['tmp_name'];
+        $origName = basename($_FILES['u_firma']['name']);
+        $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        // Validación simple de extensión
+        $extsOK = ['png','jpg','jpeg','gif','webp'];
+        if (!in_array($ext, $extsOK, true)) {
+            // si quieres, puedes setear un mensaje/flag
+            // $errorFirma = "EXTENSION_NO_PERMITIDA";
+        } else {
+            // Nombre único
+            $newName = "firma_" . uniqid() . "." . $ext;
+            $destino = $uploadDir . $newName;
+
+            if (move_uploaded_file($tmpName, $destino)) {
+                // Guarda ruta **relativa** para que <img src="..."> funcione
+                // OJO: esta ruta debe ser accesible por el servidor web
+                $firmaPath = "modulos/uploads/firmas/" . $newName;
+
+                // UPDATE usando setq() como en todo tu código (sin $conn)
+                $sql = "UPDATE usuarios 
+                          SET u_firma = '" . addslashes($firmaPath) . "'
+                        WHERE u_id = '" . addslashes($uid) . "'
+                          AND u_empresa = '" . addslashes($_SESSION['emp']) . "'";
+                setq($sql);
+            }
+        }
+    }
+
+
+
+    $sqlgrupo = 'SELECT * FROM grupos WHERE g_estatus = "A"';
+    $resultgrupo = setq($sqlgrupo);
+    while($rowgrupo = $resultgrupo -> fetch_array()){
+      if(isset($_POST['rol'.$rowgrupo['g_id']])){
+        $check = busca($rowgrupo['g_id'], 'usuarios_rol', 'ur_usuario = "'.$this->model->id.'" AND ur_rol', 'COUNT(*)');
+        if(!$check){
+          $sqlins ='INSERT INTO usuarios_rol SET ur_usuario = "'.$this->model->id.'", ur_rol = "'.$rowgrupo['g_id'].'"';
+          setq($sqlins);
+        }
+      } else {
+        $sqldel = 'DELETE FROM usuarios_rol WHERE ur_usuario = "'.$this->model->id.'" AND ur_rol = "'.$rowgrupo['g_id'].'"';
+        setq($sqldel);
+      }
+    }
+    //if(!isset($_GET['id'])) $this->model->usuarioemp();
+    if($_POST['chpass'] == "1"){
+      $okpass = $this->model->setpass($_POST['id'],$_POST['password'],$_POST['password2']);
+    }else $okpass = 1;
+
+
+
+    if (isset($_FILES['avatar']['name'])) {
+      $nombre_archivo = $_FILES['avatar']['name'];
+      $tipo_archivo = $_FILES['avatar']['type'];
+      $tamano_archivo = $_FILES['avatar']['size'];
+      if($tamano_archivo > 3000000) $error = "6XMUE2";
+      else{
+        if (!((strpos($tipo_archivo, "gif") || strpos($tipo_archivo, "jpeg") || strpos($tipo_archivo, "jpg") || strpos($tipo_archivo, "png")))) {
+          $error = "6XMUE3";
+        }
+        else{
+          if (move_uploaded_file($_FILES['avatar']['tmp_name'],  'images/avatares/'.$nombre_archivo)){
+            $sql = 'UPDATE usuarios SET u_avatar = "'.$nombre_archivo.'" WHERE u_id = "'.$_POST['id'].'"';
+            setq($sql);
+            $error="1";
+          }
+          else $error = "6XMUE4";
+        }
+      }
+    }else{
+      $error = "1";
+    }
+
+    redirect("?modulo=usuarios&accion=edit&id=".$this->model->id.'&error='.$okpass.'&avatar='.$error);
+  }
+  function delavatar(){
+    unlink('images/avatares/'.busca($_GET['id'],'usuarios','u_id','u_avatar'));
+
+    $sql = 'UPDATE usuarios SET u_avatar = NULL WHERE u_id = "'.$_GET['id'].'"';
+    setq($sql);
+
+    redirect("?modulo=usuarios&accion=edit&id=".$_GET['id']);
   }
 
-  class modelusuarios{
+  function setorden(){
+    for($i = 0; $i < $_POST['tamano']; $i++){
+      // Cadena original con comillas dobles
+      $cadenaConComillas = $_POST['uid'.$i];
+
+      // Utilizando la función str_replace() para quitar las comillas dobles
+      $cadenaSinComillas = str_replace('"', '', $cadenaConComillas);
+      $this->model->setdataorden($cadenaSinComillas, ($i+1));
+      $this->model->setorden();
+    }
+    redirect("?modulo=usuarios&accion=show");
+    
+  }
+
+  function show(){
+    $this->view = new viewusuarios($this->model);
+    $this->view->show();
+  }
+}
+
+class modelusuarios{
     
     function select($id){
       $sql = "SELECT * FROM usuarios WHERe u_id = '".$id."' AND u_empresa = '".$_SESSION['emp']."'";
@@ -168,6 +216,7 @@ ini_set('display_errors', 0);
       $this->color = $row['u_color'];
       $this->saludo = $row['u_saludo'];
       $this->notificaciones = $row['u_notificaciones'];
+      $this->u_firma = $row['u_firma'];
       
     }
     function result($page,$nmb,$grupo,$estatus){
@@ -347,7 +396,8 @@ class viewusuarios{
         <button class="btn btn-sm btn-info">
           <i class="fas fa-users-cog"></i> Ordenar vendedores
         </button>
-      </a>';  
+      </a>'; 
+    $orden = ''; 
     $filtro = 'HOLA';
 
 
@@ -475,6 +525,15 @@ class viewusuarios{
   function edit(){
     echo '
     <style>
+    .tpl-item-header {
+      display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem;
+      border:1px solid #e5e5e5; border-radius:.5rem; background:#f9fafb;
+    }
+    .tpl-drag { cursor:grab; padding:.25rem .35rem; }
+    .tpl-title { flex:1; min-width: 160px; }
+    .tpl-actions .btn { padding:.25rem .5rem; }
+    .accordion-button-clean { background:transparent; border:none; }
+
     .funkyradio div {
       clear: both;
       overflow: hidden;
@@ -769,6 +828,20 @@ class viewusuarios{
                       </div>
                     </div>
                   </div>
+                  <div class="row">
+                    <div class="mb-3">
+                      <label for="u_firma" class="form-label">Firma (imagen)</label>
+                      <input type="file" name="u_firma" id="u_firma" class="form-control" accept="image/*">
+                      
+                      <!-- Vista previa si ya existe firma -->
+                      <?php if (!empty($this->model->u_firma)): ?>
+                        <div class="mt-2">
+                          <p>Firma actual:</p>
+                          <img src="<?php echo htmlspecialchars($this->model->u_firma); ?>" alt="Firma" style="max-width:300px;">
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  </div>
                   <p style="font-size: x-small;" for=""><i>(*) Requeridos</i></p>
                   <div class="form-actions">
                     <a href="?modulo=usuarios&accion=index">
@@ -787,6 +860,29 @@ class viewusuarios{
               </div>
             </div>
           </div>
+        
+        <?php if ($this->model->id) { ?>
+        <div class="card mt-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Plantillas de correo personalizadas</h4>
+            <div class="d-flex gap-2">
+              <button type="button" id="btnAddTpl" class="btn btn-sm btn-primary">
+                <i class="fa fa-plus"></i> Agregar
+              </button>
+              <button type="button" id="btnSaveTpl" class="btn btn-sm btn-success">
+                <i class="fa fa-save"></i> Guardar
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="accordion" id="tplAccordion"></div>
+            <small class="text-muted d-block mt-2">
+              Puedes arrastrar para reordenar (usa el manejador <i class="fa fa-grip-vertical"></i>).
+            </small>
+          </div>
+        </div>
+        <?php } ?>
+
         </div>
         <div class="col-xl-5 col-md-12">
           <div class="card">
@@ -881,33 +977,28 @@ class viewusuarios{
                 }
                 ?>
 
-                <script src="assets/js/tinymce/tinymce.min.js"></script>
+                <script src="assets/tinymce/tinymce.min.js"></script>
 
                 <script>
 
-                tinymce.init({
-                    selector: '#saludo',
-                    plugins: [
-                        'a11ychecker', 'advlist', 'advcode', 'advtable', 'autolink', 'checklist', 'export',
-                        'lists', 'link', 'image', 'charmap', 'preview', 'anchor', 'searchreplace', 'visualblocks',
-                        'powerpaste', 'fullscreen', 'formatpainter', 'insertdatetime', 'media', 'table', 'help', 'wordcount', 'codesample', 'code'
-                    ],
-                    content_css: [
-                        "https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap",
-                    ],
-                    toolbar: 'undo redo | formatpainter casechange blocks | bold italic backcolor | ' +
-                        'alignleft aligncenter alignright alignjustify | ' +
-                        'bullist numlist checklist outdent indent | removeformat | a11ycheck code table help | codesample | code',
-                    setup: function (editor) {
-                    }
-                });
+                 tinymce.init({
+    selector: '#saludo',
+  height: 280,
+      menubar: false,
+      plugins: 'link lists code table autoresize emoticons',
+      toolbar: 'undo redo | bold italic underline | bullist numlist | link | table | emoticons | removeformat | code',
+      branding: false,
+  license_key: 'gpl',
+      base_url: 'assets/tinymce',
+      suffix: '.min'
+    });
 
                 </script>
 
                 <div class="row">
                   <div class="col-md-6">
                     <div class="mb-5">
-                      <label for="tipo">Color de calendario <i class="icon-exclamation-circle" data-toggle="tooltip" data-placement="top" title="Color para identificar tu actividades en el calendario"></i></label>
+                      <label for="tipo">Color de reporte <i class="icon-exclamation-circle" data-toggle="tooltip" data-placement="top" title="Color para identificar tu actividades en el calendario"></i></label>
                       <input type="color" name="color" class="form-control" id="color" value="<?php echo $this->model->color; ?>" required>
                     </div>
                   </div>
@@ -1020,12 +1111,14 @@ class viewusuarios{
                         <div class="funkyradio">
                 <div class="funkyradio-success">
                     <input type="checkbox" name="provco" id="provco1" <?php echo $gmailcorp; ?> onchange="gmail(this);"/>
-                    <label for="provco1">Gmail</label>
+                    <label for="provco1">DVLogistics</label>
                 </div>
+                <!--
                 <div class="funkyradio-success">
                     <input type="checkbox" name="provco" id="provco2" onchange="outlook(this);" <?php echo $outlookcorp; ?>/>
                     <label for="provco2">Outlook</label>
                 </div>
+                                -->
                 <div class="funkyradio-success">
                     <input type="checkbox" name="provco" id="provco3" onchange="servidor(this);" <?php echo $servidorcorp; ?>/>
                     <label for="provco3">Servidor de E-mail</label>
@@ -1112,8 +1205,290 @@ class viewusuarios{
         </div>
       </form>
     </div>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<!-- TinyMCE ya lo cargas; si no: -->
 
+<script>
+(function(){
+  const uId = '<?php echo addslashes($this->model->id ?? ""); ?>';
+  if(!uId) return;
+
+  const acc = document.getElementById('tplAccordion');
+  const addBtn = document.getElementById('btnAddTpl');
+  const saveBtn = document.getElementById('btnSaveTpl');
+
+  // ---------- Tiny base config ----------
+  const MCE_CONFIG = {
+    height: 260,
+    menubar: false,
+    plugins: 'link lists table code autoresize',
+    toolbar: 'undo redo | styles | bold italic underline | bullist numlist | link | table | removeformat | code',
+    branding: false,
+    license_key: 'gpl'
+  };
+
+  // Útil para evitar doble init
+  function ensureEditor(editorId){
+    if (tinymce.get(editorId)) return tinymce.get(editorId);
+    return tinymce.init({ ...MCE_CONFIG, selector: '#'+editorId });
+  }
+  function removeEditor(editorId){
+    const ed = tinymce.get(editorId);
+    if (ed) ed.remove();
+  }
+
+  // ---------- Helpers ----------
+  function uid(){ return 'tpl_'+Math.random().toString(36).slice(2); }
+
+  function itemTemplate(item, index){
+    const editorId  = item.editorId || uid();
+    const collapseId = 'collapse_'+editorId;
+
+    return `
+      <div class="accordion-item mb-3" data-id="${item.id || ''}" data-editor="${editorId}">
+        <div class="tpl-item-header">
+          <span class="tpl-drag text-muted" title="Arrastrar para ordenar">
+            <i class="fa fa-grip-vertical"></i>
+          </span>
+
+          <input type="text" class="form-control form-control-sm tpl-title"
+                 placeholder="Título de la plantilla"
+                 value="${item.title ? escapeHtml(item.title) : ''}"/>
+
+          <select class="form-select form-select-sm" style="max-width:120px">
+            <option value="A" ${item.estatus === 'I' ? '' : 'selected'}>Activo</option>
+            <option value="I" ${item.estatus === 'I' ? 'selected' : ''}>Inactivo</option>
+          </select>
+
+          <div class="tpl-actions d-flex gap-1 ms-1">
+            <button class="btn btn-sm btn-outline-secondary btn-toggle" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                    aria-expanded="${index===0?'true':'false'}" aria-controls="${collapseId}">
+              <i class="fa fa-chevron-down"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-del-one" type="button" title="Eliminar">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="${collapseId}" class="accordion-collapse collapse ${index===0?'show':''}" data-bs-parent="#tplAccordion">
+          <div class="accordion-body">
+            <textarea id="${editorId}" class="tpl-editor">${item.html || ''}</textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function renderItem(item, index){
+    item.editorId = item.editorId || uid();
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = itemTemplate(item, index);
+    const el = wrapper.firstElementChild;
+    acc.appendChild(el);
+
+    // Lazy init del editor: solo cuando se abre el collapse
+    const collapse = el.querySelector('.accordion-collapse');
+    collapse.addEventListener('shown.bs.collapse', () => {
+      ensureEditor(item.editorId);
+    }, {once:true}); // lo inicializa la 1ª vez que se abre
+
+    // Si está abierto de inicio, inicializa ya
+    if (collapse.classList.contains('show')) ensureEditor(item.editorId);
+
+    // Solo inputs/select/textarea detienen la propagación (para no togglear el collapse)
+el.querySelectorAll('input,select,textarea').forEach(n =>
+  n.addEventListener('click', e => e.stopPropagation())
+);
+
+// Botón eliminar: listener directo por item
+const delBtn = el.querySelector('.btn-del-one');
+delBtn.addEventListener('click', (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation(); // evita que colapse/expanda
+
+  const currentId = parseInt(el.getAttribute('data-id') || '0', 10);
+  const editorId  = el.getAttribute('data-editor');
+
+  Swal.fire({
+    title: 'Eliminar plantilla',
+    text: 'Esta acción no se puede deshacer. ¿Continuar?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then(res => {
+    if (!res.isConfirmed) return;
+
+    // Destruye el editor si existe
+    const ed = tinymce.get(editorId);
+    if (ed) ed.remove();
+
+    if (currentId > 0) {
+      $.post('query/user_tpl_delete.php', { id: currentId, u_id: uId }, function(r){
+        if (r && r.ok) {
+          el.remove();
+        } else {
+          Swal.fire('Error', (r&&r.msg)||'No se pudo eliminar', 'error');
+        }
+      }, 'json').fail(xhr => {
+        Swal.fire('Error','Fallo la petición','error');
+        console.error(xhr.responseText);
+      });
+    } else {
+      el.remove();
+    }
+  });
+});
+
+
+    return el;
+  }
+
+  // ---------- Carga inicial ----------
+  function loadTemplates(){
+    acc.innerHTML = '<div class="text-muted p-2">Cargando...</div>';
+    $.getJSON('query/user_tpl_list.php', { u_id: uId }, function(list){
+      acc.innerHTML = '';
+      if(!list || list.length===0){
+        renderItem({id:0,title:'',html:'',estatus:'A'}, 0);
+      } else {
+        list.forEach((tpl, idx) => renderItem(tpl, idx));
+      }
+      initSortable();
+    }).fail(function(xhr){
+      acc.innerHTML = '<div class="text-danger p-2">No se pudieron cargar las plantillas.</div>';
+      console.error(xhr.responseText);
+    });
+  }
+
+  // ---------- Sortable ----------
+  let sortable;
+  function initSortable(){
+    if (sortable) sortable.destroy();
+    sortable = new Sortable(acc, {
+      handle: '.tpl-drag',
+      animation: 150,
+      ghostClass: 'bg-light',
+      onEnd: function(){ /* nada, el orden se toma al guardar */ }
+    });
+  }
+
+  // ---------- Añadir / Eliminar ----------
+  addBtn?.addEventListener('click', () => {
+    renderItem({id:0,title:'',html:'',estatus:'A'}, acc.children.length);
+  });
+
+  $(document).on('click', '.btn-del-one', function(){
+    const item = this.closest('.accordion-item');
+    if(!item) return;
+    const currentId = parseInt(item.getAttribute('data-id') || '0', 10);
+    const editorId = item.getAttribute('data-editor');
+
+    Swal.fire({
+      title: 'Eliminar plantilla',
+      text: 'Esta acción no se puede deshacer. ¿Continuar?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(res => {
+      if (!res.isConfirmed) return;
+
+      // Destruye el editor si existe
+      removeEditor(editorId);
+
+      if (currentId > 0) {
+        $.post('query/user_tpl_delete.php', { id: currentId, u_id: uId }, function(r){
+          if (r && r.ok) item.remove();
+          else Swal.fire('Error', (r&&r.msg)||'No se pudo eliminar', 'error');
+        }, 'json').fail(xhr => {
+          Swal.fire('Error','Fallo la petición','error');
+          console.error(xhr.responseText);
+        });
+      } else {
+        item.remove();
+      }
+    });
+  });
+
+  // ---------- Guardar ----------
+  function collectAndSave(){
+    // Asegúrate de volcar el contenido de todos los editores visibles
+    // (TinyMCE ya guarda con getContent, pero si alguno no se abrió, estará vacío a conciencia).
+    const payload = [];
+    [...acc.querySelectorAll('.accordion-item')].forEach((item, idx) => {
+      const id      = parseInt(item.getAttribute('data-id') || '0', 10);
+      const editor  = item.getAttribute('data-editor');
+      const titleEl = item.querySelector('.tpl-title');
+      const selEst  = item.querySelector('select');
+
+      const title = titleEl ? titleEl.value.trim() : '';
+      const est   = selEst ? selEst.value : 'A';
+      let html    = '';
+
+      const ed = tinymce.get(editor);
+      if (ed) {
+        html = ed.getContent();
+      } else {
+        // Si nunca se abrió el panel, toma el valor del textarea plano
+        const ta = item.querySelector('textarea.tpl-editor');
+        html = ta ? ta.value : '';
+      }
+
+      payload.push({
+        id: isNaN(id) ? 0 : id,
+        title: title,
+        html: html,
+        sort_order: idx,
+        estatus: est
+      });
+    });
+
+    $.ajax({
+      url: 'query/user_tpl_save.php',
+      type: 'POST',
+      data: { u_id: uId, templates: JSON.stringify(payload) },
+      dataType: 'json',
+      success: function(r){
+        if (r && r.ok) {
+          // Limpia editores actuales para evitar “ghost editors”
+          [...acc.querySelectorAll('.accordion-item')].forEach(it => {
+            const edId = it.getAttribute('data-editor');
+            removeEditor(edId);
+          });
+          Swal.fire({icon:'success',title:'Plantillas guardadas',timer:1300,showConfirmButton:false});
+          loadTemplates();
+        } else {
+          Swal.fire('Error', (r && r.msg) ? r.msg : 'No fue posible guardar', 'error');
+        }
+      },
+      error: function(xhr){
+        console.error(xhr.responseText);
+        Swal.fire('Error','Fallo la petición','error');
+      }
+    });
+  }
+
+  saveBtn?.addEventListener('click', collectAndSave);
+
+  // ---------- Init ----------
+  // Si Tiny aún no cargó por CDN, espera a que exista window.tinymce
+  function whenTinyReady(cb, tries=30){
+    if (window.tinymce && tinymce.init) return cb();
+    if (tries<=0) return;
+    setTimeout(() => whenTinyReady(cb, tries-1), 150);
+  }
+  whenTinyReady(loadTemplates);
+})();
+</script>
+
+    <script>
       function desactivarVendedor(){
         var estatus = document.getElementById("estatus");
         var vendedor = "<?php echo $_GET['id']; ?>";
@@ -1534,7 +1909,7 @@ class viewusuarios{
       });
   }
 
-/*   // Obtener el elemento del botón con el ID "nuevo"
+  /*   // Obtener el elemento del botón con el ID "nuevo"
   const botonNuevo = document.getElementById("nuevo");
   // Agregar un evento de clic al botón nuevo
   botonNuevo.addEventListener("click", function(event) {
@@ -1639,96 +2014,96 @@ class viewusuarios{
     } else {
       return false;
     }
-}
-  function gmail(checkbox){
-    selectOne(checkbox);
-    var div = document.getElementById('condicionescorreo');
-    if(!checkChecked()){
-      div.innerHTML = '';
-      document.getElementById("mailcorp").removeAttribute("required");
-      document.getElementById("mailcorp").value = "";
-    }else{
-    div.innerHTML = '\
-      <div class="mb-5 "> \
-        <label for="">Host: *</label> \
-        <input class="form-control" name="host" value="tls://smtp.gmail.com:587" type="text" readonly> \
-        <label for="">Puerto: *</label> \
-        <input type="number" name="port" class="form-control" value="587" readonly> \
-        <label for="">Tipo de Seguridad: *</label> \
-        <input type="text" name="seguridad" class="form-control" value="tls" readonly> \
-        <label for="">Contraseña: *</label> \
-        <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" required value=""> \
-        <label for="">Remitente: * </label><i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i> \
-        <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente" name="remitente" class="form-control" required> \
-      </div>';
-    div.style = "display: block;";
-    document.getElementById("mailcorp").setAttribute("required", true);
     }
-  }
-  function outlook(checkbox){
-    selectOne(checkbox);
-    var div = document.getElementById('condicionescorreo');
-    if(!checkChecked()){
-      div.innerHTML = '';
-      document.getElementById("mailcorp").removeAttribute("required");
-      document.getElementById("mailcorp").value = "";
-    }else{
-    div.innerHTML = '\
-      <div class="mb-5">\
-        <label for="">Host: *</label>\
-        <input class="form-control" name="host" value="tls://smtp.office365.com:587" type="text" readonly>\
-        <label for="">Puerto: *</label>\
-        <input type="number" name="port" class="form-control" value="587" readonly>\
-        <label for="">Tipo de Seguridad: *</label> \
-        <input type="text" name="seguridad" class="form-control" value="tls" readonly> \
-        <label for="">Contraseña: *</label>\
-        <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" title="Sensible a Mayusculas, Minusculas, números y signos" required>\
-        <label for="">Remitente: * </label> <i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i>\
-        <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente" name="remitente" class="form-control" required>\
-      </div>';
-    div.style = "display: block;";
-    document.getElementById("mailcorp").setAttribute("required", true);
+    function gmail(checkbox){
+      selectOne(checkbox);
+      var div = document.getElementById('condicionescorreo');
+      if(!checkChecked()){
+        div.innerHTML = '';
+        document.getElementById("mailcorp").removeAttribute("required");
+        document.getElementById("mailcorp").value = "";
+      }else{
+      div.innerHTML = '\
+        <div class="mb-5 "> \
+          <label for="">Host: *</label> \
+          <input class="form-control" name="host" value="smtp-mail.outlook.com" type="text" readonly> \
+          <label for="">Puerto: *</label> \
+          <input type="number" name="port" class="form-control" value="587" readonly> \
+          <label for="">Tipo de Seguridad: *</label> \
+          <input type="text" name="seguridad" class="form-control" value="tls" readonly> \
+          <label for="">Contraseña: *</label> \
+          <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" required value=""> \
+          <label for="">Remitente: * </label><i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i> \
+          <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente" name="remitente" class="form-control" required> \
+        </div>';
+      div.style = "display: block;";
+      document.getElementById("mailcorp").setAttribute("required", true);
+      }
     }
-  }
-  function servidor(checkbox){
-    selectOne(checkbox);
-    var div = document.getElementById('condicionescorreo');
-    if(!checkChecked()){
-      div.innerHTML = '';
-      document.getElementById("mailcorp").removeAttribute("required");
-      document.getElementById("mailcorp").value = "";
-    }else{
-    div.innerHTML = '\
-      <div class="mb-5">\
-        <label for="">Host: *</label>\
-        <input class="form-control" name="host" value="" type="text">\
-        <label for="">Puerto: *</label>\
-        <input type="number" name="port" class="form-control" value="">\
-        <label for="">Tipo de Seguridad: *</label> \
-        <select name="seguridad" class="form-control"> \
-          <option value="">Ninguna</option> \
-          <option value="tls">tls</option> \
-          <option value="ssl">ssl</option>\
-        </select>\
-        <label for="">Contraseña: *</label>\
-        <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" title="Sensible a Mayusculas, Minusculas, números y signos" required>\
-        <label for="">Remitente: * </label> <i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i>\
-        <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente." name="remitente" class="form-control" required>\
-      </div>';
-    div.style = "display: block;";
-    document.getElementById("mailcorp").setAttribute("required", true);
+    function outlook(checkbox){
+      selectOne(checkbox);
+      var div = document.getElementById('condicionescorreo');
+      if(!checkChecked()){
+        div.innerHTML = '';
+        document.getElementById("mailcorp").removeAttribute("required");
+        document.getElementById("mailcorp").value = "";
+      }else{
+      div.innerHTML = '\
+        <div class="mb-5">\
+          <label for="">Host: *</label>\
+          <input class="form-control" name="host" value="tls://smtp.office365.com:587" type="text" readonly>\
+          <label for="">Puerto: *</label>\
+          <input type="number" name="port" class="form-control" value="587" readonly>\
+          <label for="">Tipo de Seguridad: *</label> \
+          <input type="text" name="seguridad" class="form-control" value="tls" readonly> \
+          <label for="">Contraseña: *</label>\
+          <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" title="Sensible a Mayusculas, Minusculas, números y signos" required>\
+          <label for="">Remitente: * </label> <i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i>\
+          <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente" name="remitente" class="form-control" required>\
+        </div>';
+      div.style = "display: block;";
+      document.getElementById("mailcorp").setAttribute("required", true);
+      }
     }
-  }
-  function comprobar(){
-    $.ajax({
-      url: "pruebaemailcorp.php?id=<?php echo $_SESSION['uid']; ?>",
-      method: "GET",
-    })
-    .done(function(data){
-      alert(data)
-    })
-  }
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip()  
-  }); 
+    function servidor(checkbox){
+      selectOne(checkbox);
+      var div = document.getElementById('condicionescorreo');
+      if(!checkChecked()){
+        div.innerHTML = '';
+        document.getElementById("mailcorp").removeAttribute("required");
+        document.getElementById("mailcorp").value = "";
+      }else{
+      div.innerHTML = '\
+        <div class="mb-5">\
+          <label for="">Host: *</label>\
+          <input class="form-control" name="host" value="" type="text">\
+          <label for="">Puerto: *</label>\
+          <input type="number" name="port" class="form-control" value="">\
+          <label for="">Tipo de Seguridad: *</label> \
+          <select name="seguridad" class="form-control"> \
+            <option value="">Ninguna</option> \
+            <option value="tls">tls</option> \
+            <option value="ssl">ssl</option>\
+          </select>\
+          <label for="">Contraseña: *</label>\
+          <input type="password" id="correopas" class="form-control" name="correopas" data-toggle="tooltip" data-placement="top" title="Sensible a Mayusculas, Minusculas, números y signos" required>\
+          <label for="">Remitente: * </label> <i class="fa fa-info" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente."></i>\
+          <input type="text" data-toggle="tooltip" data-placement="top" title="Nombre que aparcerá en el correo como remitente." placeholder="Nombre que aparcerá en el correo como remitente." name="remitente" class="form-control" required>\
+        </div>';
+      div.style = "display: block;";
+      document.getElementById("mailcorp").setAttribute("required", true);
+      }
+    }
+    function comprobar(){
+      $.ajax({
+        url: "pruebaemailcorp.php?id=<?php echo $_SESSION['uid']; ?>",
+        method: "GET",
+      })
+      .done(function(data){
+        alert(data)
+      })
+    }
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()  
+    }); 
 </script>

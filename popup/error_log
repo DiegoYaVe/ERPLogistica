@@ -1,0 +1,175 @@
+[13-Aug-2025 00:18:31 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 215
+[13-Aug-2025 00:18:31 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 215
+[13-Aug-2025 00:18:31 America/Guatemala] PHP Warning:  Undefined variable $descripcion in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 227
+[13-Aug-2025 00:20:34 America/Guatemala] PHP Warning:  Undefined variable $envio in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/cerrarcotiza.php on line 106
+[13-Aug-2025 00:20:34 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/cerrarcotiza.php on line 176
+[13-Aug-2025 00:20:34 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/cerrarcotiza.php on line 176
+[13-Aug-2025 00:20:34 America/Guatemala] PHP Warning:  Undefined variable $read in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/cerrarcotiza.php on line 182
+[13-Aug-2025 00:20:34 America/Guatemala] PHP Warning:  Undefined variable $read in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/cerrarcotiza.php on line 265
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $read in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 168
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $blockdes in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 260
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Warning:  Undefined variable $descripcion in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 281
+[13-Aug-2025 00:21:37 America/Guatemala] PHP Fatal error:  Uncaught mysqli_sql_exception: Table 'erp_logistica_dvl.paises' doesn't exist in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php:268
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(268): mysqli->query()
+#1 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(469): setq()
+#2 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php(330): busca()
+#3 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php on line 268
+[13-Aug-2025 00:21:48 America/Guatemala] PHP Warning:  Undefined array key "tablero" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 90
+[13-Aug-2025 00:21:48 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 215
+[13-Aug-2025 00:21:48 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 215
+[13-Aug-2025 00:21:48 America/Guatemala] PHP Warning:  Undefined variable $descripcion in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/clonecotiza.php on line 227
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "idcotiza" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 12
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1595
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1596
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1597
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1598
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1599
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1600
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1601
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1602
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1603
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1604
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1605
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1606
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1607
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1608
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1609
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1610
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1611
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1612
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1613
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1614
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1615
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1616
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1617
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1618
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1619
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1620
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1621
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1622
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1623
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1624
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1625
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1626
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1627
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1628
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1629
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1630
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1631
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $read in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 168
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $blockdes in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 260
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Warning:  Undefined variable $descripcion in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 281
+[15-Aug-2025 16:20:12 America/Guatemala] PHP Fatal error:  Uncaught mysqli_sql_exception: Table 'erp_logistica_dvl.paises' doesn't exist in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php:268
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(268): mysqli->query()
+#1 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(469): setq()
+#2 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php(330): busca()
+#3 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php on line 268
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "idcotiza" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 12
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1595
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1596
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1597
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1598
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1599
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1600
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1601
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1602
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1603
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1604
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1605
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1606
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1607
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1608
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1609
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1610
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1611
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1612
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1613
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1614
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1615
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1616
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1617
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1618
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1619
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1620
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1621
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1622
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1623
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1624
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1625
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1626
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1627
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1628
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1629
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1630
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/modulos/cotizaciones.php on line 1631
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $disablediva in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $style in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 152
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $read in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 168
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $row in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Trying to access array offset on null in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 172
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined array key "u_apellidos" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 174
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $blockdes in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 260
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Warning:  Undefined variable $descripcion in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php on line 281
+[28-Aug-2025 14:58:03 America/Guatemala] PHP Fatal error:  Uncaught mysqli_sql_exception: Table 'erp_logistica_dvl.paises' doesn't exist in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php:268
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(268): mysqli->query()
+#1 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(469): setq()
+#2 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/popup/setcotiza.php(330): busca()
+#3 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php on line 268

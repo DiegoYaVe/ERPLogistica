@@ -7,8 +7,9 @@ $id = $_POST['id'];
 $estatus = $_POST['estatus'];
 
 $sql = 'UPDATE crm_leads SET
-                cl_acercamiento = "' . $estatus . '"
-                WHERE cl_id = "' . $id . '"';
+              cl_acercamiento = "'.$estatus.'",
+              cl_fechalimite  = DATE_ADD(COALESCE(cl_fechalimite, cl_fasigna, CURDATE()), INTERVAL 7 DAY)
+            WHERE cl_id = "'.$id.'"';
 setq($sql);
 echo $respuesta;
 ?>

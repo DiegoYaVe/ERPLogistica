@@ -282,7 +282,7 @@ function setq($sql, $die = false)
   // $dbpass = ""; // El Pass
 
   $dbhost = "162.241.92.192"; // El host
-  $db = "inflalandia_fabricai"; // Nombre de la base
+  $db = "erp_logistica_dvl"; // Nombre de la base
   $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $db);
   $mysqli->query("SET CHARACTER SET utf8");
   $mysqli->query("SET NAMES utf8");
@@ -305,7 +305,7 @@ function setq1($sql, $die = false)
 // $dbpass = ""; // El Pass
 
   $dbhost = "localhost"; // El host
-  $db = "inflalandia_fabricai"; // Nombre de la base
+  $db = "erp_logistica_dvl"; // Nombre de la base
   $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $db);
   $mysqli->query("SET CHARACTER SET utf8");
 
@@ -325,7 +325,7 @@ function setq2($sql, $die = false)
 // $dbpass = ""; // El Pass
 
   $dbhost = "localhost"; // El host
-  $db = "inflalandia_fabricai"; // Nombre de la base
+  $db = "erp_logistica_dvl"; // Nombre de la base
   $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $db);
   $mysqli->query("SET CHARACTER SET utf8");
 
@@ -483,7 +483,7 @@ function real_scape($sql)
   $dbpass = ""; // El Pass
 
   $dbhost = "localhost"; // El host
-  $db = "inflalandia_fabricai"; // Nombre de la base
+  $db = "erp_logistica_dvl"; // Nombre de la base
   $mysqli = new mysqli($dbhost, $dbuser, $dbpass, $db);
   $mysqli->query("SET CHARACTER SET utf8");
 

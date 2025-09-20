@@ -38,6 +38,7 @@ class clientes{
   }
 
   function setuser(){
+    
     $telefono1 = trim(preg_replace("/[^0-9]/", "", $_POST['telefono1']));
     $telefono2 = trim(preg_replace("/[^0-9]/", "", $_POST['telefono2']));
     $i = 0;
@@ -50,7 +51,7 @@ class clientes{
     } else {
       $sqladd = '';
     }
-
+    
     if(isset($_POST['id'])){
       $id= $_POST['id'];
       $descb = "ACTUALIZACIÓN DE DATOS DE CLIENTE";
@@ -65,43 +66,9 @@ class clientes{
     $result = setq($sql);
     list($existe) = $result ->fetch_array(); 
     if(!$existe){
-      $this->model->setdata($id,$_POST['nmb'],$_POST['apellidos'],$_POST['alias'],$_POST['correo1'],$telefono1,$telefono2,$_POST['obs'],$_POST['almacen'],$_POST['precio'], date('Y-m-d H:i:s'), $_SESSION['uid']);
+      $this->model->setdata($id,$_POST['nmb'],$_POST['apellidos'],$_POST['alias'],$_POST['correo1'],$telefono1,$telefono2,$_POST['obs'],$_POST['almacen'],$_POST['precio'], date('Y-m-d H:i:s'), $_SESSION['uid'], $_POST['empresa']);
       $ok = $this->model->setuser();
 
-      if ($ok) {
-        // Ruta absoluta a la carpeta "bitacora" dentro de "modulos"
-        $dir = __DIR__ . DIRECTORY_SEPARATOR . 'bitacora';
-        $file = $dir . DIRECTORY_SEPARATOR . 'clientes' . $_SESSION['emp'] . '.txt';
-
-        // Crear carpeta si no existe
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        // Abrir archivo en modo append
-        $archivo = @fopen($file, 'a');
-        if ($archivo !== false) {
-            // Construir la línea de bitácora
-            $linea = date('Y-m-d') . '|CLIU001|' . date('H:i:s') . '|' .
-                    $this->model->id . '|' . $this->model->id . '|' .
-                    $_SESSION['uid'] . '|C|' . PHP_EOL;
-
-            // Escribir y cerrar archivo
-            fwrite($archivo, $linea);
-            fclose($archivo);
-        } else {
-            // Opcional: log para detectar errores de apertura
-            error_log("No se pudo abrir archivo de bitácora: $file");
-        }
-
-        // Continuar con actualización
-        $sqlupd = 'UPDATE crm_cotizaciones 
-                  SET cc_destino = "' . $_POST['nmb'] . ' ' . $_POST['apellidos'] . '", 
-                      cc_mensaje = "Hola ' . $_POST['nmb'] . ' ' . $_POST['apellidos'] . '\nA continuación encontrarás listados los productos de acuerdo con tu solicitud de cotización"
-                  WHERE cc_cliente = "' . $this->model->id . '" 
-                  AND cc_estatus NOT IN ("V", "A")';
-        setq($sqlupd);
-    }
 
       if($ok) bitacora($this->model->id,"CLIENTES",$descb,NULL,NULL);
       
@@ -331,13 +298,25 @@ class clientes{
         $temp = $_FILES['archivo']['tmp_name'];
         if (move_uploaded_file($temp, 'docs/clientes/'.$nuevo_nombre)) {
           chmod('docs/clientes/'.$nuevo_nombre, 0777);
+          if(isset($_GET['id'])){
+            $sqldet = 'SELECT cd_descripcion, cd_tipo FROM crm_documentos WHERE cd_id = "'.$_GET['id'].'"';
+            $resultdet = setq($sqldet);
+            list($desc, $tipo) = $resultdet -> fetch_array();
+            $hist = $_GET['id'];
+          }else {
+            $desc = $_POST['descripcion'];
+            $tipo = $_POST['tipo'];
+            $hist = '';
+          }
           $sql = 'INSERT INTO crm_documentos SET cd_cliente = "'.$id.'",
-                                                 cd_descripcion = "'.$_POST['descripcion'].'",
-                                                 cd_tipo = "'.$_POST['tipo'].'",
+                                                 cd_descripcion = "'.$desc.'",
+                                                 cd_tipo = "'.$tipo.'",
                                                  cd_estatus = "N",
                                                  cd_ugen = "'.$_SESSION['uid'].'",
                                                  cd_fgen = "'.date('Y-m-d H:i:s').'",
-                                                 cd_archivo = "'.$nuevo_nombre.'"';
+                                                 cd_archivo = "'.$nuevo_nombre.'",
+                                                 cd_historial = "'.$hist.'"';
+          
           setq($sql);
         }
         else {
@@ -379,6 +358,7 @@ class modelclientes{
     $result = setq($sql);
     $row = $result->fetch_array();
     $this->id = $row['c_id'];
+    $this->empresa = $row['c_empresa'];
     $this->alias = $row['c_alias'];
     $this->nmb = $row['c_nmb'];
     $this->apellidos = $row['c_apellidos'];
@@ -415,7 +395,7 @@ class modelclientes{
     $this->resultt = setq($sql);
   }
 
-  function setdata($id,$nmb,$apellidos,$alias,$email,$telefono1,$telefono2,$obs,$almacen,$precio, $fregistro, $uregistro){
+  function setdata($id,$nmb,$apellidos,$alias,$email,$telefono1,$telefono2,$obs,$almacen,$precio, $fregistro, $uregistro, $empresa){
     mb_internal_encoding("UTF-8");
     $simbol = array('"',"'");
     $cambio = "";
@@ -432,6 +412,7 @@ class modelclientes{
     $this->precio = str_replace($simbol,$cambio,trim($precio));
     $this->fregistro = trim($fregistro);
     $this->uregistro = trim($uregistro);
+    $this->empresa = str_replace($simbol,$cambio,mb_strtoupper(trim($empresa)));
 
 //    unique($this->alias,'c_nmb','crm_clientes');
   }
@@ -440,7 +421,7 @@ class modelclientes{
     $sql = 'INSERT INTO crm_clientes SET
             c_id = "'.$this->id.'",
             c_alias = "'.$this->alias.'",
-            c_empresa = "'.$_SESSION['emp'].'",
+            c_empresa = "'.$this->empresa.'",
             c_nmb= "'.$this->nmb.'",
             c_apellidos= "'.$this->apellidos.'",
             c_correo1= "'.$this->email.'",
@@ -453,7 +434,7 @@ class modelclientes{
             c_obs= "'.$this->obs.'"
             ON DUPLICATE KEY UPDATE
             c_alias = "'.$this->alias.'",
-            c_empresa = "'.$_SESSION['emp'].'",
+            c_empresa = "'.$this->empresa.'",
             c_nmb= "'.$this->nmb.'",
             c_apellidos= "'.$this->apellidos.'",
             c_correo1= "'.$this->email.'",
@@ -1022,6 +1003,12 @@ class viewclientes{
               <div class="row">
                 <div class="col-md-6 col-sm-6">
                   <div class="input-group-desc">
+                    <label class="name">Empresa</label>';
+                    echo '<input class="form-control" autocomplete="off" type="text" value="'.$this->model->empresa.'" name="empresa" id="empresa" required="required" autofocus placeholder="Empresa">
+                  </div>
+                </div>
+                <div class="col-md-6 col-sm-6">
+                  <div class="input-group-desc">
                     <label class="name">Nombre(s) y apellidos*</label>';
                     echo $flag;
                     echo '<input class="form-control" autocomplete="off" type="text" value="'.$nmb.'" name="nmb" id="nmb" required="required" autofocus placeholder="Nombre del cliente">
@@ -1048,10 +1035,6 @@ class viewclientes{
                     <input class="input--style-3 form-control" type="email" value="'.$correo.'" name="correo1" id="email" required="required" placeholder="Correo electrónico" data-bs-toggle="tooltip" data-bs-placement="top" title="Es importante que si sea el correo de tu cliente" >
                   </div>
                 </div>
-
-              </div>
-              <div class="row  mt-2">
-
                 <div class="col-md-3 col-sm-6">
                   <div class="input-group-desc">
                     <label class="label--desc">Telefono fijo</label>
@@ -2709,7 +2692,7 @@ echo '
         </div>
       </div>
       <div class="container mt-5">
-        <h2 class="mb-4">Añadir documento</h2>
+        <h2 class="mb-4">Altas</h2>
         <form action="?modulo=clientes&accion=insertdocumento&cliente='.$_GET['cliente'].'" method="post" enctype="multipart/form-data">
           <div class="row g-3">
             <div class="col-md-4">
@@ -2734,12 +2717,10 @@ echo '
               <button type="submit" class="btn btn-primary">Guardar</button>
             </div>
           </div>
-
-          
         </form>
       </div>
       <div class="row mt-10">';
-$sql = 'SELECT  * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "1"'; 
+$sql = 'SELECT * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "1" AND cd_historial = ""'; 
 $result = setq($sql);
 echo '<div class="col-12 col-md-6">
 <center><h2>Documentos del cliente</h2>
@@ -2748,6 +2729,7 @@ echo '<div class="col-12 col-md-6">
     <thead class="bg-primary text-white">
       <tr>
         <th>Archivo</th>
+        <th>Historial</th>
         <th>Descripción</th>          
         <th>Aceptar</th>
         <th>Denegar</th>
@@ -2758,28 +2740,121 @@ echo '<div class="col-12 col-md-6">
           $dis = '';
           $check = '';
           $rec = '';
-          $accionau = 'onclick="autorizardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
-          $accionde = 'onclick="denegardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
+          $iddoc = $row['cd_id'];
+          $archivo = $row['cd_archivo'];
           if($row['cd_estatus'] == "A"){
             $dis ='disabled';
             $check = 'checked';
             $accionau = '';
           } else if($row['cd_estatus'] == "C"){
             $dis ='disabled';
-            $accion = 'background-color=#ffffff';
             $rec = 'checked';
             $accionde = '';
+            $docn = busca($row['cd_id'], 'crm_documentos', 'cd_estatus = "N" AND cd_historial', 'cd_id');
+            if($docn > 0){
+              $dis = '';
+              $check = '';
+              $rec = '';
+              $iddoc = $docn;
+              $archivo = busca($docn, 'crm_documentos', 'cd_id', 'cd_archivo');
+            }
+            $doca = busca($row['cd_id'], 'crm_documentos', 'cd_estatus = "A" AND cd_historial', 'cd_id');
+            if($doca > 0){
+              $dis ='disabled';
+              $rec = '';
+              $check = 'checked';
+              $iddoc = $doca;
+              $archivo = busca($doca, 'crm_documentos', 'cd_id', 'cd_archivo');
+            }
           }
+          $accionau = 'onclick="autorizardoc('.$iddoc.', '.$_GET['cliente'].')"';
+          $accionde = 'onclick="denegardoc('.$iddoc.', '.$_GET['cliente'].')"';
           echo '<tr>
-            <td><a target="_BLANK" href="docs/clientes/'.$row['cd_archivo'].'" class="btn btn-secondary"><i class="fas fa-eye"></i>Ver</a> </td>
+            <td><a target="_BLANK" href="docs/clientes/'.$archivo.'" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a> </td>
+            <td>';
+            if($row['cd_estatus'] == "C"){
+              echo ' <button type="button" class="btn btn-secondary text-white btn-sm" style="background-color: teal" data-bs-toggle="modal" data-bs-target="#historial'.$row['cd_id'].'"><i class="fas fa-list text-white"></i></button>';
+              echo '<div class="modal fade" id="historial'.$row['cd_id'].'" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+
+                    <!-- Encabezado del modal -->
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="miModalLabel">'.$row['cd_descripcion'].'</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>';
+
+                    $sqldoc = 'SELECT * FROM crm_documentos WHERE cd_id = "'.$row['cd_id'].'" OR cd_historial = "'.$row['cd_id'].'" ORDER BY cd_id ASC';
+                    $resultdoc = setq($sqldoc); 
+                    
+                    echo '<div class="modal-body">
+                      <table class="table">                    
+                        <thead class="bg-primary text-white">
+                          <tr>
+                            <th>Archivo</th>
+                            <th>Fecha de registro</th>
+                            <th>Usuario de registro</th>
+                            <th>Estatus</th>
+                          </tr>
+                        </thead>
+                        <tbody>';
+                        $checkdoc=0;
+                        while($rowdoc = $resultdoc -> fetch_array()){
+                          if($rowdoc['cd_estatus'] == "N"){
+                            $estatus = "Por autorizar";
+                            $bg="primary";
+                            $check++;
+                          } else if($rowdoc['cd_estatus'] == "A"){
+                            $estatus = "Aceptado";
+                            $bg="success";
+                            $checkdoc++;
+                          } else {
+                            $estatus = "Denegado";
+                            $bg="danger";
+                          }
+                          echo '<tr>
+                          <td><a target="_BLANK" href="docs/clientes/'.$rowdoc['cd_archivo'].'" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a> </td>
+                          <td>'.$rowdoc['cd_fgen'].'</td>
+                          <td>'.$rowdoc['cd_ugen'].'</td>
+                          <td class="bg-'.$bg.'">'.$estatus.'</td>
+                          </tr>';
+                        }
+                        echo '</tbody>
+                      </table>';
+
+                    if($checkdoc == 0){
+                      echo '<form action="?modulo=clientes&accion=insertdocumento&cliente='.$_GET['cliente'].'&id='.$row['cd_id'].'" method="post" enctype="multipart/form-data">
+                        <div class="row g-3">
+                          <div class="col-md-9">
+                            <label for="archivo" class="form-label">Archivo:</label>
+                            <input type="file" class="form-control" id="archivo" name="archivo" required>
+                          </div>
+                          <div class="col-md-1 mt-11">
+                            <button type="submit" class="btn btn-primary">Actualizar documento</button>
+                          </div>
+                        </div>
+                      </form>';
+                    }
+                    echo '</div>
+
+                    
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>';
+            }
+            echo '</td>
             <td>'.$row['cd_descripcion'].' </td>
             <td><label class="custom-checkbox autorizar">
-                <input type="checkbox" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
+                <input type="checkbox" id="autorizacion'.$row['cd_id'].'" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
                 <span class="checkmark"></span>
               </label>
             </td>
             <td><label class="custom-checkbox denegar">
-              <input type="checkbox" name="autorizacion"  '.$dis.' '.$rec.' '.$accionde.'>
+              <input type="checkbox"id="denegar'.$row['cd_id'].'" name="denegar"  '.$dis.' '.$rec.' '.$accionde.'>
               <span class="checkmark"></span>
             </label>
             </td>
@@ -2797,15 +2872,16 @@ echo '<div class="col-12 col-md-6">
 </center>
 </div>';
 
-$sql = 'SELECT * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "2"'; 
+$sql = 'SELECT * FROM crm_documentos WHERE cd_cliente = "'.$this->model->id.'" AND cd_tipo = "2" AND cd_historial = ""'; 
 $result = setq($sql);
 echo '<div class="col-12 col-md-6">
-<center><h2>Documentos internos</h2>
+<center><h2>Documentos del cliente</h2>
   <div class="col-11">
   <table class="table">                    
     <thead class="bg-primary text-white">
       <tr>
         <th>Archivo</th>
+        <th>Historial</th>
         <th>Descripción</th>          
         <th>Aceptar</th>
         <th>Denegar</th>
@@ -2816,28 +2892,121 @@ echo '<div class="col-12 col-md-6">
           $dis = '';
           $check = '';
           $rec = '';
-          $accionau = 'onclick="autorizardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
-          $accionde = 'onclick="denegardoc('.$row['cd_id'].', '.$_GET['cliente'].')"';
+          $iddoc = $row['cd_id'];
+          $archivo = $row['cd_archivo'];
           if($row['cd_estatus'] == "A"){
             $dis ='disabled';
             $check = 'checked';
             $accionau = '';
           } else if($row['cd_estatus'] == "C"){
             $dis ='disabled';
-            $accion = 'background-color=#ffffff';
             $rec = 'checked';
             $accionde = '';
+            $docn = busca($row['cd_id'], 'crm_documentos', 'cd_estatus = "N" AND cd_historial', 'cd_id');
+            if($docn > 0){
+              $dis = '';
+              $check = '';
+              $rec = '';
+              $iddoc = $docn;
+              $archivo = busca($docn, 'crm_documentos', 'cd_id', 'cd_archivo');
+            }
+            $doca = busca($row['cd_id'], 'crm_documentos', 'cd_estatus = "A" AND cd_historial', 'cd_id');
+            if($doca > 0){
+              $dis ='disabled';
+              $rec = '';
+              $check = 'checked';
+              $iddoc = $doca;
+              $archivo = busca($doca, 'crm_documentos', 'cd_id', 'cd_archivo');
+            }
           }
+          $accionau = 'onclick="autorizardoc('.$iddoc.', '.$_GET['cliente'].')"';
+          $accionde = 'onclick="denegardoc('.$iddoc.', '.$_GET['cliente'].')"';
           echo '<tr>
-            <td><a target="_BLANK" href="docs/clientes/'.$row['cd_archivo'].'" class="btn btn-secondary"><i class="fas fa-eye"></i>Ver</a> </td>
+            <td><a target="_BLANK" href="docs/clientes/'.$archivo.'" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a> </td>
+            <td>';
+            if($row['cd_estatus'] == "C"){
+              echo ' <button type="button" class="btn btn-secondary text-white btn-sm" style="background-color: teal" data-bs-toggle="modal" data-bs-target="#historial'.$row['cd_id'].'"><i class="fas fa-list text-white"></i></button>';
+              echo '<div class="modal fade" id="historial'.$row['cd_id'].'" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+
+                    <!-- Encabezado del modal -->
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="miModalLabel">'.$row['cd_descripcion'].'</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>';
+
+                    $sqldoc = 'SELECT * FROM crm_documentos WHERE cd_id = "'.$row['cd_id'].'" OR cd_historial = "'.$row['cd_id'].'" ORDER BY cd_id ASC';
+                    $resultdoc = setq($sqldoc); 
+                    
+                    echo '<div class="modal-body">
+                      <table class="table">                    
+                        <thead class="bg-primary text-white">
+                          <tr>
+                            <th>Archivo</th>
+                            <th>Fecha de registro</th>
+                            <th>Usuario de registro</th>
+                            <th>Estatus</th>
+                          </tr>
+                        </thead>
+                        <tbody>';
+                        $checkdoc=0;
+                        while($rowdoc = $resultdoc -> fetch_array()){
+                          if($rowdoc['cd_estatus'] == "N"){
+                            $estatus = "Por autorizar";
+                            $bg="primary";
+                            $check++;
+                          } else if($rowdoc['cd_estatus'] == "A"){
+                            $estatus = "Aceptado";
+                            $bg="success";
+                            $checkdoc++;
+                          } else {
+                            $estatus = "Denegado";
+                            $bg="danger";
+                          }
+                          echo '<tr>
+                          <td><a target="_BLANK" href="docs/clientes/'.$rowdoc['cd_archivo'].'" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a> </td>
+                          <td>'.$rowdoc['cd_fgen'].'</td>
+                          <td>'.$rowdoc['cd_ugen'].'</td>
+                          <td class="bg-'.$bg.'">'.$estatus.'</td>
+                          </tr>';
+                        }
+                        echo '</tbody>
+                      </table>';
+
+                    if($checkdoc == 0){
+                      echo '<form action="?modulo=clientes&accion=insertdocumento&cliente='.$_GET['cliente'].'&id='.$row['cd_id'].'" method="post" enctype="multipart/form-data">
+                        <div class="row g-3">
+                          <div class="col-md-9">
+                            <label for="archivo" class="form-label">Archivo:</label>
+                            <input type="file" class="form-control" id="archivo" name="archivo" required>
+                          </div>
+                          <div class="col-md-1 mt-11">
+                            <button type="submit" class="btn btn-primary">Actualizar documento</button>
+                          </div>
+                        </div>
+                      </form>';
+                    }
+                    echo '</div>
+
+                    
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>';
+            }
+            echo '</td>
             <td>'.$row['cd_descripcion'].' </td>
             <td><label class="custom-checkbox autorizar">
-                <input type="checkbox" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
+                <input type="checkbox" id="autorizacion'.$row['cd_id'].'" name="autorizacion" '.$dis.' '.$check.' '.$accionau.'>
                 <span class="checkmark"></span>
               </label>
             </td>
             <td><label class="custom-checkbox denegar">
-              <input type="checkbox" name="autorizacion"  '.$dis.' '.$rec.' '.$accionde.'>
+              <input type="checkbox"id="denegar'.$row['cd_id'].'" name="denegar"  '.$dis.' '.$rec.' '.$accionde.'>
               <span class="checkmark"></span>
             </label>
             </td>
@@ -2865,6 +3034,8 @@ echo '</div></div>
         const confirmacion = confirm("¿Estás seguro de autorizar este documento?");
         if (confirmacion) {
           window.location.href = '?modulo=clientes&accion=autorizardoc&cliente='+cliente+'&id='+id;
+        } else {
+          document.getElementById("autorizacion"+id).checked = false;
         }
       }
 
@@ -2872,6 +3043,8 @@ echo '</div></div>
         const confirmacion = confirm("¿Estás seguro de denegar este documento?");
         if (confirmacion) {
           window.location.href = '?modulo=clientes&accion=denegardoc&cliente='+cliente+'&id='+id;
+        } else {
+          document.getElementById("denegar"+id).checked = false;
         }
       }
 

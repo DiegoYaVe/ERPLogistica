@@ -1,6 +1,5 @@
 <?php
-  /* if($_SESSION['uid'] == "ADMIN")
-  ini_set('display_errors', 1); */
+  /* if($_SESSION['uid'] == "ADMIN") */
   ini_set('display_errors', 0);
   class tableros{
     var $model;
@@ -46,7 +45,7 @@
   $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
 
   // Conexión para escape
-  $db = new mysqli("localhost", "root", "", "inflalandia_fabricai");
+  $db = new mysqli("localhost", "root", "", "erp_logistica_dvl");
 
   if (!$cliente) {
     $cliente = busca($_POST['telefonocl'], 'crm_clientes', 'c_telefono1 = "' . $_POST['telefonocl'] . '" OR c_telefono2', 'c_id');
@@ -401,12 +400,14 @@
       $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
       $sql = 'SELECT * FROM crm_tableros WHERE ct_fini BETWEEN "'.$fini.'" AND "'.$ffin.'"';
       
+      /*
       if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "SUBGERENCIA"){
         if($agente)$sql .= ' AND ct_agente = "'.$agente.'"';
         else  $sql .= "";
       } else {
         $sql .= ' AND ct_agente = "'.$_SESSION['uid'].'"';
       }
+        */
     /* 
       if($estatus == "O") $sql.=' AND ct_estatus IN ("N","P","G","V","A") ';
       elseif($estatus == "W") $sql.=' AND ct_estatus IN ("F","V","A") ';
@@ -420,6 +421,7 @@
       //$result = setq($sql);
       $sql.= ' ORDER BY ct_id DESC ';
        $sql.= ' LIMIT '.($bloque*$page).','.$bloque;
+      //die($sql);
       $this->result = setq($sql);
       $this->resultt = setq($sql);
     }

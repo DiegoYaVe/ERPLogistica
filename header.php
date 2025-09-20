@@ -103,67 +103,90 @@ License: For each use you must have a valid license purchased only from above li
 		<!--begin::Aside menu-->
 		<div class="aside-menu flex-column-fluid">
 		<!--begin::Aside Menu-->
-		<div class="hover-scroll-overlay-y my-5 my-lg-5" id="kt_aside_menu_wrapper" data-kt-scroll="true"
-			data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-height="auto"
-			data-kt-scroll-dependencies="#kt_aside_logo, #kt_aside_footer" data-kt-scroll-wrappers="#kt_aside_menu"
-			data-kt-scroll-offset="0">
-			<!--begin::Menu-->
-			<div
-				class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500"
-				id="#kt_aside_menu" data-kt-menu="true">
-				<?php
-					$sql = 'SELECT menu.* FROM menu INNER JOIN menud ON m_id = md_menu INNER JOIN gruposd ON md_modulo = gd_modulo 
-                    INNER JOIN usuarios ON gd_grupo = u_grupo WHERE m_barra = "1" AND u_id = "'.$_SESSION['uid'].'" 
-                    GROUP BY m_id ORDER BY m_orden,m_id'; 
-          
-					$result = setq($sql);
-					while($row = $result->fetch_array()){
-						$pertenece = busca($_GET['modulo'],'menud','md_modulo','md_menu');
-						if($pertenece == $row['m_id']) $activo = "active";
-						else $activo = '';
-				?>
-				<div data-kt-menu-trigger="click" class="menu-item menu-accordion">
-					<span class="menu-link  <?php echo $activo; ?>">
-						<span class="menu-icon">
-							<!--begin::Svg Icon | path: icons/duotune/communication/com012.svg-->
-							<span class="svg-icon svg-icon-2">
-								<i class="<?php echo $row['m_icono']; ?> fs-1"></i>
-							</span>
-							<!--end::Svg Icon-->
-						</span>
-						<span class="menu-title"><?php echo $row['m_id']; ?></span>
-						<span class="menu-arrow"></span>
-					</span>
-					<div class="menu-sub menu-sub-accordion">
-						<?php
-							$sqld = 'SELECT * FROM menud WHERE md_menu = "'.$row['m_id'].'" AND md_show = "1" ORDER BY md_orden';
-							$resultd = setq($sqld);
-							if($resultd->num_rows > 0){
-								while($rowd = $resultd->fetch_array()){
-						?>
-						<div class="menu-item">
-							<a class="menu-link"
-								href="?modulo=<?php echo $rowd['md_modulo'] ?>&accion=<?php echo $rowd['md_accion'] ?>">
-								<!-- <span class="menu-bullet">
-									<span class="bullet bullet-dot"></span>
-								</span> -->
+		<?php
+$uid = addslashes($_SESSION['uid'] ?? '');
+?>
 
-								<span class="<?php echo $rowd['md_icono'] ?>"></span>
-								<span class="menu-title">&nbsp;<?php echo $rowd['md_id']; ?></span>
-							</a>
-						</div>
-						<?php
-								}
-							}
-						?>
-					</div>
-				</div>
-				<?php
-					}
-				?>
-			</div>
-			<!--end::Menu-->
-		</div>
+<div class="hover-scroll-overlay-y my-5 my-lg-5" id="kt_aside_menu_wrapper" data-kt-scroll="true"
+     data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-height="auto"
+     data-kt-scroll-dependencies="#kt_aside_logo, #kt_aside_footer" data-kt-scroll-wrappers="#kt_aside_menu"
+     data-kt-scroll-offset="0">
+
+  <!--begin::Menu-->
+  <div
+    class="menu menu-column menu-title-gray-800 menu-state-title-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500"
+    id="kt_aside_menu" data-kt-menu="true">
+    <?php
+      // 1) Menús disponibles para AL MENOS un submenú permitido por roles del usuario
+      //    Importante: vinculamos modulo + accion con gruposd
+      $sql = '
+        SELECT DISTINCT m.*
+        FROM menu m
+        INNER JOIN menud    md ON m.m_id = md.md_menu
+        INNER JOIN gruposd  gd ON gd.gd_modulo = md.md_modulo
+                              AND gd.gd_accion = md.md_accion
+        INNER JOIN usuarios_rol ur ON ur.ur_rol = gd.gd_grupo
+                                  AND ur.ur_usuario = "'.$uid.'"
+        WHERE m.m_barra = "1"
+        ORDER BY m.m_orden, m.m_id
+      ';
+      $result = setq($sql);
+
+      while($row = $result->fetch_array()){
+        // para marcar activo el menú al que pertenece el módulo actual
+        $pertenece = busca($_GET['modulo'] ?? '', 'menud', 'md_modulo', 'md_menu');
+        $activo    = ($pertenece == $row['m_id']) ? 'active' : '';
+    ?>
+    <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+      <span class="menu-link <?php echo $activo; ?>">
+        <span class="menu-icon">
+          <span class="svg-icon svg-icon-2">
+            <i class="<?php echo $row['m_icono']; ?> fs-1"></i>
+          </span>
+        </span>
+        <span class="menu-title"><?php echo $row['m_id']; ?></span>
+        <span class="menu-arrow"></span>
+      </span>
+
+      <div class="menu-sub menu-sub-accordion">
+        <?php
+          // 2) Submenús (menud) realmente permitidos para este usuario según sus roles
+          $sqld = '
+            SELECT DISTINCT md.*
+            FROM menud md
+            INNER JOIN gruposd  gd ON gd.gd_modulo = md.md_modulo
+                                  AND gd.gd_accion = md.md_accion
+            INNER JOIN usuarios_rol ur ON ur.ur_rol = gd.gd_grupo
+                                      AND ur.ur_usuario = "'.$uid.'"
+            WHERE md.md_menu = "'.$row['m_id'].'"
+              AND md.md_show = "1"
+            ORDER BY md.md_orden
+          ';
+          $resultd = setq($sqld);
+
+          if($resultd && $resultd->num_rows > 0){
+            while($rowd = $resultd->fetch_array()){
+        ?>
+        <div class="menu-item">
+          <a class="menu-link"
+             href="?modulo=<?php echo $rowd['md_modulo']; ?>&accion=<?php echo $rowd['md_accion']; ?>">
+            <span class="<?php echo $rowd['md_icono']; ?>"></span>
+            <span class="menu-title">&nbsp;<?php echo $rowd['md_id']; ?></span>
+          </a>
+        </div>
+        <?php
+            }
+          }
+        ?>
+      </div>
+    </div>
+    <?php
+      } // while menus
+    ?>
+  </div>
+  <!--end::Menu-->
+</div>
+
 		<!--end::Aside Menu-->
 		</div>
 		<!--end::Aside menu-->
@@ -216,384 +239,239 @@ License: For each use you must have a valid license purchased only from above li
 								</a>
 							</div>
 	
-		<?php 
-function buttonBar($nmb, $modulos, $badgeCount = 0, $ntableros = 0, $nremisiones = 0, $ningresos = 0, $nclientes = 0, $nperdidos = 0, $nguias = 0, $nembarques = 0) {
-    $modulos = explode(",", $modulos);
-    $mdl = '';
-    for($j = 0; $j < count($modulos); $j++) {
-        if($j == (count($modulos) - 1)){
-            $mdl .= 'm_id = "'.htmlspecialchars($modulos[$j]).'"';
-        } else {
-            $mdl .= 'm_id = "'.htmlspecialchars($modulos[$j]).'" OR ';
-        }
-    }	
-    ?>
-    <div data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" class="menu-item menu-lg-down-accordion me-lg-1">
-        <span class="menu-link py-3">
-            <span class="menu-title"><?php echo $nmb; ?></span>&nbsp;
-            <?php if (($badgeCount > 0 || $nguias > 0 || $nembarques > 0)) { ?>
-                <span class="badge bg-danger"><?php echo $badgeCount+$nguias+$nembarques; ?></span>
-            <?php } ?>
-			<?php if (($ntableros > 0 || $nremisiones > 0 || $ningresos > 0 || $nclientes > 0 || $nperdidos > 0)) { ?>
-                <span class="badge bg-danger"><?php echo $ntableros+$nremisiones+$ningresos+$nclientes+$nperdidos+$nguias; ?></span>
-            <?php } ?>
-            <span class="menu-arrow d-lg-none"></span>
-        </span>
+							<?php 
+								function buttonBar($nmb, $modulos, $badgeCount = 0, $ntableros = 0, $nremisiones = 0, $ningresos = 0, $nclientes = 0, $nperdidos = 0, $nguias = 0, $nembarques = 0) {
+									$modulos = explode(",", $modulos);
+									$mdl = '';
+									for($j = 0; $j < count($modulos); $j++) {
+										if($j == (count($modulos) - 1)){
+											$mdl .= 'm_id = "'.htmlspecialchars($modulos[$j]).'"';
+										} else {
+											$mdl .= 'm_id = "'.htmlspecialchars($modulos[$j]).'" OR ';
+										}
+									}	
+									?>
+									<div data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" class="menu-item menu-lg-down-accordion me-lg-1">
+										<span class="menu-link py-3">
+											<span class="menu-title"><?php echo $nmb; ?></span>&nbsp;
+											<?php if (($badgeCount > 0 || $nguias > 0 || $nembarques > 0)) { ?>
+												<span class="badge bg-danger"><?php echo $badgeCount+$nguias+$nembarques; ?></span>
+											<?php } ?>
+											<?php if (($ntableros > 0 || $nremisiones > 0 || $ningresos > 0 || $nclientes > 0 || $nperdidos > 0)) { ?>
+												<span class="badge bg-danger"><?php echo $ntableros+$nremisiones+$ningresos+$nclientes+$nperdidos+$nguias; ?></span>
+											<?php } ?>
+											<span class="menu-arrow d-lg-none"></span>
+										</span>
 
-        <div class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown menu-rounded-0 py-lg-4 w-lg-225px">
-            <?php
-            $sqlf = 'SELECT * FROM menu WHERE '.$mdl.' AND m_barra = 1';
-            $resultf = setq($sqlf);
-            while($rowf = $resultf->fetch_array()) {
-                ?>
-                <div data-kt-menu-trigger="{default:'click', lg: 'hover'}" data-kt-menu-placement="right-start"
-                    class="menu-item menu-lg-down-accordion">
-                    <span class="menu-link py-3">
-                        <span class="menu-icon">
-                            <span class="<?php echo $rowf['m_icono']; ?>"></span>
-                        </span>
-                        <span class="menu-title"><?php echo $rowf['m_id']; ?></span>
-                        <?php 
-						if (($badgeCount > 0 || $nguias > 0 || $nembarques > 0) && $rowf['m_id'] == "LOGISTICA") { ?>
-                            <span class="badge bg-danger"><?php echo $badgeCount+$nguias+$nembarques; ?></span>
-                        <?php } ?>
-						<?php if (($ntableros > 0 || $nremisiones > 0) && $rowf['m_id'] == "VENTAS") { ?>
-                            <span class="badge bg-danger"><?php echo $ntableros+$nremisiones+$nguias; ?></span>
-                        <?php } ?>
-						<?php if ($ningresos > 0 && $rowf['m_id'] == "FINANZAS") { ?>
-                            <span class="badge bg-danger"><?php echo $ningresos; ?></span>
-                        <?php } ?>
-						<?php if (($nclientes > 0 || $nperdidos > 0) && $rowf['m_id'] == "CLIENTES") { ?>
-                            <span class="badge bg-danger"><?php echo $nclientes+$nperdidos; ?></span>
-                        <?php } ?>
-                        <span class="menu-arrow"></span>
-                    </span>
-                    <div
-						class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown menu-active-bg py-lg-4 w-lg-225px">
-						<?php
-						$sqlmd = 'SELECT * FROM menud WHERE md_menu = "'.$rowf['m_id'].'" AND md_show = 1;';
-						$resultmd = setq($sqlmd);
-						while($rowmd = $resultmd->fetch_array()){
-						?>
-						<div class="menu-item">
-							<a class="menu-link py-3" href="index?modulo=<?php echo $rowmd['md_modulo']."&accion=".$rowmd['md_accion']; ?>">
-								<span class="menu-bullet">
-									<span class="<?php echo $rowmd['md_icono']; ?>"></span>
-								</span>
-								<span class="menu-title"><?php echo $rowmd['md_id']?></span>
-								<?php if ($badgeCount > 0 && $rowmd['md_modulo'] == "cotizacionessolicitud") { ?>
-									<span class="badge bg-danger"><?php echo $badgeCount; ?></span>
-								<?php } ?>
-								<?php if ($ntableros > 0 && $rowmd['md_modulo'] == "tableros") { ?>
-									<span class="badge bg-danger"><?php echo $ntableros; ?></span>
-								<?php } ?>
-								<?php if ($nremisiones > 0 && $rowmd['md_modulo'] == "remisiones") { ?>
-									<span class="badge bg-danger"><?php echo $nremisiones; ?></span>
-								<?php } ?>
-								<?php if ($ningresos > 0 && $rowmd['md_modulo'] == "ingresos") { ?>
-									<span class="badge bg-danger"><?php echo $ningresos; ?></span>
-								<?php } ?>
-								<?php if ($nclientes > 0 && $rowmd['md_modulo'] == "leadscapturados") { ?>
-									<span class="badge bg-danger"><?php echo $nclientes; ?></span>
-								<?php } ?>
-								<?php if ($nperdidos > 0 && $rowmd['md_modulo'] == "leadsperdidos") { ?>
-									<span class="badge bg-danger"><?php echo $nperdidos; ?></span>
-								<?php } ?>
-								<?php if ($nguias > 0 && $rowmd['md_modulo'] == "guias") { ?>
-									<span class="badge bg-danger"><?php echo $nguias; ?></span>
-								<?php } ?>
-								<?php if ($nembarques > 0 && $rowmd['md_modulo'] == "embarcamiento") { ?>
-									<span class="badge bg-danger"><?php echo $nembarques; ?></span>
-								<?php } ?>
-							</a>
-						</div>
-						<?php
-						}
-						?>
-					</div>
-                </div>
-                <?php
-            }
-            ?>
-        </div>
-    </div>
-    <?php
-}
-	/* $sql = 'SELECT * FROM crm_cotizaciones WHERE cc_estatus = "L" AND cc_agente = "'.$_SESSION['uid'].'"'; */
-	$grupouser = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-	$badgeCount = 0;
-	$ingresosaprobados = 0;
-	$nembarques = 0;
-	if($grupouser == "ADMIN" || $grupouser == "GERENCIA" || $grupouser == "LOGISTIC"){
-		$badgeCount = intval(busca('L', 'crm_cotizaciones', 'cc_estatus', 'COUNT(*)'));
-	}
+										<div class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown menu-rounded-0 py-lg-4 w-lg-225px">
+											<?php
+											$sqlf = 'SELECT * FROM menu WHERE '.$mdl.' AND m_barra = 1';
+											$resultf = setq($sqlf);
+											while($rowf = $resultf->fetch_array()) {
+												?>
+												<div data-kt-menu-trigger="{default:'click', lg: 'hover'}" data-kt-menu-placement="right-start"
+													class="menu-item menu-lg-down-accordion">
+													<span class="menu-link py-3">
+														<span class="menu-icon">
+															<span class="<?php echo $rowf['m_icono']; ?>"></span>
+														</span>
+														<span class="menu-title"><?php echo $rowf['m_id']; ?></span>
+														<?php 
+														if (($badgeCount > 0 || $nguias > 0 || $nembarques > 0) && $rowf['m_id'] == "LOGISTICA") { ?>
+															<span class="badge bg-danger"><?php echo $badgeCount+$nguias+$nembarques; ?></span>
+														<?php } ?>
+														<?php if (($ntableros > 0 || $nremisiones > 0) && $rowf['m_id'] == "VENTAS") { ?>
+															<span class="badge bg-danger"><?php echo $ntableros+$nremisiones+$nguias; ?></span>
+														<?php } ?>
+														<?php if ($ningresos > 0 && $rowf['m_id'] == "FINANZAS") { ?>
+															<span class="badge bg-danger"><?php echo $ningresos; ?></span>
+														<?php } ?>
+														<?php if (($nclientes > 0 || $nperdidos > 0) && $rowf['m_id'] == "CLIENTES") { ?>
+															<span class="badge bg-danger"><?php echo $nclientes+$nperdidos; ?></span>
+														<?php } ?>
+														<span class="menu-arrow"></span>
+													</span>
+													<div
+														class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown menu-active-bg py-lg-4 w-lg-225px">
+														<?php
+														$sqlmd = 'SELECT * FROM menud WHERE md_menu = "'.$rowf['m_id'].'" AND md_show = 1;';
+														$resultmd = setq($sqlmd);
+														while($rowmd = $resultmd->fetch_array()){
+														?>
+														<div class="menu-item">
+															<a class="menu-link py-3" href="index?modulo=<?php echo $rowmd['md_modulo']."&accion=".$rowmd['md_accion']; ?>">
+																<span class="menu-bullet">
+																	<span class="<?php echo $rowmd['md_icono']; ?>"></span>
+																</span>
+																<span class="menu-title"><?php echo $rowmd['md_id']?></span>
+																<?php if ($badgeCount > 0 && $rowmd['md_modulo'] == "cotizacionessolicitud") { ?>
+																	<span class="badge bg-danger"><?php echo $badgeCount; ?></span>
+																<?php } ?>
+																<?php if ($ntableros > 0 && $rowmd['md_modulo'] == "tableros") { ?>
+																	<span class="badge bg-danger"><?php echo $ntableros; ?></span>
+																<?php } ?>
+																<?php if ($nremisiones > 0 && $rowmd['md_modulo'] == "remisiones") { ?>
+																	<span class="badge bg-danger"><?php echo $nremisiones; ?></span>
+																<?php } ?>
+																<?php if ($ningresos > 0 && $rowmd['md_modulo'] == "ingresos") { ?>
+																	<span class="badge bg-danger"><?php echo $ningresos; ?></span>
+																<?php } ?>
+																<?php if ($nclientes > 0 && $rowmd['md_modulo'] == "leadscapturados") { ?>
+																	<span class="badge bg-danger"><?php echo $nclientes; ?></span>
+																<?php } ?>
+																<?php if ($nperdidos > 0 && $rowmd['md_modulo'] == "leadsperdidos") { ?>
+																	<span class="badge bg-danger"><?php echo $nperdidos; ?></span>
+																<?php } ?>
+																<?php if ($nguias > 0 && $rowmd['md_modulo'] == "guias") { ?>
+																	<span class="badge bg-danger"><?php echo $nguias; ?></span>
+																<?php } ?>
+																<?php if ($nembarques > 0 && $rowmd['md_modulo'] == "embarcamiento") { ?>
+																	<span class="badge bg-danger"><?php echo $nembarques; ?></span>
+																<?php } ?>
+															</a>
+														</div>
+														<?php
+														}
+														?>
+													</div>
+												</div>
+												<?php
+											}
+											?>
+										</div>
+									</div>
+									<?php
+								}
+								/* $sql = 'SELECT * FROM crm_cotizaciones WHERE cc_estatus = "L" AND cc_agente = "'.$_SESSION['uid'].'"'; */
+								$grupouser = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+								$badgeCount = 0;
+								$ingresosaprobados = 0;
+								$nembarques = 0;
+								if($grupouser == "ADMIN" || $grupouser == "GERENCIA" || $grupouser == "LOGISTIC"){
+									$badgeCount = intval(busca('L', 'crm_cotizaciones', 'cc_estatus', 'COUNT(*)'));
+								}
 
-	if($grupouser == "VENTAS" || $grupouser == "FINANZAS"){
-		$sqlf = 'cc_agente = "'.$_SESSION['uid'].'" AND ';
-		$sqlg = 'r_encargado = "'.$_SESSION['uid'].'" AND ';
-	} else if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
-		$sqlf = '';
-		$sqlg = '';
-	} 
+								if($grupouser == "VENTAS" || $grupouser == "FINANZAS"){
+									$sqlf = 'cc_agente = "'.$_SESSION['uid'].'" AND ';
+									$sqlg = 'r_encargado = "'.$_SESSION['uid'].'" AND ';
+								} else if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
+									$sqlf = '';
+									$sqlg = '';
+								} 
 
-	//Todas las cotizaciones que esten aplicadas
-	$ntableros = intval(busca('P', 'crm_cotizaciones', $sqlf.'cc_estatus', 'COUNT(*)'));
-	/* die($ntableros); */
-	
-	//Todas las nuevas remisiones
-	$nremisiones = intval(busca('N', 'remisiones', $sqlg.'r_estatus', 'COUNT(*)'));
-	//die($nremisiones);
-	$ningresos = intval(busca('P', 'ingresos', 'i_estatus', 'COUNT(*)'));
+								//Todas las cotizaciones que esten aplicadas
+								$ntableros = intval(busca('P', 'crm_cotizaciones', $sqlf.'cc_estatus', 'COUNT(*)'));
+								/* die($ntableros); */
+								
+								//Todas las nuevas remisiones
+								$nremisiones = intval(busca('N', 'remisiones', $sqlg.'r_estatus', 'COUNT(*)'));
+								//die($nremisiones);
+								$ningresos = intval(busca('P', 'ingresos', 'i_estatus', 'COUNT(*)'));
 
 
-	//Buscamos cada ingreso finalizado y agrupamos por remisión
-	$sqlingresos = 'SELECT COUNT(*) FROM (SELECT COUNT(*) FROM ingresos INNER JOIN ingreso_cxcobrar ON i_id = ic_ingreso INNER JOIN cxcobrar ON ic_cxcobrar = cx_id INNER JOIN remisiones ON r_id = cx_referencia WHERE i_estatus = "F" AND r_estatus = "F" GROUP BY r_id) as cantidad';
-	$resultingresos = setq($sqlingresos);
-	list($ingresosaprobados) = $resultingresos -> fetch_array(); 
-	/* while($rowingresos = $resultingresos->fetch_array()){
-		//Si la remision se encuentra en estatus "F" significa que aún no salen todos sus productos en algun embarque.
-		$estatusr = busca($rowingresos['cx_referencia'], 'remisiones', 'r_id', 'r_estatus'); 
-		if($estatusr == "F"){
-			$ingresosaprobados++;
-		}
-	} */
-	//Sumamos la cantidad obtenida a las notificaciones de los tableros
-	$ntableros += $ingresosaprobados;
-	//Buscamos los registros pertenecientes a cuando una solicitud de cotizacion en lógistica es devuelta al vendedor
-	$ntableros += intval(busca("D", 'crm_cotizaciones', 'cc_motivo IS NOT NULL AND cc_estatus', 'COUNT(*)'));
+								//Buscamos cada ingreso finalizado y agrupamos por remisión
+								$sqlingresos = 'SELECT COUNT(*) FROM (SELECT COUNT(*) FROM ingresos INNER JOIN ingreso_cxcobrar ON i_id = ic_ingreso INNER JOIN cxcobrar ON ic_cxcobrar = cx_id INNER JOIN remisiones ON r_id = cx_referencia WHERE i_estatus = "F" AND r_estatus = "F" GROUP BY r_id) as cantidad';
+								$resultingresos = setq($sqlingresos);
+								list($ingresosaprobados) = $resultingresos -> fetch_array(); 
 
-	//Contabilizamos la cantidad de leads asignados y reasignados del vendedor
-	if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
-		$sqleadf = '';
-	} else {
-		$sqleadf = '  AND cl_vendedor = "'.$_SESSION['uid'].'"';
-	}
-	/* $sqlead = 'SELECT cl_code, cl_telefono FROM crm_leads WHERE cl_estatus IN ("A", "R") AND cl_acercamiento != 1 '.$sqleadf;
-	$resultlead = setq($sqlead);
-	$nclientes = 0;
-	while($rowlead = $resultlead->fetch_array()){
-		$telefono = $rowlead['cl_telefono'];
-		$telefonoconlada = $rowlead['cl_code'].$telefono;
-		//Consultamos si hay un usuario con este número de teléfono registrado
-		$sqlcl = 'SELECT c_id FROM crm_clientes
-				WHERE (c_telefono1 IN ("'.$telefono.'", "'.$telefonoconlada.'") OR c_telefono2 
-				IN ("'.$telefono.'", "'.$telefonoconlada.'"))';
-		$resultcl = setq($sqlcl);
-		if($resultcl->num_rows > 0){
-			list($cliente) = $resultcl->fetch_array();
-			//Verificamos que no existan abiertos de este usuario
-			$ntableros = intval(busca($cliente, 'crm_tableros', 'ct_estatus != "F" AND ct_cliente', 'COUNT(*)'));
-			if($ntableros == 0){
-				$nclientes++;
-			}
-		} else{
-			//No existe ningun registro para este número de telefono
-			$nclientes++;
-		}
-	} */
+								//Sumamos la cantidad obtenida a las notificaciones de los tableros
+								$ntableros += $ingresosaprobados;
+								//Buscamos los registros pertenecientes a cuando una solicitud de cotizacion en lógistica es devuelta al vendedor
+								$ntableros += intval(busca("D", 'crm_cotizaciones', 'cc_motivo IS NOT NULL AND cc_estatus', 'COUNT(*)'));
 
-	//Buscamos la cantidad total de leads marcados como perdidos
-	$nperdidos = intval(busca('X', 'crm_leads', 'cl_estatus', 'COUNT(*)'));
+								//Contabilizamos la cantidad de leads asignados y reasignados del vendedor
+								if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
+									$sqleadf = '';
+								} else {
+									$sqleadf = '  AND cl_vendedor = "'.$_SESSION['uid'].'"';
+								}
 
-	//Buscamos las remisiones a las cuales ya se les puede asignar una guía
-	/* $sqlrc = 'SELECT COUNT(*) AS nregistros FROM ( SELECT DISTINCT(r_id) FROM remisiones 
-			INNER JOIN crm_cotizaciones ON cc_remision = r_id 
-			INNER JOIN crm_cotizacionesc ON ccc_cotizacion = cc_id 
-			WHERE r_estatus = "F" AND ccc_estatus IN ("N") AND ccc_guia IS NULL AND ccc_tipoenvio IN ("O", "D") ) AS subconsulta';
-	$resultrc = setq($sqlrc);
-	list($nreg) = $resultrc->fetch_array();
-	$nguias = intval($nreg); */
+								//Buscamos la cantidad total de leads marcados como perdidos
+								$nperdidos = intval(busca('X', 'crm_leads', 'cl_estatus', 'COUNT(*)'));
 
-	$nguias = 0;
-	$sqlguias = 'SELECT COUNT(*) FROM remisiones INNER JOIN remisionesc ON rc_remision = r_id WHERE r_estatus = "F" AND rc_estatus IN ("A")';
-	if($grupouser != "ADMIN"){
-		if($grupouser != "GERENCIA"){
-			$sqlguias .= ' AND r_encargado LIKE "%'.$_SESSION['uid'].'%"';
-		}
-	}
-	$sqlguias .= ' ORDER BY r_id DESC';    
-	$resultguias = setq($sqlguias);
-	list($nguias) = $resultguias -> fetch_array();
+								$nguias = 0;
+								$sqlguias = 'SELECT COUNT(*) FROM remisiones INNER JOIN remisionesc ON rc_remision = r_id WHERE r_estatus = "F" AND rc_estatus IN ("A")';
+								if($grupouser != "ADMIN"){
+									if($grupouser != "GERENCIA"){
+										$sqlguias .= ' AND r_encargado LIKE "%'.$_SESSION['uid'].'%"';
+									}
+								}
+								$sqlguias .= ' ORDER BY r_id DESC';    
+								$resultguias = setq($sqlguias);
+								list($nguias) = $resultguias -> fetch_array();
 
-	/* while($row = $resultguias->fetch_array()){  
-		$remision  = $row['r_id'];
-		$articulosc = intval(busca($remision, 'remisionesc', 'rc_estatus IN ("A") AND rc_tipoenvio IN ("O", "D") AND rc_remision', 'COUNT(*)'));
-		if($articulosc > 0){
-		 $narticulos = intval(busca($cotizacion, 'crm_cotizacionesc', 'ccc_estatus = "N" AND ccc_guia IS NULL AND ccc_cotizacion', 'COUNT(*)')); 
-		$narticulos = intval(busca($remision, 'remisionesc', 'rc_estatus = "A" AND rc_remision', 'COUNT(*)'));
+								$pdefinir = 0;
+								$sqlq = 'SELECT COUNT(*) FROM remisiones INNER JOIN remisionesc ON rc_remision = r_id WHERE r_estatus = "F" AND rc_estatus IN ("N") AND rc_tipoenvio IN ("P")';
+								if($grupouser != "ADMIN"){
+									if($grupouser != "GERENCIA"){
+										$sqlq.= ' AND r_encargado LIKE "%'.$_SESSION['uid'].'%"';
+									}
+								}
+								$sqlq.=' ORDER BY r_id DESC';
+								$resultq = setq($sqlq);
+								list($pdefinir) = $resultq -> fetch_array();
 
-		if($narticulos){
-			$nguias++;
-		}
-	}
-	} */
+								$nremisiones += $pdefinir;
 
-	$pdefinir = 0;
-	$sqlq = 'SELECT COUNT(*) FROM remisiones INNER JOIN remisionesc ON rc_remision = r_id WHERE r_estatus = "F" AND rc_estatus IN ("N") AND rc_tipoenvio IN ("P")';
-	if($grupouser != "ADMIN"){
-		if($grupouser != "GERENCIA"){
-			$sqlq.= ' AND r_encargado LIKE "%'.$_SESSION['uid'].'%"';
-		}
-	}
-	$sqlq.=' ORDER BY r_id DESC';
-	$resultq = setq($sqlq);
-	list($pdefinir) = $resultq -> fetch_array();
-	/* while($rowq = $resultq->fetch_array()){  
-	$cotizacion = $rowq ['cc_id'];
-	$articulosc = intval(busca($cotizacion, 'remisionesc', 'rc_estatus IN ("N") AND rc_tipoenvio IN ("P") AND rc_remision', 'COUNT(*)'));
-	if($articulosc > 0){
-	$narticulos = intval(busca($cotizacion, 'crm_cotizacionesc', 'ccc_estatus = "N" AND ccc_guia IS NULL AND ccc_cotizacion', 'COUNT(*)'));
-		$pdefinir++;
-	}
-	} */
+								//Buscamos las guías que esten pendientes de embarque
+								$sqlpaq = 'SELECT COUNT(*) FROM paqueterias INNER JOIN guias_articulos ON ga_paqueteria = p_id  WHERE p_estatus = "A" AND ga_estatus = "P"';
+								$resultpaq = setq($sqlpaq);
+								list($nembarques) = $resultpaq -> fetch_array();
 
-	$nremisiones += $pdefinir;
-/* echo "Registros: ".$contador; */
+								//Buscamos los artículos que recoge el cliente
+								$sql = 'SELECT COUNT(*) FROM remisionesc INNER JOIN remisiones ON r_id = rc_remision
+								WHERE r_estatus IN ("F", "A") AND rc_estatus IN ("P") AND rc_tipoenvio = "C"';
+								$result = setq($sql);
+								list($registrosc) = $result->fetch_array();
 
-	//Buscamos las guías que esten pendientes de embarque
-	$sqlpaq = 'SELECT COUNT(*) FROM paqueterias INNER JOIN guias_articulos ON ga_paqueteria = p_id  WHERE p_estatus = "A" AND ga_estatus = "P"';
-	$resultpaq = setq($sqlpaq);
-	list($nembarques) = $resultpaq -> fetch_array();
-	/* while($rowpaq = $resultpaq->fetch_array()){
-		$paqueteria = $rowpaq['p_nmb'];
-
-		$registros = intval(busca($rowpaq['p_id'], 'guias_articulos', 'ga_estatus = "P" AND ga_paqueteria', 'COUNT(*)'));
-		if($registros > 0){
-			$nembarques += $registros;
-		}
-	} */
-	//Buscamos los artículos que recoge el cliente
-	$sql = 'SELECT COUNT(*) FROM remisionesc INNER JOIN remisiones ON r_id = rc_remision
-      WHERE r_estatus IN ("F", "A") AND rc_estatus IN ("P") AND rc_tipoenvio = "C"';
-	$result = setq($sql);
-	list($registrosc) = $result->fetch_array();
-
-	if($registrosc > 0){
-		$nembarques += $registrosc;
-	}
+								if($registrosc > 0){
+									$nembarques += $registrosc;
+								}
 
 
 
-	if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){		
-		buttonBar("Finanzas", "FINANZAS,COMPRAS,FACTURACION", 0, 0, 0, $ningresos, 0, 0, 0, 0);
-		buttonBar("Ventas", "VENTAS,CLIENTES", 0, $ntableros, $nremisiones, 0, $nclientes, $nperdidos, 0, 0);
-		buttonBar("Logística", "ARTICULOS,LOGISTICA,INVENTARIOS", $badgeCount, 0, 0, 0, 0, 0, $nguias, $nembarques);
-	}else{
-	if($grupouser == "FINANZAS"){
-		buttonBar("Finanzas", "FINANZAS,COMPRAS,FACTURACION", 0, 0, 0, $ningresos, 0, 0, 0, 0);
-	}
-    
-	if($grupouser == "VENTAS"){
-		buttonBar("Ventas", "VENTAS,CLIENTES", 0, $ntableros, $nremisiones, 0, $nclientes, $nperdidos, 0, 0);
-	}
+								if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){		
+									buttonBar("Finanzas", "FINANZAS,COMPRAS,FACTURACION", 0, 0, 0, $ningresos, 0, 0, 0, 0);
+									buttonBar("Ventas", "VENTAS,CLIENTES", 0, $ntableros, $nremisiones, 0, $nclientes, $nperdidos, 0, 0);
+									buttonBar("Logística", "ARTICULOS,LOGISTICA,INVENTARIOS", $badgeCount, 0, 0, 0, 0, 0, $nguias, $nembarques);
+								}else{
+								if($grupouser == "FINANZAS"){
+									buttonBar("Finanzas", "FINANZAS,COMPRAS,FACTURACION", 0, 0, 0, $ningresos, 0, 0, 0, 0);
+								}
+								
+								if($grupouser == "VENTAS"){
+									buttonBar("Ventas", "VENTAS,CLIENTES", 0, $ntableros, $nremisiones, 0, $nclientes, $nperdidos, 0, 0);
+								}
 
-	if($grupouser == "LOGISTIC"){
-		buttonBar("Logística", "ARTICULOS,LOGISTICA,INVENTARIOS", $badgeCount, 0, 0, 0, 0, 0, $nguias, $nembarques);
-	}
-	}
+								if($grupouser == "LOGISTIC"){
+									buttonBar("Logística", "ARTICULOS,LOGISTICA,INVENTARIOS", $badgeCount, 0, 0, 0, 0, 0, $nguias, $nembarques);
+								}
+								}
 
 
-	
-	$elementos = 10;
-	$sqlp = 'SELECT * FROM gruposd WHERE gd_grupo = "'.$grupouser.'" AND gd_modulo != "INDEX" GROUP BY gd_modulo';
-	$resultp = setq($sqlp);
-	$numfiles = $resultp->num_rows;
-	if($numfiles >= 10){
-		$campos = intval($numfiles / $elementos);
-		$residuo = $numfiles % $elementos;
-		
-		if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
-			$tamanio = $campos * 150;	
-		} else{
-			if($residuo > 0){
-				$campos++;
-			}
-			$tamanio = $campos * 200;
-		}
-		/* $closediv = '</div></div>'; */
-	} else{
-		$tamanio = 200;
-	}
-	/* die(); */
-	?>
-
-	<!-- INICIA MEGA MENU -->
-		<!-- <div data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start"
-		class="menu-item menu-lg-down-accordion me-lg-1">
-		<span class="menu-link py-3">
-			<span class="menu-title">Mega Menu</span>
-			<span class="menu-arrow d-lg-none"></span>
-		</span>
-		<div class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown w-100 w-lg-<?php /* echo $tamanio; */ ?>px p-5 p-lg-5">
-			<div class="row" data-kt-menu-dismiss="true"> -->
-			<?php 
-			/* $sql = 'SELECT * FROM menud INNER JOIN menu ON m_id = md_menu INNER JOIN gruposd WHERE md_show = "1" AND m_barra = 1 AND  md_modulo = gd_modulo AND gd_accion = md_accion AND gd_grupo = "'.$grupouser.'" ORDER BY m_orden;';
-			$result = setq($sql);
-			$i = 1;
-			$conteo = $result->num_rows;
-			
-
-			while ($row = $result->fetch_array()) {		
-			
-				$txt = 'width: 150px;';
-				
-				if ($i % $elementos == 1) {
-					if($i == 1){
-						$txt2 = 'width: 150px;';
-					} else{
-						$txt2 = 'width: revert-layer;';
-					}
-					echo '<div class="col-lg-3 border-left-lg-1" style="'.$txt2.'">';
-					echo '<div class="menu-inline menu-column menu-active-bg" style="'.$txt.'">';
-				}
-				?>
-				<div class="menu-item" style="<?php echo $txt; ?>">
-					<a href="index?modulo=<?php echo $row['md_modulo']."&accion=".$row['md_accion']; ?>" class="menu-link">
-						<span class="<?php echo $row['md_icono']; ?>"></span>
-						&nbsp;<span class="menu-title"><?php echo $row['md_id']; ?></span>
-						<?php 
-						if ($badgeCount > 0 && $row['md_modulo'] == "cotizacionessolicitud") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $badgeCount; ?></span>
-						<?php } ?>
-						<?php if ($ntableros > 0 && $row['md_modulo'] == "tableros") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $ntableros; ?></span>
-						<?php } ?>
-						<?php if ($nremisiones > 0 && $row['md_modulo'] == "remisiones") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $nremisiones; ?></span>
-						<?php } ?>
-						<?php if ($ningresos > 0 && $row['md_modulo'] == "ingresos") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $ningresos; ?></span>
-						<?php } ?>
-						<?php if ($nguias > 0 && $row['md_modulo'] == "guias") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $nguias; ?></span>
-						<?php } ?>
-						<?php if ($nembarques > 0 && $row['md_modulo'] == "embarcamiento") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $nembarques; ?></span>
-						<?php } ?>
-
-						<?php if ($nperdidos > 0 && $row['md_modulo'] == "leadsperdidos") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $nperdidos; ?></span>
-						<?php } ?>
-						<?php if ($nclientes > 0 && $row['md_modulo'] == "leadscapturados") { ?>
-							&nbsp;<span class="badge bg-danger"><?php echo $nclientes; ?></span>
-						<?php } ?>
-					</a>
-				</div>
-				<?php
-				if ($i % $elementos == 0 || $i == $conteo) {
-						echo '</div>'; // Cerrar la columna interna
-						echo '</div>'; // Cerrar la columna externa
-				}
-				$i++;
-			}	 */		
-			?>
-		<!-- </div>
-		</div>
-		</div> -->
-		<!--FINALIZA MEGA MENÚ-->
-
-		<!--end::Menu wrapper-->
-		</div>
+								
+								$elementos = 10;
+								$sqlp = 'SELECT * FROM gruposd WHERE gd_grupo = "'.$grupouser.'" AND gd_modulo != "INDEX" GROUP BY gd_modulo';
+								$resultp = setq($sqlp);
+								$numfiles = $resultp->num_rows;
+								if($numfiles >= 10){
+									$campos = intval($numfiles / $elementos);
+									$residuo = $numfiles % $elementos;
+									
+									if($grupouser == "ADMIN" || $grupouser == "GERENCIA"){
+										$tamanio = $campos * 150;	
+									} else{
+										if($residuo > 0){
+											$campos++;
+										}
+										$tamanio = $campos * 200;
+									}
+								} else{
+									$tamanio = 200;
+								}
+								?>
+			<!--end::Menu wrapper-->
+			</div>
 
 
 		</div></div>

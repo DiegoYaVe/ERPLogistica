@@ -82,7 +82,7 @@
       }
     
       $sql .= ' ORDER BY cl_id DESC LIMIT '.($bloque * $page).','.$bloque;
-      die($sql);
+      //die($sql);
       $this->result = setq($sql);
       $this->resultt = setq($sql);
     }    

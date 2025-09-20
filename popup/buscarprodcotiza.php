@@ -1,5 +1,5 @@
 <?php
-  //ini_set('display_errors', 1);
+  ini_set('display_errors', 0);
   //$mysqli = new mysqli("localhost",'tyesolut_root','Wptyeall.0','tyesolut_ceo');
   include('../funciones.php');
   $iddoc = $_REQUEST['iddoc'];

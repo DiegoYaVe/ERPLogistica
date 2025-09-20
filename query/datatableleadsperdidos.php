@@ -1,6 +1,6 @@
 <?php
 include_once('../funciones.php');
-/* ini_set('display_errors',1); */
+ini_set('display_errors',0);
 session_start();
 
 $fini = $_POST['fini'];

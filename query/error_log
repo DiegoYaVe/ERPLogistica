@@ -1,0 +1,139 @@
+[11-Aug-2025 16:59:02 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[12-Aug-2025 23:43:16 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[14-Aug-2025 17:39:09 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[14-Aug-2025 20:29:20 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[14-Aug-2025 22:36:07 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 16:05:12 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 16:06:13 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 16:06:17 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 16:07:00 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 16:07:58 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:07:58 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:17 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:17 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:17 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:17 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:11:18 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[15-Aug-2025 16:25:20 America/Guatemala] PHP Warning:  Undefined variable $respuesta in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/addprospecto.php on line 65
+[15-Aug-2025 16:25:20 America/Guatemala] PHP Warning:  Undefined variable $respuesta in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/addprospecto.php on line 122
+[15-Aug-2025 16:25:20 America/Guatemala] PHP Warning:  Undefined variable $codes in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/addprospecto.php on line 225
+[15-Aug-2025 16:25:20 America/Guatemala] PHP Warning:  Undefined variable $nvendedore2 in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/addprospecto.php on line 310
+[15-Aug-2025 16:30:48 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 17:03:04 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 17:17:03 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 17:17:12 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 17:24:10 America/Guatemala] PHP Warning:  Undefined array key "remision" in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/datatableprodpordefinir.php on line 10
+[15-Aug-2025 17:46:53 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 17:47:49 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopsadmin.php:39
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopsadmin.php on line 39
+[15-Aug-2025 17:47:51 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 18:27:54 America/Guatemala] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'cl_fechalimite' in 'SET' in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php:268
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php(268): mysqli->query()
+#1 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/marcaracercamiento.php(13): setq()
+#2 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/funciones.php on line 268
+[15-Aug-2025 18:37:47 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[15-Aug-2025 18:42:56 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[28-Aug-2025 10:18:30 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[28-Aug-2025 14:51:13 America/Guatemala] PHP Fatal error:  Uncaught DivisionByZeroError: Division by zero in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php:365
+Stack trace:
+#0 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/contenidopssimple.php on line 365
+[28-Aug-2025 14:58:35 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[28-Aug-2025 14:58:35 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[28-Aug-2025 14:58:35 America/Guatemala] PHP Warning:  Undefined variable $alias in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26
+[28-Aug-2025 14:58:35 America/Guatemala] PHP Fatal error:  Uncaught TypeError: array_unique(): Argument #1 ($array) must be of type array, null given in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php:26
+Stack trace:
+#0 /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php(26): array_unique()
+#1 {main}
+  thrown in /home/q676o9ds4mg6/public_html/ERPLogisticDLV/query/suggestclientes.php on line 26

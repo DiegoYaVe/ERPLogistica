@@ -575,25 +575,115 @@ function browse($vendedor,$estatus,$hini,$hfin,$page, $telefono){
                         $check = " checked disabled";
                         /* $acciones = '<center><span><em>Se hizo acercamiento a este lead</em></span></center>'; */
                       }
-                      $acciones = '
-                        <div class="row">
-                          <div class="col-5">
-                            <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero"><i class="fas fa-book-open"></i> Iniciar</button>
-                          </div>
-                          <div class="col-7">
-                           <select class="form-control form-control-sm" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
-                            <option value="">Seleccionar</option>
-                            <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
-                            <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
-                            <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
-                            <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
-                            <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
-                            <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
-                            <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
-                            <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
-                          </select>
-                          </div>
-                        </div>';
+echo '
+<style>
+  .estatus-select option[value="No iniciado"] {
+    background-color: #00bcd4; /* Azul claro */
+    color: white;
+  }
+  .estatus-select option[value="Correo Enviado"] {
+    background-color: #4caf50; /* Verde */
+    color: white;
+  }
+  .estatus-select option[value="No localizado"] {
+    background-color: #f57c00; /* Naranja */
+    color: white;
+  }
+  .estatus-select option[value="Reunion concretada"] {
+    background-color: #1565c0; /* Azul fuerte */
+    color: white;
+  }
+  .estatus-select option[value="Grupo Creado"] {
+    background-color: #00897b; /* Verde azulado */
+    color: white;
+  }
+  .estatus-select option[value="Buzon"] {
+    background-color: #ffeb3b; /* Amarillo */
+    color: black;
+  }
+  .estatus-select option[value="Negado"] {
+    background-color: #424242; /* Gris oscuro */
+    color: red;
+  }
+  .estatus-select option[value="Contactar Nuevamente"] {
+    background-color: #b71c1c; /* Rojo fuerte */
+    color: white;
+  }
+</style>
+
+<script>
+function aplicarColorSelect(select) {
+    let color = "#00bcd4"; // default "No iniciado"
+    let textColor = "white";
+
+    switch (select.value) {
+        case "": // si no tiene valor
+        case "No iniciado": 
+            color = "#00bcd4"; 
+            break;
+        case "Correo Enviado": 
+            color = "#4caf50"; 
+            break;
+        case "No localizado": 
+            color = "#f57c00"; 
+            break;
+        case "Reunion concretada": 
+            color = "#1565c0"; 
+            break;
+        case "Grupo Creado": 
+            color = "#00897b"; 
+            break;
+        case "Buzon": 
+            color = "#ffeb3b"; 
+            textColor = "black"; 
+            break;
+        case "Negado": 
+            color = "#424242"; 
+            textColor = "red"; 
+            break;
+        case "Contactar Nuevamente": 
+            color = "#b71c1c"; 
+            break;
+    }
+
+    select.style.backgroundColor = color;
+    select.style.color = textColor;
+}
+
+// Aplicar al cargar la página
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".estatus-select").forEach(select => {
+        aplicarColorSelect(select);
+        select.addEventListener("change", function() {
+            aplicarColorSelect(this);
+        });
+    });
+});
+</script>
+';
+
+$acciones = '
+<div class="row">
+  <div class="col-5">
+    <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero">
+      <i class="fas fa-book-open"></i> Iniciar
+    </button>
+  </div>
+  <div class="col-7">
+    <select class="form-control form-control-sm estatus-select" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
+      <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
+      <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
+      <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
+      <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
+      <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
+      <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
+      <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
+      <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
+    </select>
+  </div>
+</div>';
+
+
                       $checkb = '<center><input class="form-check-input consult-check" onclick="marcarAcercamiento('.$row['cl_id'].')" type="checkbox" name="select'.$row['cl_id'].'" id="select'.$row['cl_id'].'" '.$check.'></center>';
                       $hfasignacion = date('d-m-Y',strtotime($row['cl_fasigna'])).' '.$row['cl_hasigna'];
 

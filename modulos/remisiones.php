@@ -282,9 +282,9 @@
 
     if($narticulosdo > 0){
       if($narticulosdo == 1){
-        $cuerpo = $narticulosdo.' nuevo producto listo para asignarle guía';
+        $cuerpo = $narticulosdo.' nuevo servicio listo para asignarle guía';
       } else{
-        $cuerpo = $narticulosdo.' nuevos productos listos para asignarles guía';
+        $cuerpo = $narticulosdo.' nuevos servicio listos para asignarles guía';
       }
       $grupos = '"LOGISTIC"';
           echo "
@@ -306,9 +306,9 @@
 
     if($narticulosc > 0){
       if($narticulosc == 1){
-        $cuerpo = $narticulosc.' nuevo producto listo para ser embarcado';
+        $cuerpo = $narticulosc.' nuevo servicio listo para ser embarcado';
       } else{
-        $cuerpo = $narticulosc.' nuevos productos listos para ser embarcados';
+        $cuerpo = $narticulosc.' nuevos servicios listos para ser embarcados';
       }
       $grupos = '"LOGISTIC"';
           echo "
@@ -438,7 +438,7 @@
         list($articulo, $modelo) = getIDprodVar($_POST['producto']);
         if(!$articulo){
         echo '<script>
-                alert("Error: El producto buscado no esta registrado en tu base de datos, verifica la información");
+                alert("Error: El servicio buscado no esta registrado en tu base de datos, verifica la información");
                 window.location.href="?modulo=remisiones&accion=show&id='.$_GET['id'].'";
               </script>';
         die();
@@ -633,7 +633,7 @@
           $compexiste = $this->model->comprueba($_GET['id'],$alrem,$articulo);
           if($compexiste !== "OK"){
             echo '<script>
-              alert("El producto seleccionado: '.busca($articulo,'articulos','a_id','a_nmb').', no tiene existencia suficiente en el almacen, por favor verifica antes de poder aplicar la remisión.");
+              alert("El servicio seleccionado: '.busca($articulo,'articulos','a_id','a_nmb').', no tiene existencia suficiente en el almacen, por favor verifica antes de poder aplicar la remisión.");
               window.location.href="?modulo=remisiones&accion=delprod&id='.$_GET['id'].'&idprod='.$articulo.'&ex=1";
             </script>';
           }
@@ -854,7 +854,7 @@
 
       }else{
         echo '<script>
-          alert("El producto seleccionado: '.$datos['articulos']['0'].', no tiene existencia suficiente en el almacen, por favor verifica antes de poder aplicar la remisión.");
+          alert("El servicio seleccionado: '.$datos['articulos']['0'].', no tiene existencia suficiente en el almacen, por favor verifica antes de poder aplicar la remisión.");
         </script>';
         redirect('?modulo=remisiones&accion=show&id='.$_GET['id']);
       }
@@ -2020,7 +2020,7 @@
         $result = setq($sqltp);
         if($result->num_rows > 0){
           $table.='<table widht="100%" class="tablecot" style="margin-top:5px;">
-                      <thead><tr><td colspan="5" class="title-table" >Productos cotizados</td></tr>
+                      <thead><tr><td colspan="5" class="title-table" >Servicios cotizados</td></tr>
                       <tr>
                       <th width="10%" class="title-table">Cantidad</th>
                       <th width="12%" class="title-table">Modelo</th>
@@ -2573,7 +2573,7 @@
 
           $pordefinir = '
           <a href="?modulo=remisiones&accion=prodpordefinir&tipo=2">
-            <button type="button" class="btn btn-sm btn-secondary mb-1 mr-1" data-toggle="tooltip" data-placement="top" title="Productos por definir forma de envío"><i class="fas fa-file-signature"></i> Productos por definir'.$etiqueta.'</button>
+            <button type="button" class="btn btn-sm btn-secondary mb-1 mr-1" data-toggle="tooltip" data-placement="top" title="servicios por definir forma de envío"><i class="fas fa-file-signature"></i> servicios por definir'.$etiqueta.'</button>
           </a>
           ';
       
@@ -3138,10 +3138,10 @@
       if (!isset($_GET['alerta'])) $_GET['alerta'] = NULL;
       if ($_GET['alerta'] == 1) echo alert("El articulo no Existe", true);
       /* if($this->model->estatus == "N") $leyenda = 'Añadir productos a la Remisión '.$this->model->folio." ";
-      else  */ $leyenda = 'Lista de productos en la Remisión '.$this->model->folio." ";
+      else  */ $leyenda = 'Lista de servicios en la Remisión '.$this->model->folio." ";
       echo '<script>
         function delprod(idprod){
-          var conf = confirm("¿Deseas borrar el producto de la remisión?");
+          var conf = confirm("¿Deseas borrar el servicio de la remisión?");
           if(conf == true){
             window.location.href="?modulo=remisiones&accion=delprod&id='.$this->model->id.'&idprod=" + idprod;
           }
@@ -3350,15 +3350,15 @@
         }
         
         echo '
-          <div class="alert alert-primary col-md-12"><center><b>Captura de productos</b></center></div>
+          <div class="alert alert-primary col-md-12"><center><b>Captura de servicios</b></center></div>
           <form method="post" class="row" autocomplete="off" action="?modulo=remisiones&accion='.$action.'&id='.$this->model->id.'">
             <input type="hidden" name="idprod" value="'.$idprod.'" />
             <input type="hidden" name="costo" id="costo" value="'.$this->model->costod.'" />
             <div class="col-md-3 col-sm-12">
               <div class="mb-5">
-                <label for="agregar" class">Producto</label><br>
+                <label for="agregar" class">Servicios</label><br>
                 <div>
-                  <input type="text" name="producto" id="producto" value="'.$this->model->nmbarticulod.'" placeholder="Escribe un fragmento de tu producto" class="search_query form-control" required="required"  autofocus tabindex="1" >
+                  <input type="text" name="producto" id="producto" value="'.$this->model->nmbarticulod.'" placeholder="Escribe un fragmento de tu servicio" class="search_query form-control" required="required"  autofocus tabindex="1" >
                 </div>
                 <div id="suggestions" class="ocultaoscroll" style="max-height: 400px; overflow: overlay;"></div>
               </div>
@@ -3663,7 +3663,7 @@
           ventimp.document.write('<tr><td width="50%" align="center" style="font-size:14px">Genera:</td><td align="left" colspan="2" style="font-size:14px">'+ficha2+'</td></tr>');
           ventimp.document.write('<tr><td colspan="3" height="15px"></td></tr>');
           ventimp.document.write('<tr><td colspan="3">-------------------------------------------------------</td></tr>');
-          ventimp.document.write('<tr><td width="50%" style="font-size:14px">PRODUCTO</td><td align="center" width="20%" style="font-size:14px">CANTIDAD</td><td align="center" width="30%" style="font-size:14px">PRECIO</td></tr>');
+          ventimp.document.write('<tr><td width="50%" style="font-size:14px">SERVICIO</td><td align="center" width="20%" style="font-size:14px">CANTIDAD</td><td align="center" width="30%" style="font-size:14px">PRECIO</td></tr>');
           ventimp.document.write('<tr><td colspan="3">-------------------------------------------------------</td></tr>');
           for(var i=0; i<nmbart.length;i++){
             ventimp.document.write('<tr><td width="50%" style="font-size:12px">'+nmbart[i].value+'</td><td align="center" width="20%" style="font-size:12px">'+cantart[i].value+'</td><td align="center" width="30%" style="font-size:12px">$'+preart[i].value+'</td></tr>');

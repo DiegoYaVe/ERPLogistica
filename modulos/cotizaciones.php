@@ -258,13 +258,14 @@
     }
     function insertprod(){
       
-      $cantidad = $_POST['cantidadorig'];
+      //$cantidad = $_POST['cantidadorig'];
+      $cantidad = '1';
       $idprod = getIDprod($_POST['producto']);
       if(!$idprod){ 
         list($idprod, $modelo) = getIDprodVar($_POST['producto']);
         if(!$idprod){
         echo '<script>
-                alert("Error: El producto buscado no esta registrado en tu base de datos, verifica la información");
+                alert("Error: El servicio buscado no esta registrado en tu base de datos, verifica la información");
                 window.location.href="?modulo=cotizaciones&accion=index&id='.$_GET['id'].'";
               </script>';
         die();
@@ -461,7 +462,8 @@
 
       $precio = $_POST['precio'];
       
-      $this->model->updateprod($_GET['cotizacion'],$_GET['id'],$_POST['cantidad'],$precio,$miva);
+      //$this->model->updateprod($_GET['cotizacion'],$_GET['id'],$_POST['cantidad'],$precio,$miva);
+      $this->model->updateprod($_GET['cotizacion'],$_GET['id'],'1',$precio,$miva);
 
       $this->model->calculaimporte($_GET['cotizacion']);
 
@@ -1305,8 +1307,11 @@
       } 
       $sql = 'INSERT INTO crm_cotizaciones_historial SET cch_cotizacion = "'.$_GET['idcotiza'].'", cch_fecha = "'.date('Y-m-d H:i:s').'", cch_user = "'.$_SESSION['uid'].'", cch_descripcion = "FIN DE CAPTURA DE FORMAS DE ENVÍO"';
       setq($sql);
-
-      redirect($url); 
+      echo '<script>
+      window.open("formats/pdfcotizacion.php?idcotiza='.$_GET['idcotiza'].'&descarga=1", "_blank");
+      window.location.href = "'.$url.'";
+      </script>';
+      
     }
 
     function enviaryvender(){
@@ -1661,7 +1666,7 @@
     function insertcotiza(){
       $this->mensaje = "Hola ".$this->destino."
 
-      A continuación encontrarás listados los productos de acuerdo con tu solicitud de cotización
+      A continuación encontrarás listados los servicios de acuerdo con tu solicitud de cotización
 
       ";
 
@@ -2091,7 +2096,7 @@
         $result = setq($sqltp);
         if($result->num_rows > 0){
           $table.='<table widht="100%" class="tablecot" style="margin-top:5px;">
-                      <thead><tr><td colspan="5" class="title-table" >Productos cotizados</td></tr>
+                      <thead><tr><td colspan="5" class="title-table" >Servicios cotizados</td></tr>
                       <tr>
                       <th width="10%" class="title-table">Cantidad</th>
                       <th width="12%" class="title-table">Modelo</th>
@@ -2666,6 +2671,23 @@
       </div>';
       ?>
       <script>
+function setdireccion(){
+
+  var check = document.getElementById('setdir');
+  var campos = document.getElementById('camposdir');
+  var seldir = document.getElementById("direcciones");
+  var cp = document.getElementById("cp");
+  if(check.checked){
+    campos.hidden = false;
+    cp.setAttribute("required", "required");
+    cambiardir();
+  } else {
+    campos.hidden = true;
+    cp.removeAttribute("required");
+  }
+  setpais();
+}
+
         function cerrarModal() {
           var modal = document.getElementById('historial');
           $(modal).modal('hide');
@@ -2729,38 +2751,29 @@
           <div class="card mt-3">
             <div class="card-body">
             <div class="card-header">
-              <h4 class="" >'.$this->model->nmb.' - '.$this->model->destino.'</h4>';
-              if($this->model->direnvio != "0" && $this->model->envio == "P" ){
-               $cob = busca(busca($this->model->direnvio, 'crm_direcciones', 'cd_id', 'cd_cp'), 'paqueterias_cobertura', 'pc_paqueteria = "1" AND pc_cp', 'pc_tipo');
-               if($cob == "0"){
-                echo'<div class="alert alert-success"> Código postal con zona de cobertura para OCURRE</div>';
-               } else {
-                echo'<div class="alert alert-danger"> Código postal sin zona de cobertura para OCURRE</div>'; 
-               }
-              }
-               
+              <h4 class="" >';
             echo '</div>
           <form method="post" action="?modulo=cotizaciones&accion=insertprod&id='.$this->model->id.'" autocomplete="off" class="mt-2 container">
             <div class="row">
               <div class="col-auto mb-5">
                 <label>Buscar</label><br>
                 <a accesskey="B" href="popup/productocotiza?cotiza='.$this->model->id.'&accion=insertd" onclick="window.open(this.href,\'window\',\'width=870, height=650\');return false">
-                  <button type="button" class="btn btn-primary"><i class="fa fa-search"></i>Buscar producto</button>
+                  <button type="button" class="btn btn-primary"><i class="fa fa-search"></i>Buscar servicio</button>
                 </a>
               </div>
-              <div class="col-6 col-md-4">
-                <label for="agregar" class">Productos</label>
-                <input type="text" name="producto" onblur="buscaprod();" id="producto" placeholder="Escribe un fragmento de tu producto" class="search_query form-control" required '.$focus.' tabindex="1"/>
+              <div class="col-8 col-md-5">
+                <label for="agregar" class">Servicios</label>
+                <input type="text" name="producto" onblur="buscaprod();" id="producto" placeholder="Escribe un fragmento de tu servicio" class="search_query form-control" required '.$focus.' tabindex="1"/>
                 <div id="suggestions" class="ocultaoscroll" style="max-height: 400px; overflow: overlay;"></div>
               </div>
-              <div class="col-6 col-md-2">
+              <div hidden class="col-6 col-md-2">
                 <label for="agregar" class">Cantidad</label>
                 <input type="number" min="1" max="99999" step="1" value="1" name="cantidadorig" id="cantidadorig" placeholder="Cantidad" class="form-control" required tabindex="2">
               </div>';
               $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
               if($grupo == "ADMIN" || $grupo == "GERENCIA") $read = '';
               else $read = 'readonly';
-              echo  '<div class="col-6 col-md-2">
+              echo  '<div class="col-8 col-md-3">
                 <label for="precio" class">Precio unitario</label>
                 <input type="number" min="0.01" max="9999999" step="0.01" name="impunitario" id="impunitario" placeholder="Importe del concepto" class="form-control" required  tabindex="3" '.$read.'>
               </div>
@@ -2781,10 +2794,10 @@
             <table class="table">
               <thead class="thead-active bg-primary text-white">
                 <tr>
-                  <th width="35%">Producto</th>
-                  <th width="10%">Cantidad</th>
+                  <th width="35%">Servicio</th>
+                  <!-- <th width="10%">Cantidad</th> -->
                   <th width="17%">Precio</th>
-                  <th width="5%">+ IVA</th>
+                  <th width="15%">+ IVA</th>
                   <th width="18%">Importe</th>
                   <th width="15%"></th>
                 </tr>
@@ -3119,7 +3132,7 @@
                         });
                       </script>';
                     echo '</td>
-                    <td><input type="number"  onchange="updatecant'.$row['cdm_id'].'()" class="form-control number-align" min="0" max="9999" name="cantidad" id="cantidad'.$row['cdm_id'].'" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" /></td>
+                    <!-- <td><input type="number"  hidden onchange="updatecant'.$row['cdm_id'].'()" class="form-control number-align" min="0" max="9999" name="cantidad" id="cantidad'.$row['cdm_id'].'" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" /></td> -->
                     <script>
                       function cambiarcantidad(id,cotizacion){
                         var cant = document.getElementById("rdcantidad").value;
@@ -3155,7 +3168,7 @@
                         </div>';
                         echo '<div class="mb-5">
                           <a data-fancybox data-type="ajax" data-src="popup/fichaproducto.php?articulo='.$row['cdm_articulo'].'&modelo='.$row['cdm_modelo'].'&rand='.rand().'" href="javascript:;">
-                            <button type="button" class="btn btn-success"><i class="fas fa-clipboard-list"></i> Ficha del producto</button>
+                            <button type="button" class="btn btn-success"><i class="fas fa-clipboard-list"></i> Ficha del servicio</button>
                           </a>
                         </div>';
                     echo '</td>
@@ -3223,789 +3236,353 @@
           </div>
         </div>';
       } else {
-        ?>
-        <style>
-          #toast {
-            display: none;
-            position: fixed;
-            top: 10%;
-            left: 85%;
-            transform: translateX(-50%);
-            background-color: #DD0000;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 99999;
-            width: 30%;
-            opacity: 0; 
-            transition: opacity 0.5s ease; 
-          }
-          .form-group {
-              position: relative;
-          }
-          
-          .form-group input:focus + .custom-label {
-              top: -18px;
-              font-size: 12px;
-              background-color: white;
-              padding: 0 5px;
-          }
-          
-          .custom-label {
-              position: absolute;
-              top: 10px;
-              left: 10px;
-              transition: all 0.2s;
-              pointer-events: none;
-          }
-        </style>
-        <?php
-        $bandera = 0;
-        echo '<div class="row mt-5" style="background: white;">';
+/* ======== BLOQUE NUEVO: CHOFERES + KM + TARIFARIO ======== */
 
-        if($this->model->motivo != "" && $this->model->motivo != NULL){
-          echo '<div id="toast" class="hidden">Motivo del regreso de logística: <b>'.$this->model->motivo.'</b></div>';
-        }
-        if($this->model->direnvio == "0"){
-          echo '<div class="mt-5">
-          <center>
-            <div class="col-7 alert alert-danger">
-              No se ha seleccionado una dirección de entrega, modifique la remisión para que aparezca la opción de OCURRE.
-            </div>
-          </center>
-          </div>';
-          $bandera = "2";
-        } else {
-          $sqlget = 'SELECT cd_cp, cd_colonia, cd_municipio, cd_estado, cd_calle, cd_nume, cd_pais FROM crm_direcciones WHERE cd_id ="'.$this->model->direnvio.'"';
-          $resultget = setq($sqlget);
-          list($codp, $colonia, $municipio, $estadoh, $calle, $nume, $pais) = $resultget->fetch_array();
-          if($pais == "146"){
-            if($codp == "" || $colonia == "" || $municipio == "" || $estadoh == "" || $calle == "" || $nume == ""){
-              $bandera = "1";
-            }
-          } else {
-            if($calle == "") $bandera = "1";
-          }
-        }
-        echo '<input id="checkdir" name="checkdir" value="'.$bandera.'" type="hidden">';
-        
-        if($this->model->direnvio){
-          $cob = busca(busca($this->model->direnvio, 'crm_direcciones', 'cd_id', 'cd_cp'), 'paqueterias_cobertura', 'pc_paqueteria = "1" AND pc_cp', 'pc_tipo');
-          if($cob != "0"){
-            echo'<div class="col-12 d-flex mt-2" style="flex-direction: row-reverse;"><div class="alert alert-danger col-3"> Código postal sin zona de cobertura para OCURRE</div></div>'; 
-          } 
-        }
-        echo '<div class="">
-        <center>
-          <div class="table-responsive col-12">
-            <form method="post" id="formenvios" action="?modulo=cotizaciones&accion=seleccionarenvio&idcotiza='.$this->model->id.'" autocomplete="off" class="mt-2 container">
-              <table class="table">
-                <thead class="thead-active bg-primary text-white">
-                  <tr>
-                    <th width="25%">Producto</th>
-                    <th colspan="4">Tipo de envío</th>
-                    <th>Fecha de entrega</th>
-                    <th> Sucursal - Paquetería</th>
-                  </tr>
-                </thead>
-                <tbody>';
-                  $k=1;
-                  $cp = busca($this->model->direnvio, 'crm_direcciones', 'cd_id', 'cd_cp');
-                  $cob = busca($cp, 'paqueterias_cobertura', 'pc_paqueteria = "1" AND pc_cp', 'pc_tipo');
-                  if($cob == "0") {
-                    $selo = "";
-                    $selesp = "checked";
-                  } else {
-                    $selo = "";
-                    $selesp = "checked";
-                  }
-                  $sql = 'SELECT * FROM crm_cotizacionesd INNER JOIN articulos ON cdm_articulo = a_id
-                          WHERE cdm_cotizacion = "'.$this->model->id.'"';
-                  $result = setq($sql);
+/* 1) Precio de combustible activo */
+$precioCombustible = 0.0;
+$r = setq('SELECT cc_precio FROM config_combustible WHERE cc_activo="S" ORDER BY cc_vigente_desde DESC, cc_id DESC LIMIT 1');
+if ($r && $row = $r->fetch_array()) $precioCombustible = floatval($row[0]);
 
-                  function imprimircheckboxes($k, $selcli, $cob, $selo, $padre = NULL, $envio) {
-                      $color = 'style="background: #c8c8c8;"';
-                      $seldom="";
-                      $fondod="";
-                      $selcli="";
-                      $fondoc="";
-                      $selesp="";
-                      $fondop="";
-                      $fondoe="";
-                      $fondoo="";
-                      if($envio == "0"){
-                        if($selcli == "checked") $fondoc = $color; else $fondoc = "";
-                        if($selo == "checked") $fondoo = $color; else  $fondoo = "";
-                      } else {
-                        $selpen = "";
-                        $selo = "";
-                        if($envio == "D" && $cob == "0"){ $seldom = 'checked'; $fondod = $color;}
-                        else if($envio == "C") {$selcli = 'checked'; $fondoc = $color;}
-                        else if($envio == "P") {$selcli = 'checked'; $fondoc = $color;}
-                        else if($envio == "O" && $cob == "0") {$selo = 'checked'; $fondoo = $color;}
-                        else {$selcli = 'checked'; $fondoc = $color;}
-                      }
+/* 2) Choferes activos */
+$choferes = [];
+$qCh = 'SELECT u_id, CONCAT(u_nmb, " ", u_apellidos) AS nombre
+       FROM usuarios WHERE u_estatus="A" AND u_grupo="CHOFER" ORDER BY nombre ASC';
+$rsCh = setq($qCh);
+while($rsCh && $rowCh = $rsCh->fetch_assoc()){
+  $choferes[] = $rowCh;
+}
 
-                      if($padre == NULL){
-                        $clase = '';
-                        $pad = 0;
-                      } else{
-                        $clase = ' select'.$padre;
-                        $pad = $padre;
-                      }
-                       
-                      $i = 0;
-                      if($cob != "0") $dis = 'onclick="return false;" style="background: #ddd"';
-                      else $dis = 'onclick="selectOne(this, '.$k.', '.$k.($i + 3).', '.$pad.');"';
-                      return '
-                        <td '.$fondod.' class="select-all '.$padre.'" id="td'.$k.$i.'">
-                            <input class="form-check-input '.$clase.'" onclick="selectOne(this, '.$k.', '.$k.$i.', '.$pad.');" type="checkbox" name="tipo'.$k.'" id="domicilio'.$k.'" value="D" '.$seldom.'>
-                            <label class="form-check-label" for="domicilioAll'.$k.'">A domicilio</label>
-                        </td>&nbsp;&nbsp;
-                        <td '.$fondoc.' class="select-all '.$padre.'" id="td'.$k.($i + 1).'">
-                            <input class="form-check-input '.$clase.'" onclick="selectOne(this, '.$k.', '.$k.($i + 1).', '.$pad.');" type="checkbox" name="tipo'.$k.'" id="recoge'.$k.'" value="C" '.$selcli.'>
-                            <label class="form-check-label" for="recogeAll'.$k.'">Recoge cliente</label>
-                        </td>&nbsp;&nbsp;
-                        <td '.$fondop.' class="select-all '.$padre.'" id="td'.$k.($i + 2).'">
-                          <input class="form-check-input '.$clase.'" onclick="selectOne(this, '.$k.', '.$k.($i + 2).', '.$pad.');" type="checkbox" name="tipo'.$k.'" id="pendiente'.$k.'" value="P" '.$selpen.' disabled>
-                          <label class="form-check-label" for="recogeAll'.$k.'">Por definir</label>
-                        </td>&nbsp;&nbsp;
-                        <td '.$fondoo.' class="select-all '.$padre.'" id="td'.$k.($i + 3).'">
-                            <input class="form-check-input '.$clase.'"  type="checkbox" name="tipo'.$k.'" id="ocurre'.$k.'" value="O" '.$selo.' '.$dis.'>
-                            <label class="form-check-label" for="ocurreAll'.$k.'">Ocurre</label>
-                        </td>';
-                  }
+/* 3) Tarifario (insumos base; los km se aplican aquí en cotización) */
+$tarifario = [];
+$qTf = 'SELECT tc_id, tc_unidad, tc_rendimiento, tc_capacidad_tanque, tc_casetas, tc_var_desgaste
+        FROM tarifario_costos WHERE tc_estatus="A" ORDER BY tc_unidad ASC';
+$rsTf = setq($qTf);
+while($rsTf && $rowTf = $rsTf->fetch_assoc()){
+  // normaliza a float
+  $rowTf['tc_rendimiento']      = floatval($rowTf['tc_rendimiento']);
+  $rowTf['tc_capacidad_tanque'] = floatval($rowTf['tc_capacidad_tanque']);
+  $rowTf['tc_casetas']          = floatval($rowTf['tc_casetas']);
+  $rowTf['tc_var_desgaste']     = floatval($rowTf['tc_var_desgaste']);
+  $tarifario[] = $rowTf;
+}
+?>
 
-                  function imprimircheckboxesCombos($k, $selesp, $cob, $selo) {
-                    if($cob != "0") $dis = 'readonly';
-                    else $dis = "";
-                    return '
-                        <td>
-                            <input class="form-check-input" onclick="selectAll(this, '.$k.', 0, '.$cob.');" type="checkbox" name="tipoAll'.$k.'" id="domicilioAll'.$k.'" value="D">
-                            <label class="form-check-label" for="domicilioAll'.$k.'">Todos</label>
-                        </td>&nbsp;&nbsp;
-                        <td>
-                            <input class="form-check-input" onclick="selectAll(this, '.$k.', 1, '.$cob.');" type="checkbox" name="tipoAll'.$k.'" id="recogeAll'.$k.'" value="C">
-                            <label class="form-check-label" for="recogeAll'.$k.'">Todos</label>
-                        </td>&nbsp;&nbsp
-                        <td>
-                            <input class="form-check-input" onclick="selectAll(this, '.$k.', 2, '.$cob.');" type="checkbox" name="tipoAll'.$k.'" id="pendienteAll'.$k.'" value="P">
-                            <label class="form-check-label" for="recogeAll'.$k.'">Todos</label>
-                        </td>&nbsp;&nbsp
-                        <td>
-                            <input class="form-check-input" onclick="selectAll(this, '.$k.', 3, '.$cob.');" type="checkbox" name="tipoAll'.$k.'" id="ocurreAll'.$k.'" value="O" '.$dis.'>
-                            <label class="form-check-label" for="ocurreAll'.$k.'">Todos</label>
-                        </td>';
-                  } 
-                  function selectsucursal($k, $cp, $cob, $padre,$sucursal, $tipoenvio, $paqueteria){
-                    $hidden = '';
-                    if($padre == NULL){
-                      $clase = '';
-                      $clase2 = '';
-                    } else{
-                      $clase = ' selsuc'.$padre;
-                      $clase2 = ' suctd'.$padre;
-                    }
-                    if($tipoenvio == "0"){
-                      if($cob == "0"){
-                        $hidden = "";
-                      } else {
-                        $hidden = "hidden";
-                      } 
-                    } else{
-                      if($tipoenvio == "O" && $cob == "0") {
-                        $hidden = "";
-                        //$req = "required";
-                      } else {
-                        $hidden = "hidden";
-                        //$req = "";
-                      }
-                      $req ="";
-                    }
-                    $dir= "";
-                    $i =0;
-                    $select = 
-                     ' 
-                     <td id="sucursaltd'.$k.'" class="'.$clase2.'" '.$hidden.'>
-                        <select class="form-control '.$clase.'"  onchange="paqueteriaOcurre('.$k.');"  name="paqueteriaOcurre'.$k.'" id="paqueteriaOcurre'.$k.'" >';
-                        $sql = 'SELECT * FROM paqueterias WHERE p_estatus = "A" AND p_ocurre = "1"';
-                        $result = setq($sql);
-                        while($row = $result -> fetch_array()){
-                          if($paqueteria == $row['p_id']) $selected = 'selected';
-                          else $selected = '';
-                          $select .='<option value="'.$row['p_id'].'" '.$selected.'>'.$row['p_nmb'].'</option>';
-                        }
-                        $select .= '<label for="sucursal'.$k.'" class="custom-label">Texto en el contorno</label>
-                        </select>
-                        <div class="form-floating">
+<!-- ======== UI: Choferes + KM + Tarifario ======== -->
+<div class="card mt-3">
+  <div class="card-header">
+    <b>Asignación de chofer(es) y kilómetros (manual/automático)</b>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
 
-                        <select class="form-control '.$clase.'"  name="sucursal'.$k.'" id="sucursal'.$k.'" aria-label="Floating label select example" onchange="cambiardir();"> '.$req.' ';
-                        $sqlpaq = 'SELECT * FROM paqueterias_sucursales WHERE ps_plaza IN (SELECT DISTINCT(ps_plaza) FROM paqueterias_sucursales WHERE ps_sucursal IN (SELECT pc_sucursal FROM paqueterias_cobertura WHERE pc_cp = "'.$cp.'")) AND ps_ocurre = "1" AND ps_paqueteria = "'.$paqueteria.'"';
-                        $resultpaq = setq($sqlpaq);
-                        if($resultpaq->num_rows == 0){
-                          $select .='<option value="">SIN RESULTADOS</option>';
-                        } else {
-                          while($rowpaq = $resultpaq -> fetch_array()){
-                            if($i == 0) $dir = $rowpaq['ps_direccion']; 
-                            if($sucursal == $rowpaq['ps_id']){
-                               $selected = 'selected';
-                               $dir = $rowpaq['ps_direccion'];
-                            }else {
-                              $selected = "";
-                            }
-                            $select .='<option value="'.$rowpaq['ps_id'].'" '.$selected.'>'.$rowpaq['ps_sucursal'].' - '.$rowpaq['ps_nmb'].'</option>';
-                          }
-                        }
-                        $select .= '</select>
-                          <label for="floatingSelect" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; max-width: 100%;" id="dirsuc'.$k.'">'.$dir.'</label>
-                       </div>
-                      </td>
-                    ';
-                    return $select;
-                  }
+      <!-- Choferes (multi) -->
+      <div class="col-12">
+        <label class="form-label"><b>Chofer(es)</b></label>
+        <select name="choferes[]" id="chf_choferes" class="form-control" multiple size="6">
+          <?php foreach($choferes as $ch): ?>
+            <option value="<?= htmlspecialchars($ch['u_id']) ?>"><?= htmlspecialchars($ch['nombre']) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <small class="text-muted">Usa Ctrl/Cmd para seleccionar varios.</small>
+      </div>
 
-                  function selectpaqueteria($k, $cob, $padre, $paqueteria, $tipoenvio){  
-                    
-                    $hidden ='';
-                    if($padre == NULL){
-                      $clase = '';
-                      $clase2 = '';
-                    } else{
-                      $clase = ' selpaq'.$padre;
-                      $clase2 = ' paquetd'.$padre;
-                    }
-                    if($tipoenvio == "O"){
-                        $hidden = "hidden";
-                    } else{
-                      if($tipoenvio == "D" || $tipoenvio == "E") {
-                        $hidden = "";
-                      }
-                      else {
-                        $hidden = "hidden";
-                      }
-                    }
-                    
-                    $select = 
-                     ' <td id="paqueteriatd'.$k.'" class="'.$clase2.'" '.$hidden.' >
-                          <select class="form-control '.$clase.'"  name="paqueteria'.$k.'" id="paqueteria'.$k.'" >';
-                          $sql = 'SELECT * FROM paqueterias WHERE p_estatus = "A" AND p_adomicilio = "1"';
-                          $result = setq($sql);
-                          while($row = $result -> fetch_array()){
-                            if($paqueteria == $row['p_id']) $selected = 'selected';
-                            else $selected = '';
-                            $select .='<option value="'.$row['p_id'].'" '.$selected.'>'.$row['p_nmb'].'</option>';
-                          }
-                          $select .= '</select>
-                      </td>
-                    ';
-                    return $select;
-                  }
+      <!-- Modo KM -->
+      <div class="col-md-6">
+        <label class="form-label"><b>Modo de kilómetros</b></label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" checked>
+          <label class="form-check-label" for="chf_km_manual">Manual</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="km_mode" id="chf_km_auto" value="auto">
+          <label class="form-check-label" for="chf_km_auto">Automático (Google Maps)</label>
+        </div>
+      </div>
 
-                  while($row = $result->fetch_array()){
-                    for($i = 1; $i <= $row['cdm_cantidad']; $i++){
-                      if($row['a_tipoprod'] == "M") {
-                        echo '<tr style="background: #FFEE85" ><td>PAQUETE - '.$row['a_nmb']." ".$i.'  </td>'.imprimircheckboxesCombos($row['a_id'].$i, $selesp, $cob, $selo).'<td colspan="2"></td></tr>';
-                        $sqlvar = 'SELECT * FROM crm_cotizacion_variantes WHERE ccv_cotizaciond = "'.$row['cdm_id'].'" AND ccv_cotizacion = "'.$row['cdm_cotizacion'].'"';
-                        $resultvar = setq($sqlvar);
-                        while($rowvar = $resultvar->fetch_array()) {
-                          $nmb = busca($rowvar['ccv_articulo'], 'articulos', 'a_id' ,'a_nmb');
-                          if($rowvar['ccv_modelo'] != "")
-                            $nmb .= ' '.busca($rowvar['ccv_articulo'], 'articulos_variantes', 'av_modelo = "'.$rowvar['ccv_modelo'].'" AND av_articulo' ,'av_nmb');
-                          for($j = 1; $j <= $rowvar['ccv_cantidad']; $j++){
-                            $sqlc = 'SELECT ccc_tipoenvio, ccc_sucursal, ccc_paqueteria, ccc_fenvio
-                                     FROM crm_cotizacionesc WHERE ccc_cotizaciond = "'.$row['cdm_id'].'" AND ccc_articulo = "'.$rowvar['ccv_articulo'].'" AND ccc_modelo = "'.$rowvar['ccv_modelo'].'" AND ccc_numero ="'.$j.'" AND ccc_combo = "'.$i.'" AND ccc_cotizacion ="'.$row['cdm_cotizacion'].'"';
-                            $resultc = setq($sqlc);
-                            //echo $sqlc.'<br>';
-                            list($tipoenvio, $sucursal, $paqueteria, $fenvio) = $resultc -> fetch_array(); 
-                            if(!$tipoenvio) $tipoenvio = "0";
-                            if(!$sucursal) $sucursal = "0";
-                            if(!$paqueteria) $paqueteria = "1";
-                            if(!$fenvio) $fenvio = date('Y-m-d');
-                            echo '<tr><td>&nbsp;&nbsp;&nbsp;&nbsp; * '.$nmb." ".$j.' </td>' . imprimircheckboxes($k, $selesp, $cob, $selo, $row['a_id'].$i, $tipoenvio) . '<td> <input type="date" min="'.date('Y-m-d').'" name="fenvio'.$k.'" id="fenvio'.$k.'" class="form-control" value="'.$fenvio.'"></td> ' .selectsucursal($k, $cp, $cob, $row['a_id'].$i, $sucursal, $tipoenvio, $paqueteria).selectpaqueteria($k, $cob, $row['a_id'].$i, $paqueteria, $tipoenvio).' </tr>';
-                            $k++;
-                          }
-                        }
-                        echo '<tr style="background: #FFEE85" ><td colspan="7"></td></tr>';
-                      } else {
-                        if($row['cdm_modelo']){
-                          $sqlc = 'SELECT ccc_tipoenvio, ccc_sucursal, ccc_paqueteria, ccc_fenvio FROM crm_cotizacionesc WHERE ccc_cotizaciond = "'.$row['cdm_id'].'" AND ccc_articulo = "'.$row['cdm_articulo'].'" AND ccc_modelo = "'.$row['cdm_modelo'].'" AND ccc_numero ="'.$i.'" AND ccc_combo = "0" AND ccc_cotizacion = "'.$row['cdm_cotizacion'].'"';
-                          $resultc = setq($sqlc);
-                          list($tipoenvio, $sucursal, $paqueteria, $fenvio) = $resultc -> fetch_array();
-                          if(!$tipoenvio) $tipoenvio = "0";
-                          if(!$sucursal) $sucursal = "0";
-                          if(!$paqueteria) $paqueteria = "1";
-                          if(!$fenvio) $fenvio = date('Y-m-d');
-                          $nmb = busca($row['cdm_articulo'], 'articulos_variantes', 'av_modelo = "'.$row['cdm_modelo'].'" AND av_articulo', 'av_nmb');
-                          echo '<tr><td>'.$row['a_nmb']." ".$nmb." ".$i.' </td>' . imprimircheckboxes($k, $selesp, $cob, $selo, '', $tipoenvio) . '<td> <input type="date" class="form-control" min="'.date('Y-m-d').'" name="fenvio'.$k.'" id="fenvio'.$k.'" value="'.$fenvio.'"></td> ' .selectsucursal($k, $cp, $cob, NULL, $sucursal, $tipoenvio, $paqueteria).selectpaqueteria($k, $cob, NULL, $paqueteria, $tipoenvio).'</tr>';
-                          $k++;
-                        } else {
-                          $sqlc = 'SELECT ccc_tipoenvio, ccc_sucursal, ccc_paqueteria, ccc_fenvio FROM crm_cotizacionesc WHERE ccc_cotizaciond = "'.$row['cdm_id'].'" AND ccc_articulo = "'.$row['cdm_articulo'].'" AND ccc_modelo = "" AND ccc_numero ="'.$i.'" AND ccc_combo = "0" AND ccc_cotizacion = "'.$row['cdm_cotizacion'].'"';
-                          $resultc = setq($sqlc);
-                          list($tipoenvio, $sucursal, $paqueteria, $fenvio) = $resultc -> fetch_array();
-                          if(!$tipoenvio) $tipoenvio = "0";
-                          if(!$sucursal) $sucursal = "0";
-                          if(!$paqueteria) $paqueteria = "1";
-                          if(!$fenvio) $fenvio = date('Y-m-d');
-                          echo '<tr><td>'.$row['a_nmb']." ".$i.' </td>' . imprimircheckboxes($k, $selesp, $cob, $selo, '', $tipoenvio) . '<td> <input type="date" class="form-control" min="'.date('Y-m-d').'" name="fenvio'.$k.'" id="fenvio'.$k.'" value="'.$fenvio.'"></td> ' .selectsucursal($k, $cp, $cob, NULL, $sucursal, $tipoenvio, $paqueteria).selectpaqueteria($k, $cob, NULL, $paqueteria, $tipoenvio).'</tr>';
-                          $k++;
-                        }
-                      }
-                    }
-                  }
-                echo '</tbody>
-              </table>
-              <input type="hidden" id="cant" name ="cant" value="'.$k--.'">
-            </form>
-          </div>
-        </center>
-        </div>';
-        ?>
-          <script>
-          function mostrarToast() {
-            var toast = document.getElementById("toast");
-            if(toast){
-              toast.style.display = "block";
+      <!-- KM manual -->
+      <div class="col-md-6" id="chf_kmManualBox">
+        <label class="form-label"><b>Kilómetros (manual)</b></label>
+        <input type="number" step="0.01" min="1" class="form-control" id="chf_km" value="1">
+      </div>
 
-              // Agrega una pequeña demora para permitir que la transición funcione
-              setTimeout(function() {
-                toast.style.opacity = "1";
-              }, 500);
+    </div>
 
-              setTimeout(function() {
-                toast.style.opacity = "0";
-                setTimeout(function() {
-                  toast.style.display = "none";
-                }, 300); 
-              }, 20000); 
-            }
-          }  
-          mostrarToast();
-          function checkIguales(k) {
-              var checkboxes = document.querySelectorAll('.select'+k+':checked');
-              var val = "";
-              var checkedValues = [];
+    <!-- KM automático -->
+    <div id="chf_kmAutoBox" class="mt-3" style="display:none;">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Origen</label>
+          <input type="text" id="chf_gm_origen" class="form-control" placeholder="Ingresa origen">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Destino</label>
+          <input type="text" id="chf_gm_destino" class="form-control" placeholder="Ingresa destino">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Paradas intermedias</label>
+          <div id="chf_gm_paradas_wrap"></div>
+          <button type="button" class="btn btn-sm btn-secondary mt-2" id="chf_btnAddParada">
+            <i class="fas fa-plus"></i> Agregar parada
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button type="button" class="btn btn-info mt-2" id="chf_btnCalcularRuta">
+            <i class="fas fa-route"></i> Calcular ruta
+          </button>
+          <small class="text-muted ms-2">Se calcularán los KM y se aplicará el tarifario.</small>
+        </div>
+        <div class="col-12">
+          <div id="chf_gm_mapa" style="width:100%; height:280px; border:1px solid #e1e1e1; border-radius:6px;"></div>
+        </div>
+      </div>
+    </div>
 
-              for (var i = 0; i < checkboxes.length; i++) {
-                  checkedValues.push(checkboxes[i].value);
-                  val = checkboxes[i].value;
-              }
+    <hr/>
 
-              var validacion = areAllValuesEqual(checkedValues);
-              return { result: validacion, value: val };
-          }
+    <!-- Selección de unidad del tarifario -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label"><b>Unidad (tarifario)</b></label>
+        <select id="chf_tarifario" class="form-control">
+          <option value="">-- Selecciona una unidad --</option>
+          <?php foreach($tarifario as $t): ?>
+            <option value="<?= (int)$t['tc_id'] ?>">
+              <?= htmlspecialchars($t['tc_unidad']) ?>
+              (rend: <?= number_format($t['tc_rendimiento'],4) ?> km/l)
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
 
-          function areAllValuesEqual(valuesArray) {
-              for (var i = 1; i < valuesArray.length; i++) {
-                  if (valuesArray[i] !== valuesArray[0]) {
-                      return false;
-                  }
-              }
-              return true;
-          }
+      <div class="col-md-3">
+        <label class="form-label">Precio combustible (global)</label>
+        <input type="text" id="chf_precio" class="form-control" value="<?= number_format($precioCombustible,4,'.','') ?>" readonly>
+      </div>
 
-          function checkSelect(k){
-          // Obtén todos los radio buttons con el mismo nombre
-            var radioButtons = document.getElementsByName('tipoAll'+k);
+      <div class="col-md-3">
+        <label class="form-label">KM usados</label>
+        <input type="text" id="chf_km_mostrado" class="form-control" readonly>
+      </div>
+    </div>
 
-            var valorSeleccionado;
+    <div class="row g-3 mt-1">
+      <div class="col-md-2"><label class="form-label">TANQUES</label> <input type="text" id="chf_tanques" class="form-control" readonly></div>
+      <div class="col-md-2"><label class="form-label">COMBUSTIBLE ($)</label> <input type="text" id="chf_combustible" class="form-control" readonly></div>
+      <div class="col-md-2"><label class="form-label">CASETAS ($)</label> <input type="text" id="chf_casetas" class="form-control" readonly></div>
+      <div class="col-md-2"><label class="form-label">DESGASTE ($)</label> <input type="text" id="chf_desgaste" class="form-control" readonly></div>
+      <div class="col-md-2"><label class="form-label">OPERADOR ($)</label> <input type="text" id="chf_operador" class="form-control" readonly></div>
+      <div class="col-md-2"><label class="form-label">TOTAL ($)</label> <input type="text" id="chf_total" class="form-control" readonly></div>
+      <div class="col-md-2 mt-2"><label class="form-label">VENTA DVL ($)</label> <input type="text" id="chf_venta" class="form-control" readonly></div>
+    </div>
 
-            // Recorre los radio buttons para encontrar el seleccionado
-            for (var i = 0; i < radioButtons.length; i++) {
-              if (radioButtons[i].checked) {
-                valorSeleccionado = radioButtons[i].value;
-                break; // Detén el bucle una vez que encuentres el seleccionado
-              }
-            }
+    <!-- Hidden para enviar con el form existente -->
+    <input type="hidden" name="chf_km_mode" id="chf_km_mode" value="manual">
+    <input type="hidden" name="chf_km_total" id="chf_km_total" value="1">
+    <input type="hidden" name="chf_tarifario_id" id="chf_tarifario_id" value="">
+    <input type="hidden" name="chf_costo_total" id="chf_costo_total" value="">
+    <input type="hidden" name="chf_costo_venta" id="chf_costo_venta" value="">
+    <input type="hidden" name="chf_ruta_origen" id="chf_ruta_origen" value="">
+    <input type="hidden" name="chf_ruta_destino" id="chf_ruta_destino" value="">
+    <input type="hidden" name="chf_ruta_paradas" id="chf_ruta_paradas" value="[]">
 
-            // Si se encontró un radio button seleccionado, muestra su valor
-            if (valorSeleccionado !== undefined) {
-              return valorSeleccionado;
-            } else {
-              return false;
-            }
+  </div>
+</div>
+<script>
+(function(){
+  // ---------- Datos del servidor ----------
+  const TARIFARIO = <?php echo json_encode($tarifario, JSON_NUMERIC_CHECK); ?>;
+  const PRECIO    = parseFloat(document.getElementById('chf_precio').value) || 0;
 
-            }
+  // ---------- Elementos ----------
+  const kmManual     = document.getElementById('chf_km_manual');
+  const kmAuto       = document.getElementById('chf_km_auto');
+  const boxManual    = document.getElementById('chf_kmManualBox');
+  const boxAuto      = document.getElementById('chf_kmAutoBox');
+  const kmInput      = document.getElementById('chf_km');
+  const kmMostrado   = document.getElementById('chf_km_mostrado');
+  const selTarifario = document.getElementById('chf_tarifario');
 
-            function checkSelectID(k) {
-              // Obtén todos los radio buttons con el mismo nombre
-              var radioButtons = document.getElementsByName('tipoAll' + k);
+  const outTanques   = document.getElementById('chf_tanques');
+  const outComb      = document.getElementById('chf_combustible');
+  const outCas       = document.getElementById('chf_casetas');
+  const outDesg      = document.getElementById('chf_desgaste');
+  const outOper      = document.getElementById('chf_operador');
+  const outTotal     = document.getElementById('chf_total');
+  const outVenta     = document.getElementById('chf_venta');
 
-              var idSeleccionado;
+  const hMode   = document.getElementById('chf_km_mode');
+  const hKm     = document.getElementById('chf_km_total');
+  const hTarId  = document.getElementById('chf_tarifario_id');
+  const hTot    = document.getElementById('chf_costo_total');
+  const hVen    = document.getElementById('chf_costo_venta');
+  const hOrig   = document.getElementById('chf_ruta_origen');
+  const hDest   = document.getElementById('chf_ruta_destino');
+  const hStops  = document.getElementById('chf_ruta_paradas');
 
-              // Recorre los radio buttons para encontrar el seleccionado
-              for (var i = 0; i < radioButtons.length; i++) {
-                  if (radioButtons[i].checked) {
-                      idSeleccionado = radioButtons[i].id;
-                      break; // Detén el bucle una vez que encuentres el seleccionado
-                  }
-              }
+  // ---------- Toggle modo ----------
+  function toggleKmMode(){
+    if(kmAuto.checked){
+      boxManual.style.display = 'none';
+      boxAuto.style.display   = '';
+      hMode.value = 'auto';
+    } else {
+      boxManual.style.display = '';
+      boxAuto.style.display   = 'none';
+      hMode.value = 'manual';
+    }
+    recalc(); // recalcula por si cambia
+  }
+  [kmManual, kmAuto].forEach(el => el.addEventListener('change', toggleKmMode));
+  toggleKmMode();
 
-              // Si se encontró un radio button seleccionado, devuelve su id
-              if (idSeleccionado !== undefined) {
-                  return idSeleccionado;
-              } else {
-                  return false;
-              }
-            }
+  // ---------- Util ----------
+  function toNum(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+  function numFmt2(n){ return (toNum(n)).toFixed(2); }
+  function numFmt3(n){ return (toNum(n)).toFixed(3); }
+  function numFmt4(n){ return (toNum(n)).toFixed(4); }
 
+  // Busca el registro de tarifario
+  function getTarifarioById(id){
+    id = parseInt(id||0);
+    return TARIFARIO.find(t => parseInt(t.tc_id) === id) || null;
+  }
 
-          function limpiarCheck(id){
-            var cant = '4';
-            for (var i = 0; i < parseInt(cant); i++) {
-              document.getElementById("td"+id+i).style.background = '';
-            }
-            
-          }
+  // ---------- Re-cálculo costos ----------
+  function recalc(){
+    const tarId = parseInt(selTarifario.value||0);
+    const t = getTarifarioById(tarId);
+    const km = toNum(kmManual.checked ? kmInput.value : hKm.value);
+    kmMostrado.value = numFmt2(km);
 
-          function selectOne(checkbox, k, td, padre) {
-            var select = document.getElementById('sucursal'+k);
-            var paqueteria = document.getElementById('paqueteria'+k);
-            var selecttd = document.getElementById('sucursaltd'+k);
-            var paqueteriatd = document.getElementById('paqueteriatd'+k);
-            var checkdir = document.getElementById('checkdir').value;
-            var form = document.getElementById('updcotiza');
-            
-            if(checkbox.value == "D" || checkbox.value == "E" || checkbox.value == "O") {
-               /* if(checkdir == "1" && checkbox.value == "O"){
-                //select.removeAttribute("required");
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se ha seleccionado una dirección de destino, configurela antes de continuar',
-                }).then((result) => {
-                    if (result.isConfirmed || result.isDenied) {
-                        Swal.close();
-                        form.click();
-                        setTimeout(function() {
-                            // Selecciona el elemento dentro del FancyBox y haz clic en él
-                            var checkdir = document.getElementById("setdir");
-                            var seldir = document.getElementById("direcciones");
-                            if(!checkdir.checked)checkdir.click();
-                            //seldir.value="XXX";
-                            setTimeout(function(){
-                              var direcciones = document.getElementById("direcciones");
-                              var cp = document.getElementById("cp");
-                              var boton = document.getElementById("guardar");
-                              boton.style.border = "2px solid #FF0000";
-                              direcciones.style.borderColor = "red";
-                              direcciones.style.borderWidth = "3";
-                              cp.style.borderColor = "red";
-                              cp.style.borderWidth = "3";
-                              cp.focus();
-                            }, 200 );
-                        }, 500);
-                    }
-                });
-              } else  */if((checkdir == "1" || checkdir == "2") && (checkbox.value == "D" || checkbox.value == "E" || checkbox.value =="O")){
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se ha seleccionado una dirección de destino, configurela antes de continuar',
-                }).then((result) => {
-                    if (result.isConfirmed || result.isDenied) {
-                        Swal.close();
-                        form.click();
-                        setTimeout(function() {
-                            // Selecciona el elemento dentro del FancyBox y haz clic en él
-                            var checkdir = document.getElementById("setdir");
-                            var seldir = document.getElementById("direcciones");
-                            if(!checkdir.checked)checkdir.click();
-                            //seldir.value="XXX";
-                            setTimeout(function(){
-                              var direcciones = document.getElementById("direcciones");
-                              var cp = document.getElementById("cp");
-                              var col = document.getElementById("col");
-                              var estado = document.getElementById("estado");
-                              var municipio = document.getElementById("municipio");
-                              var calle = document.getElementById("calle");
-                              var exterior = document.getElementById("exterior");
-                              var boton = document.getElementById("guardar");
-                              boton.style.border = "2px solid #FF0000";
-                              direcciones.style.borderColor = "red";
-                              direcciones.style.borderWidth = "3";
-                              cp.style.borderColor = "red";
-                              cp.style.borderWidth = "3";
-                              cp.focus();
-                              col.style.borderColor = "red";
-                              col.style.borderWidth = "3";
-                              estado.style.borderColor = "red";
-                              estado.style.borderWidth = "3";
-                              municipio.style.borderColor = "red";
-                              municipio.style.borderWidth = "3";
-                              calle.style.borderColor = "red";
-                              calle.style.borderWidth = "3";
-                              exterior.style.borderColor = "red";
-                              exterior.style.borderWidth = "3";
-                            }, 200 );
-                        }, 500);
-                    }
-                });
-              } else if(checkbox.value == "O"){
-                select.hidden = false;
-                //select.setAttribute("required", "required");
-                selecttd.hidden = false;
-                paqueteria.hidden = true;
-                paqueteriatd.hidden = true;
-              }else{
-                select.hidden = true;
-                //select.removeAttribute("required");
-                selecttd.hidden = true;
-                paqueteria.hidden = false;
-                paqueteriatd.hidden = false;
-              }
-              
-            } else {
-              select.hidden = true;
-              selecttd.hidden = true;
-              //select.removeAttribute("required");
-              paqueteria.hidden = true;
-              paqueteriatd.hidden = true;
-            }
+    // refleja hidden
+    hKm.value   = km;
+    hTarId.value = tarId || '';
 
-            limpiarCheck(k);
-            var i = 0;
-            var checkboxes = document.getElementsByName("tipo"+k);
-            checkboxes.forEach(function(cb) {
-                if (cb !== checkbox) {
-                    if(cb.checked){
-                      cb.checked = false;
-                      i++;
-                    }
-                }
-            });
-            if(i == 0){
-              checkbox.checked = true;
-            }
-            var tdElement = document.getElementById("td"+td);
-            tdElement.style.background = '#c8c8c8';
-            
-            if(padre != false || padre != 0){
-              var val = checkSelect(padre); //Value del checkbox padre del combo
-              var valId = checkSelectID(padre); //ID del checkbox padre del combo
-              if(checkbox.value != val && val != false){
-                document.getElementById(valId).checked = false;
-              }
-              var resultObject = checkIguales(padre);
+    if(!t || km <= 0){
+      outTanques.value = outComb.value = outCas.value = outDesg.value = outOper.value = outTotal.value = outVenta.value = '';
+      hTot.value = hVen.value = '';
+      return;
+    }
 
-              if (resultObject.result) {          
-                  if(resultObject.value == "C"){
-                    document.getElementById("recogeAll"+padre).checked = true;
-                  } else if(resultObject.value == "D"){
-                    document.getElementById("domicilioAll"+padre).checked = true;
-                  } else if(resultObject.value == "E"){
-                    document.getElementById("especialAll"+padre).checked = true;
-                  } else {
-                    // Si es O            
-                    document.getElementById("ocurreAll"+padre).checked = true;
-                  }
-              }
-            }
+    const rend = toNum(t.tc_rendimiento);
+    const cap  = toNum(t.tc_capacidad_tanque);
+    const cas  = toNum(t.tc_casetas);
+    const vdes = toNum(t.tc_var_desgaste);
+    const prec = PRECIO;
 
-          }
+    const tanq = (rend > 0 ? (km / rend) : 0);
+    const comb = prec * cap * tanq;
+    const desg = km * (vdes * 10);  // tu ajuste
+    const oper = km * (vdes * 10);  // tu ajuste
+    const total = comb + cas + desg + oper;
+    const venta = total * 1.5;
 
-          function selectOneAll(checkbox, k) {
+    outTanques.value = numFmt4(tanq);
+    outComb.value    = numFmt2(comb);
+    outCas.value     = numFmt2(cas);
+    outDesg.value    = numFmt2(desg);
+    outOper.value    = numFmt2(oper);
+    outTotal.value   = numFmt2(total);
+    outVenta.value   = numFmt2(venta);
 
-            var i = 0;
-            var checkboxes = document.getElementsByName("tipoAll"+k);
-            checkboxes.forEach(function(cb) {
-                if (cb !== checkbox) {
-                    if(cb.checked){
-                      cb.checked = false;
-                      i++;
-                    }
-                }
-            });
-            if(i == 0){
-              checkbox.checked = true;
-            }
-          }
+    hTot.value = total;
+    hVen.value = venta;
+  }
 
-          function selectAll(idHTML, idArt, num, cob){
-            // Obtén todos los elementos de tipo checkbox dentro del contenedor con la clase
-            const checkboxes = document.querySelectorAll('.select'+idArt);
-            const sucursales = document.querySelectorAll('.selsuc'+idArt);
-            const sucursalestd = document.querySelectorAll('.suctd'+idArt);
-            const paqueteria = document.querySelectorAll('.selpaq'+idArt);
-            const paqueteriatd = document.querySelectorAll('.paquetd'+idArt);
-            const numberOfCheckboxes = checkboxes.length;
-            var checkdir = document.getElementById('checkdir').value;
-            var form = document.getElementById('updcotiza');
-            console.log('valor: ', idHTML.value);
-            if(idHTML.value == "D" || idHTML.value == "E" || idHTML.value == "O")  {
-              /* if(checkdir == "2" && idHTML.value == "O"){
-                //select.removeAttribute("required");
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se ha seleccionado una dirección de destino, configurela antes de continuar',
-                }).then((result) => {
-                    if (result.isConfirmed || result.isDenied) {
-                        Swal.close();
-                        form.click();
-                        setTimeout(function() {
-                            // Selecciona el elemento dentro del FancyBox y haz clic en él
-                            var checkdir = document.getElementById("setdir");
-                            var seldir = document.getElementById("direcciones");
-                            if(!checkdir.checked)checkdir.click();
-                            //seldir.value="XXX";
-                            setTimeout(function(){
-                              var direcciones = document.getElementById("direcciones");
-                              var cp = document.getElementById("cp");
-                              var boton = document.getElementById("guardar");
-                              boton.style.border = "2px solid #FF0000";
-                              direcciones.style.borderColor = "red";
-                              direcciones.style.borderWidth = "3";
-                              cp.style.borderColor = "red";
-                              cp.style.borderWidth = "3";
-                              cp.focus();
-                            }, 200 );
-                        }, 500);
-                    }
-                });
-              } else */ if((checkdir == "1" || checkdir == "2") && (idHTML.value == "D" || idHTML.value == "E" || idHTML.value == "O")){
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se ha seleccionado una dirección de destino, configurela antes de continuar',
-                }).then((result) => {
-                    if (result.isConfirmed || result.isDenied) {
-                        Swal.close();
-                        form.click();
-                        setTimeout(function() {
-                            // Selecciona el elemento dentro del FancyBox y haz clic en él
-                            var checkdir = document.getElementById("setdir");
-                            var seldir = document.getElementById("direcciones");
-                            if(!checkdir.checked)checkdir.click();
-                            //seldir.value="XXX";
-                            setTimeout(function(){
-                              var direcciones = document.getElementById("direcciones");
-                              var cp = document.getElementById("cp");
-                              var col = document.getElementById("col");
-                              var estado = document.getElementById("estado");
-                              var municipio = document.getElementById("municipio");
-                              var calle = document.getElementById("calle");
-                              var exterior = document.getElementById("exterior");
-                              var boton = document.getElementById("guardar");
-                              boton.style.border = "2px solid #FF0000";
-                              direcciones.style.borderColor = "red";
-                              direcciones.style.borderWidth = "3";
-                              cp.style.borderColor = "red";
-                              cp.style.borderWidth = "3";
-                              cp.focus();
-                              col.style.borderColor = "red";
-                              col.style.borderWidth = "3";
-                              estado.style.borderColor = "red";
-                              estado.style.borderWidth = "3";
-                              municipio.style.borderColor = "red";
-                              municipio.style.borderWidth = "3";
-                              calle.style.borderColor = "red";
-                              calle.style.borderWidth = "3";
-                              exterior.style.borderColor = "red";
-                              exterior.style.borderWidth = "3";
-                            }, 200 );
-                        }, 500);
-                    }
-                });
-              } else if(idHTML.value == "O"){
-                sucursales.forEach(select => {  
-                select.hidden = false;
-                });
-                sucursalestd.forEach(select => {  
-                  select.hidden = false;
-                });
-                paqueteria.forEach(select => {  
-                  select.hidden = true;
-                });
-                paqueteriatd.forEach(select => {  
-                  select.hidden = true;
-                });
-              } else {
-                sucursales.forEach(select => { 
-                select.hidden = true;
-                });
-                sucursalestd.forEach(select => { 
-                  select.hidden = true;
-                });
-                paqueteria.forEach(select => {  
-                  select.hidden = false;
-                });
-                paqueteriatd.forEach(select => {  
-                  select.hidden = false;
-                });
-              }
-            } else {
-              sucursales.forEach(select => { 
-                select.hidden = true;
-              });
-              sucursalestd.forEach(select => { 
-                select.hidden = true;
-              });
-              paqueteria.forEach(select => {  
-                select.hidden = true;
-              });
-              paqueteriatd.forEach(select => {  
-                select.hidden = true;
-              });
-            }
-            selectOneAll(idHTML, idArt)
-            var elemento = document.getElementById(idHTML.id).value;
-            var p0 = 0;
-            var p1 = 0;
-            var p2 = 0;
-            
-            if(num == 0){
-              marca = 0;
-              p0 = 1;
-              p1 = 2;
-              p2 = 3;
-            }
-            if(num == 1){
-              marca = 1;
-              p0 = 0;
-              p1 = 2;
-              p2 = 3;
-            }
-            if(num == 2){
-              marca = 2;
-              p0 = 0;
-              p1 = 1;
-              p2 = 3;   
-            }
+  // eventos
+  ['input','change'].forEach(ev => {
+    kmInput.addEventListener(ev, recalc);
+    selTarifario.addEventListener(ev, recalc);
+  });
 
-            if(num == 3){
-              marca = 3;
-              p0 = 0;
-              p1 = 1;
-              p2 = 2;
-            }
-            
-            var i = 0;          
-            var j = 0; 
-            checkboxes.forEach(checkbox => {  
-              ind = checkbox.name.substring(4); // Empieza en el índice 4 y toma el resto del texto   
-              var cant;
-               cant = 3;
-              if(i == cant){
-                document.getElementById("td"+ind+marca).style.background = '#c8c8c8';
-                document.getElementById("td"+ind+p0).style.background = '';
-                document.getElementById("td"+ind+p1).style.background = '';
-                document.getElementById("td"+ind+p2).style.background = '';
-                j++;
-                i = 0;
-              }
-              
-              if (checkbox.value === elemento) {
-                checkbox.checked = true; // Marca el checkbox        
-              } else{
-                checkbox.checked = false; // Marca el checkbox
-              }     
-              i++; 
-            });
-          }
-          </script>
-        <?php
+  // ---------- Google Maps ----------
+  // Requiere cargar en tu layout:
+
+  let gMap, gDirSvc, gDirRend, chfParadaIdx = 0;
+
+  function gAddParadaInput(val=''){
+    const wrap = document.getElementById('chf_gm_paradas_wrap');
+    const id = 'chf_parada_' + (++chfParadaIdx);
+    const row = document.createElement('div');
+    row.className = 'input-group mb-2';
+    row.innerHTML = `
+      <input type="text" class="form-control chf_gm_parada" id="${id}" placeholder="Parada intermedia" value="${val}">
+      <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove();"><i class="fas fa-times"></i></button>
+    `;
+    wrap.appendChild(row);
+    if(window.google && google.maps && google.maps.places){
+      new google.maps.places.Autocomplete(document.getElementById(id), { types: ['geocode'] });
+    }
+  }
+  document.getElementById('chf_btnAddParada').addEventListener('click', ()=> gAddParadaInput());
+
+  function gInit(){
+    if(!(window.google && google.maps)) return;
+    gMap = new google.maps.Map(document.getElementById('chf_gm_mapa'), {
+      center:{lat:19.4326,lng:-99.1332}, zoom:6, mapTypeId:'roadmap'
+    });
+    gDirSvc  = new google.maps.DirectionsService();
+    gDirRend = new google.maps.DirectionsRenderer({ map:gMap });
+    new google.maps.places.Autocomplete(document.getElementById('chf_gm_origen'),  { types: ['geocode'] });
+    new google.maps.places.Autocomplete(document.getElementById('chf_gm_destino'), { types: ['geocode'] });
+  }
+  if(window.google && google.maps){ gInit(); }
+
+  document.getElementById('chf_btnCalcularRuta').addEventListener('click', function(){
+    if(!(window.google && google.maps)){
+      alert('Falta cargar Google Maps JS (agrega tu API Key).');
+      return;
+    }
+    const origen  = document.getElementById('chf_gm_origen').value.trim();
+    const destino = document.getElementById('chf_gm_destino').value.trim();
+    if(!origen || !destino){ alert('Indica origen y destino.'); return; }
+
+    const wpEls = document.querySelectorAll('.chf_gm_parada');
+    const waypoints = [];
+    const stops = [];
+    wpEls.forEach(el=>{
+      const v = el.value.trim();
+      if(v){ waypoints.push({location:v, stopover:true}); stops.push(v); }
+    });
+
+    gDirSvc.route({
+      origin: origen,
+      destination: destino,
+      waypoints: waypoints,
+      optimizeWaypoints: false,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, function(res, status){
+      if(status !== google.maps.DirectionsStatus.OK){
+        alert('No fue posible calcular la ruta: ' + status);
+        return;
       }
+      gDirRend.setDirections(res);
+      let meters = 0;
+      res.routes[0].legs.forEach(l => meters += (l.distance?.value || 0));
+      const kmCalc = (meters/1000);
+      // guarda en hidden
+      hMode.value = 'auto';
+      hKm.value   = kmCalc.toFixed(2);
+      kmMostrado.value = kmCalc.toFixed(2);
+      document.getElementById('chf_km_auto').checked = true;
+      document.getElementById('chf_km_manual').checked = false;
+
+      hOrig.value = origen;
+      hDest.value = destino;
+      hStops.value = JSON.stringify(stops);
+
+      // recalcula con los km automáticos
+      recalc();
+    });
+  });
+
+  // inicial
+  recalc();
+})();
+</script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script>
+<?php       
+}
         //Condiciones comerciales ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if( $this->model->estatus == "A"){
           $sqlf='SELECT * FROM  crm_cotizaciones_condiciones WHERE cf_cotizacion = "'.$this->model->id.'" order by cf_orden';

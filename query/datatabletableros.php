@@ -1,4 +1,5 @@
 <?php
+ini_set('display_errors', 0);
 include_once('../funciones.php');
 session_start();
 $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');

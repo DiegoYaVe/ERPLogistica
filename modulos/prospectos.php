@@ -1,5 +1,5 @@
 <?php
-  /* ini_set('display_errors', 1); */
+ini_set('display_errors', 0);
   class prospectos{
     var $model;
     var $view;
@@ -21,23 +21,115 @@
     }
     function insert(){
       $fini = explode("T", $_POST['fini']);
-      $estado = $_POST['estado']; // recuperar el estado del formulario
+      $estado = $_POST['estado'];
+
+      // OJO: observacion viene de TinyMCE (HTML). NO la conviertas a mayúsculas.
+      $internacional = filter_var($_POST['internacional'] ?? 0, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
 
       $this->model->setdata(
-        "NULL",
+            "NULL",
+            $_POST['ugen'],
+            $fini[0],
+            $fini[1],
+            "NULL",
+            "A",
+            $_POST['observacion'],
+            $estado, // pasar estado
+            $internacional     // 0 o 1 ya normalizado
+          );
+
+      $this->model->insert();
+
+      // Guarda archivos (si vienen)
+      $this->model->save_files($this->model->idt, $_FILES['mediaFiles'] ?? null);
+
+      $this->insertorden();
+      redirect('?modulo=prospectos&accion=show&id='.$this->model->idt);
+    }
+
+    function update(){
+      $idHoja = intval($_POST['idHoja'] ?? 0);
+      if ($idHoja <= 0) { die(json_encode(['ok'=>false,'msg'=>'id inválido'])); }
+
+      $fini = explode("T", $_POST['fini']);
+      $estado = $_POST['estado'];
+
+      $this->model->setdata(
+        $idHoja,
         $_POST['ugen'],
         $fini[0],
         $fini[1],
-        "NULL",
+        NULL, // no tocamos hfin aquí
         "A",
-        $_POST['observacion'],
-        $estado // pasar estado
+        $_POST['observacion'], // HTML crudo (TinyMCE)
+        $estado
       );
 
-      $this->model->insert();
-      $this->insertorden();
+      $this->model->update();  // nuevo en el modelo
+      $this->model->save_files($idHoja, $_FILES['mediaFiles'] ?? null);
 
-      redirect('?modulo=prospectos&accion=show&id='.$this->model->idt);
+      // Si llamas por AJAX espera JSON; si no, redirecciona:
+      if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        echo json_encode(['ok'=>true]); 
+        return;
+      }
+      redirect('?modulo=prospectos&accion=show&id='.$idHoja);
+    }
+
+    function get_hoja(){
+      die("Entra");
+      $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+      if ($id <= 0) {
+        header('Content-Type: application/json');
+        echo json_encode(['ok'=>false,'msg'=>'id inválido']);
+        exit;
+      }
+
+      $row = $this->model->getHoja($id);
+
+      header('Content-Type: application/json; charset=utf-8');
+      echo json_encode([
+        'ok' => $row ? true : false,
+        'idHoja' => $row['cc_id'] ?? null,
+        'estado' => $row['cc_estado'] ?? '',
+        'fini' => isset($row['cc_fini']) ? date('Y-m-d\TH:i:s', strtotime($row['cc_fini'])) : '',
+        'ugen' => $row['cc_ugen'] ?? '',
+        'observacionHTML' => $row['cc_observacion'] ?? ''
+      ]);
+      exit; // MUY IMPORTANTE: evita que se renderice el layout
+    }
+
+    function list_files(){
+      $id = intval($_GET['id'] ?? 0);
+      $sql = 'SELECT ca_id, ca_filename, ca_filepath 
+              FROM crm_capturaleads_archivos 
+              WHERE cc_id = "'.$id.'" 
+              ORDER BY ca_id DESC';
+      $res = setq($sql);
+      $files = [];
+      while($r = $res->fetch_assoc()){
+        $files[] = [
+          'id' => $r['ca_id'],
+          'filename' => $r['ca_filename'],
+          'url' => $r['ca_filepath']   // Debe ser URL accesible (relativa pública)
+        ];
+      }
+      header('Content-Type: application/json');
+      echo json_encode($files);
+    }
+
+    function delete_file(){
+      $id = intval($_POST['id'] ?? 0);
+      $sql = 'SELECT ca_filepath FROM crm_capturaleads_archivos WHERE ca_id = "'.$id.'"';
+      $res = setq($sql);
+      $row = $res->fetch_array();
+      if ($row) {
+        $path = $_SERVER['DOCUMENT_ROOT'] . $row['ca_filepath'];
+        if (is_file($path)) @unlink($path);
+        setq('DELETE FROM crm_capturaleads_archivos WHERE ca_id = "'.$id.'"');
+      }
+      header('Content-Type: application/json');
+      echo json_encode(['ok'=>true]);
     }
 
     function show(){
@@ -63,41 +155,41 @@
         </script>
         ';
       } else{
-      while ($rowu = $resultu->fetch_array()){
-        array_push($usuariosventas, $rowu['uo_orden']);
+        while ($rowu = $resultu->fetch_array()){
+          array_push($usuariosventas, $rowu['uo_orden']);
+        }
+
+        $sqluo = "SELECT uo_orden FROM usuarios_orden INNER JOIN crm_leads  ON cl_vendedor = uo_uid WHERE cl_estatus = 'P' AND cl_ucaptura = '".$_SESSION['uid']."' AND uo_estatus = 'A'";
+        $resultuo = setq($sqluo);
+        $totalu = $resultuo->num_rows;
+        while ($rowuo = $resultuo->fetch_array()){
+          array_push($ocupados, $rowuo['uo_orden']);
+        }
+
+        $disponibles = array_merge(array_diff($usuariosventas, $ocupados), array_diff($usuariosventas, $ocupados));
+        $ultimovendedor = busca($disponibles[0], "usuarios_orden", "uo_estatus = 'A' AND uo_orden", "uo_uid"); //Consultamos el orden del ultimo registro de asignación
+
+        //Comrobamos que el número de vendedores no sea mayor al orden
+        if($totalu == $nvendedores){
+          //Si el número de asignación llegó al límite de vendedores asignados volvemos a comenzar desde el primer vendedor activo
+
+          $vendedor = busca('A', 'usuarios_orden', 'uo_estatus', 'MIN(uo_orden) AS uo_orden');
+          /* $vendedor = busca("1", "usuarios_orden", "uo_orden", "uo_uid"); */
+          
+        } else{
+          //Si el número de asignación no ha llegado al límite de vendedores asignados
+          $vendedor = $ultimovendedor;
+        }    
+
+        //Si el prospecto ya tuvo un registro previo se le asigna el asesor que lo atendió en esa ocasión
+        if (!empty($pvendedor)) {
+          $vendedor = $pvendedor;
+        }
+      
+                                                                                                                                                      
+        $this->model->setdatalead("",$_POST['lead'],$_POST['nmb'],$_POST['cp'],$_POST['correo'],$_POST['telefono'],$_POST['code'],$_POST['pais'],"P",$_POST['observacion'],$vendedor,$ncaptura,$_SESSION['uid'],"NULL",date("Y-m-d"));
+        $this->model->insertlead();
       }
-
-      $sqluo = "SELECT uo_orden FROM usuarios_orden INNER JOIN crm_leads  ON cl_vendedor = uo_uid WHERE cl_estatus = 'P' AND cl_ucaptura = '".$_SESSION['uid']."' AND uo_estatus = 'A'";
-      $resultuo = setq($sqluo);
-      $totalu = $resultuo->num_rows;
-      while ($rowuo = $resultuo->fetch_array()){
-        array_push($ocupados, $rowuo['uo_orden']);
-      }
-
-      $disponibles = array_merge(array_diff($usuariosventas, $ocupados), array_diff($usuariosventas, $ocupados));
-      $ultimovendedor = busca($disponibles[0], "usuarios_orden", "uo_estatus = 'A' AND uo_orden", "uo_uid"); //Consultamos el orden del ultimo registro de asignación
-
-      //Comrobamos que el número de vendedores no sea mayor al orden
-      if($totalu == $nvendedores){
-        //Si el número de asignación llegó al límite de vendedores asignados volvemos a comenzar desde el primer vendedor activo
-
-        $vendedor = busca('A', 'usuarios_orden', 'uo_estatus', 'MIN(uo_orden) AS uo_orden');
-        /* $vendedor = busca("1", "usuarios_orden", "uo_orden", "uo_uid"); */
-        
-      } else{
-        //Si el número de asignación no ha llegado al límite de vendedores asignados
-        $vendedor = $ultimovendedor;
-      }    
-
-      //Si el prospecto ya tuvo un registro previo se le asigna el asesor que lo atendió en esa ocasión
-      if (!empty($pvendedor)) {
-        $vendedor = $pvendedor;
-      }
-    
-                                                                                                                                                    
-      $this->model->setdatalead("",$_POST['lead'],$_POST['nmb'],$_POST['cp'],$_POST['correo'],$_POST['telefono'],$_POST['code'],$_POST['pais'],"P",$_POST['observacion'],$vendedor,$ncaptura,$_SESSION['uid'],"NULL",date("Y-m-d"));
-      $this->model->insertlead();
-    }
       $link = '?modulo=prospectos&accion=show&id='.$_POST['lead'];
       redirect($link);
     }
@@ -254,16 +346,17 @@
       $this->result = setq($sql);
       $this->resultt = setq($sql);
     }
-    function setdata($id, $ugen, $fini, $hini, $hfin, $estatus, $observacion, $estado){
+    function setdata($id, $ugen, $fini, $hini, $hfin, $estatus, $observacion, $estado, $internacional){
       mb_internal_encoding("UTF-8");
       $this->id = $id;
       $this->ugen = clearvmayus($ugen);
       $this->fini = $fini;
       $this->hini = $hini;
-      $this->hfin = $hfin;
+      $this->hfin = $hfin; // puede ser NULL
       $this->estatus = clearvmayus($estatus);
-      $this->observacion = clearvmayus($observacion);
-      $this->estado = clearvmayus($estado); // nuevo atributo
+      $this->observacion = $observacion; // HTML crudo, no upper
+      $this->estado = clearvmayus($estado);
+      $this->internacional = $internacional;
     }
 
     function insert(){
@@ -274,11 +367,13 @@
               cc_hfin = '.$this->hfin.',
               cc_estatus = "'.$this->estatus.'",
               cc_observacion = "'.$this->observacion.'",
-              cc_estado = "'.$this->estado.'"'; // nuevo campo
+              cc_estado = "'.$this->estado.'",
+              cc_internacional ="'.$this->internacional.'" '; // nuevo campo
       setq($sql);
 
       $this->idt = getmax('cc_id','crm_capturaleads',false,false);
     }
+
 
     function setdatalead($id,$lead,$nmb,$cp,$correo,$telefono,$code,$pais,$estatus,$observacion,$vendedor,$ncaptura,$ucaptura,$hasigna,$fechaasigna,$consecutivo){
       $this->id = $id;
@@ -318,7 +413,8 @@
               cl_ucaptura = "'.$this->ucaptura.'",
               cl_hasigna = NULL,
               cl_consecutivo = "'.$this->consecutivo.'",
-              cl_fasigna = "'.$this->fasigna.'"';
+              cl_fasigna = "'.$this->fasigna.'",
+              cl_fechalimite = "'.date("Y-m-d", strtotime("+7 days")).'"';
       $result = setq($sql);
       if ($result !== false) {
         $respuesta = 1; //La consulta fue exitosa
@@ -329,29 +425,51 @@
       return($respuesta);
     }
     
-    function updatelead(){
-      $sql = 'UPDATE crm_leads SET
-              cl_lead = "'.$this->lead.'",         
-              cl_nmb = "'.$this->nmb.'",
-              cl_telefono = "'.$this->telefono.'" ,
-              cl_code = "'.$this->code.'" ,
-              cl_pais = "'.$this->pais.'" ,
-              cl_correo = "'.$this->correo.'",
-              cl_estatus = "'.$this->estatus.'",
-              cl_observacion = "'.$this->observacion.'",
-              cl_vendedor = "'.$this->vendedor.'",
-              cl_ncaptura = "'.$this->ncaptura.'",
-              cl_ucaptura = "'.$this->ucaptura.'",
-              cl_hasigna = "'.$this->hasigna.'",
-              cl_fasigna = "'.$this->fasigna.'"
-              WHERE cl_id = "'.$this->id.'"';
+    function update(){
+      $hfinSQL = is_null($this->hfin) ? 'NULL' : '"'.$this->hfin.'"';
+
+      $sql = 'UPDATE crm_capturaleads SET
+                cc_fini = "'.$this->fini.'",
+                cc_ugen = "'.$this->ugen.'",
+                cc_hini = "'.$this->hini.'",
+                cc_hfin = '.$hfinSQL.',
+                cc_estatus = "'.$this->estatus.'",
+                cc_observacion = "'.mysqli_real_escape_string($GLOBALS['mysqli'],$this->observacion).'",
+                cc_estado = "'.$this->estado.'"
+              WHERE cc_id = "'.$this->id.'"';
       setq($sql);
+    }
+
+    function save_files($cc_id, $files){
+      if (empty($files) || empty($files['name'])) return;
+
+      $baseDir = '/uploads/prospectos/'.$cc_id.'/';      // URL pública relativa
+      $absDir  = $_SERVER['DOCUMENT_ROOT'].$baseDir;     // ruta física
+      if (!is_dir($absDir)) @mkdir($absDir, 0775, true);
+
+      $names = $files['name'];
+      $tmp   = $files['tmp_name'];
+      $errs  = $files['error'];
+
+      for ($i=0; $i < count($names); $i++){
+        if ($errs[$i] !== UPLOAD_ERR_OK) continue;
+
+        $safe = preg_replace('/[^a-zA-Z0-9._-]/','_', $names[$i]);
+        $final = uniqid().'_'.$safe;
+
+        if (move_uploaded_file($tmp[$i], $absDir.$final)) {
+          $sql = 'INSERT INTO crm_capturaleads_archivos
+                    (cc_id, ca_filename, ca_filepath, ca_uploaded_by)
+                  VALUES
+                    ("'.$cc_id.'","'.$safe.'","'.$baseDir.$final.'","'.($_SESSION['uid'] ?? '').'")';
+          setq($sql);
+        }
+      }
     }
 
     function resultlead($id){
       /* $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_fasigna = "'.date("Y-m-d").'" ORDER BY cl_estatus = "P" DESC, cl_id DESC'; */
-      $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_estatus != "R" ORDER BY cl_estatus = "P" DESC, cl_id DESC';
-
+      $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_estatus != "R" AND cl_estatus != "X" ORDER BY cl_estatus = "P" DESC, cl_id DESC';
       $this->result = setq($sql);
 
       /* $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_fasigna = "'.date("Y-m-d").'" AND cl_estatus = "P" ORDER BY cl_id DESC'; */
@@ -383,43 +501,52 @@
       
     }
 
-  function finalizarcaptura($id){
-    $sql0 = 'SELECT cl_id, cl_vendedor, cl_code, cl_pais, cl_telefono FROM crm_leads WHERE cl_estatus = "P"';
-    $result0 = setq($sql0);
-    $cantvend = array();
-    $i = 0;
-    $hora = date("H:i:s");
-    $fecha = date("Y-m-d");
-    while($row0 = $result0->fetch_array()){
-      $sql1 = 'SELECT cl_id FROM crm_leads WHERE cl_estatus IN ("P", "A", "X") AND cl_code = "'.$row0['cl_code'].'" AND cl_pais = "'.$row0['cl_pais'].'" AND cl_telefono = "'.$row0['cl_telefono'].'"';
-      $result1 = setq($sql1);
-      while($row1 = $result1->fetch_array()){
-        $sqlh = 'UPDATE historial_leadsasignacion SET
-                hl_lead = "'.$row1['cl_id'].'" WHERE hl_lead = "'.$row1['cl_id'].'"';
-        setq($sqlh);
+    function finalizarcaptura($id){
+      $sql0 = 'SELECT cl_id, cl_vendedor, cl_code, cl_pais, cl_telefono FROM crm_leads WHERE cl_estatus = "P"';
+      $result0 = setq($sql0);
+      $cantvend = array();
+      $i = 0;
+      $hora = date("H:i:s");
+      $fecha = date("Y-m-d");
+      while($row0 = $result0->fetch_array()){
+        $sql1 = 'SELECT cl_id FROM crm_leads WHERE cl_estatus IN ("P", "A", "X") AND cl_code = "'.$row0['cl_code'].'" AND cl_pais = "'.$row0['cl_pais'].'" AND cl_telefono = "'.$row0['cl_telefono'].'"';
+        $result1 = setq($sql1);
+        while($row1 = $result1->fetch_array()){
+          $sqlh = 'UPDATE historial_leadsasignacion SET
+                  hl_lead = "'.$row1['cl_id'].'" WHERE hl_lead = "'.$row1['cl_id'].'"';
+          setq($sqlh);
+        }
+
+        $sqldel = "DELETE FROM crm_leads WHERE cl_code = '".$row0['cl_code']."' AND cl_pais = '".$row0['cl_pais']."' AND cl_telefono = '".$row0['cl_telefono']."' AND cl_estatus IN ('A', 'X', 'R')";
+        setq($sqldel);
+
+        $sql = 'UPDATE crm_leads SET cl_estatus= "A", cl_hasigna = "'.$hora.'" WHERE cl_id = "'.$row0['cl_id'].'"';
+        $cantvend[$i] = $row0['cl_vendedor'];
+        setq($sql);
+        $id = $row0['cl_id'];
+        $vendedor = $row0['cl_vendedor'];
+        inserthistorial($id, $hora, $fecha, $vendedor);
+        $i++;
       }
-
-      $sqldel = "DELETE FROM crm_leads WHERE cl_code = '".$row0['cl_code']."' AND cl_pais = '".$row0['cl_pais']."' AND cl_telefono = '".$row0['cl_telefono']."' AND cl_estatus IN ('A', 'X', 'R')";
-      setq($sqldel);
-
-      $sql = 'UPDATE crm_leads SET cl_estatus= "A", cl_hasigna = "'.$hora.'" WHERE cl_id = "'.$row0['cl_id'].'"';
-      $cantvend[$i] = $row0['cl_vendedor'];
-      setq($sql);
-      $id = $row0['cl_id'];
-      $vendedor = $row0['cl_vendedor'];
-      inserthistorial($id, $hora, $fecha, $vendedor);
-      $i++;
+      return $cantvend;
     }
-    return $cantvend;
-  }
 
-  function insertorden($id, $estatus){
-    $sql = 'UPDATE usuarios_orden
-    SET uo_estatus = "'.$estatus.'"
-    WHERE uo_uid = "'.$id.'"
-    ';
-    setq($sql);
-  }
+    function insertorden($id, $estatus){
+      $sql = 'UPDATE usuarios_orden
+      SET uo_estatus = "'.$estatus.'"
+      WHERE uo_uid = "'.$id.'"
+      ';
+      setq($sql);
+    }
+
+    function getHoja($id){
+      $sql = 'SELECT cc_id, cc_estado, cc_fini, cc_ugen, cc_observacion
+              FROM crm_capturaleads
+              WHERE cc_id = "'.$id.'" LIMIT 1';
+      $res = setq($sql);
+      if (!$res || $res->num_rows===0) return null;
+      return $res->fetch_array();
+    }
 
   }
 
@@ -460,490 +587,944 @@ $("body").on("keydown", function(e) {
         $this->estatust = array("N"=>"Abierto","P"=>"Construcción","G"=>"Negociación","L"=>"Aplazado","A"=>"Vendido","F"=>"Finalizado","C"=>"Cancelado","O"=>"En Linea","X"=>"Perdido","W"=>"Ganados");
         $this->colestatust = array("N"=>"bg-yellow bg-accent-1","P"=>"bg-orange bg-accent-2","G"=>"bg-indigo bg-accent-3","L"=>"bg-amber bg-darken-4","A"=>"bg-success bg-accent-3","C"=>"bg-red bg-accent-4","F"=>"bg-blue bg-darken-2","X"=>"bg-red bg-darken-2");
     }
-    function browse($ugen,$estatus,$fini,$ffin,$hini,$hfin,$page){
-        $nuevo = '
-        <button id="nuevo" type="button" class="btn btn-sm btn-primary">
-          <i class="fa fa-plus"></i> Nueva hoja
-        </button>';
+function browse($ugen,$estatus,$fini,$ffin,$hini,$hfin,$page){
+    $nuevo = '
+    <button id="nuevo" type="button" class="btn btn-sm btn-primary">
+      <i class="fa fa-plus"></i> Nueva hoja
+    </button>';
 
-        $hoja = busca(date("Y-m-d"), "crm_capturaleads", "cc_estatus ='A' AND cc_fini", "cc_id");
+    $hoja = busca(date("Y-m-d"), "crm_capturaleads", "cc_estatus ='A' AND cc_fini", "cc_id");
 
-        if($hoja != ""){
-          $hojaactual = "";
-        } else{
-          $hojaactual = "";
-        }
-
-        $filtro = '
-        <form autocomplete="off" action="?modulo=prospectos&accion=index" method="post" id="filtro" class="">
-          <div class="mb-5">
-            <label class="mr-sm-2">Registra:</label>
-            <select name="nmb" id="nmb" class="form-control">
-              <option value="">TODOS</option>';
-              //menu_select_db('usuarios','u_id','u_id',$agente,'agente','u_empresa = "'.$_SESSION['emp'].'" AND u_estatus = "A"',false,false,true,false,"Todos")
-              $sql = 'SELECT * FROM usuarios WHERE u_estatus = "A" AND u_empresa = "'.$_SESSION['emp'].'"';
-              $result = setq($sql);
-              while($row = $result->fetch_array()){
-                if($row['u_id'] == $ugen) $agenteselect = 'selected';
-                else $agenteselect = '';
-
-                $filtro.= '<option value="'.$row['u_id'].'" '.$agenteselect.'>'.$row['u_id'].'</option>';
-                
-              }
-
-              $filtro.= '
-            </select>
-          </div>
-          <div class="mb-5" hidden>
-            <label class="mr-sm-2">Page:</label>
-            <div class="position-relative has-icon-left">
-              <input type="text" id="page" name="page" class="form-control" value="" required>
-            </div>
-          </div>
-          <div class="mb-5">
-            <label class="mr-sm-2">Fecha desde:</label>
-            <div class="position-relative has-icon-left">
-              <input type="date" id="fini" name="fini" class="form-control" value="'.$fini.'" required>
-              <input hidden type="date" id="fini2" class="form-control" value="'.date('Y-m-d',strtotime('-20 days')).'">
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-          <div class="mb-5">
-            <label class="mr-sm-2">Fecha hasta:</label>
-            <div class="position-relative has-icon-left">
-              <input type="date" id="ffin" name="ffin" class="form-control" value="'.$ffin.'" required>
-              <input hidden type="date" id="ffin2" class="form-control" value="'.date('Y-m-d',strtotime('last day of this month')).'">
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="mr-sm-2">Hora desde:</label>
-            <div class="position-relative has-icon-left">
-              <input type="time" id="hini" name="hini" class="form-control" value="'.$hini.'" required>
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="mr-sm-2">Hora hasta:</label>
-            <div class="position-relative has-icon-left">
-              <input type="time" id="hfin" name="hfin" class="form-control" value="'.$hfin.'" required>
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-         <div class="mb-5">
-        <label class="mr-sm-2">Estatus:</label>
-        <select name="estatus" id="estatus" class="form-control" >
-          <option value="">Todos</option>
-          <option value="A" ' . ($estatus == "A" ? "selected" : "") . '>Activo</option>
-          <option value="F" ' . ($estatus == "F" ? "selected" : "") . '>Finalizado</option>
-        </select>
-        </div>
-          <div class="mb-5">
-            <label>Acciones:</label><br>
-            <button type="button" onclick="mandar(0)" class="btn btn-success"><i class="icon-funnel"></i> Filtrar </button>
-            <!-- <a href="?modulo=prospectos&accion=index"><button type="button" class="btn btn-warning"> -->
-            <button type="button" onclick="mandar(1)" class="btn btn-warning">
-            <span class="glyphicon glyphicon-record"></span> <i class="icon-android-cancel"></i> Limpiar
-            </button><!-- </a> -->
-          </div>
-        </form>
-        ';
-
-        toolbar($_GET['modulo'],$nuevo,$filtro,$hojaactual);
-          ?>
-<script>
-function alertSweet(icono, titulo, mensaje) {
-    Swal.fire({
-        icon: icono,
-        title: titulo,
-        text: mensaje
-    }).then((result) => {
-        if (result.isConfirmed || result.isDenied) {
-            Swal.close();
-        }
-    });
-}
-
-// Obtener el elemento del botón con el ID "nuevo"
-const botonNuevo = document.getElementById('nuevo');
-// Agregar un evento de clic al botón nuevo
-botonNuevo.addEventListener('click', function(event) {
-    // Prevenir el comportamiento predeterminado del evento
-    event.preventDefault();
-    $.ajax({
-        type: "POST",
-        url: "query/consultahoja.php",
-        success: function(data) {
-            // Comprobar si el resultado de la solicitud AJAX es diferente de "0" (Que haya una hoja abierta)
-            if (data == 2) {
-                // Si el resultado no es "0", mostrar una alerta
-                alertSweet("error", "Atención", "No puede crear más de una hoja por día");
-                //} else if (data == 3) {
-                // Hay una hoja abierta de un día diferente a hoy
-                //alertSweet("error", "Atención", "Existe una hoja sin finalizar de algún día previo");
-            } else {
-                // Si el resultado es "0", realizar las siguientes acciones
-                // Obtener el atributo "data-bs-target" del botón
-                const modalTarget0 = botonNuevo.getAttribute("data-bs-target");
-                // Comprobar si el atributo "data-bs-target" ya existe 
-                if (!modalTarget0) {
-                    // Si el atributo "data-bs-target" no existe, configurar los atributos "data-bs-target" y "data-bs-toggle" del botón
-                    const modalTarget = botonNuevo.setAttribute("data-bs-target", "#newtablero");
-                    const modalToggle = botonNuevo.setAttribute("data-bs-toggle", "modal");
-                    // Obtener el elemento modal con el ID "newtablero"
-                    const modal = document.querySelector(modalTarget);
-                    // Comprobar si el elemento modal existe
-                    if (modal) {
-                        // Si existe, crear un objeto Modal de Bootstrap y mostrar el modal
-                        const bsModal = new bootstrap.Modal(modal);
-                        bsModal.show();
-                    }
-                    // Obtener nuevamente el elemento del botón
-                    const modalT = document.querySelector(modalToggle);
-                    // Comprobar si el elemento del botón existe
-                    if (modalT) {
-                        // Si existe, crear un objeto Modal de Bootstrap y mostrar el modal nuevamente
-                        const bsModalT = new bootstrap.Modal(modalT);
-                        bsModalT.show();
-                    }
-                    // Simular un clic en el botón "nuevo" para que se abra el modal recién configurado
-                    botonNuevo.click();
-                }
-            }
-        }
-    });
-});
-
-
-// Agregar un evento que se ejecutará cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    // Obtener el elemento del modal con el ID "newtablero"
-    const modalNewTablero = document.getElementById('newtablero');
-    // Comprobar si el elemento del modal existe en el DOM
-    if (modalNewTablero) {
-        // Si el modal existe, agregar un evento que se ejecutará cuando se oculte el modal
-        modalNewTablero.addEventListener('hidden.bs.modal', function() {
-            // Obtener el botón con el ID "nuevo"
-            const botonNuevo = document.getElementById('nuevo');
-            // Remover los atributos "data-bs-target" y "data-bs-toggle" del botón "nuevo"
-            botonNuevo.removeAttribute("data-bs-target");
-            botonNuevo.removeAttribute("data-bs-toggle");
-        });
+    if($hoja != ""){
+      $hojaactual = "";
+    } else{
+      $hojaactual = "";
     }
-});
 
-/* function mandar(id){
-  document.getElementById("page").value = id;
-  document.getElementById("filtro").submit();
-} */
+    $filtro = '
+    <form autocomplete="off" action="?modulo=prospectos&accion=index" method="post" id="filtro" class="">
+      <div class="mb-5">
+        <label class="mr-sm-2">Registra:</label>
+        <select name="nmb" id="nmb" class="form-control">
+          <option value="">TODOS</option>';
+          //menu_select_db('usuarios','u_id','u_id',$agente,'agente','u_empresa = "'.$_SESSION['emp'].'" AND u_estatus = "A"',false,false,true,false,"Todos")
+          $sql = 'SELECT * FROM usuarios WHERE u_estatus = "A" AND u_empresa = "'.$_SESSION['emp'].'"';
+          $result = setq($sql);
+          while($row = $result->fetch_array()){
+            if($row['u_id'] == $ugen) $agenteselect = 'selected';
+            else $agenteselect = '';
 
-function finalizar(id) {
-    Swal.fire({
-        icon: "question",
-        title: "Atención",
-        html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
-        showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
-        showCancelButton: true, // Muestra el botón de cancelar
-        focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
-        confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
-        confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
-        cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
-        cancelButtonColor: "#d33", // Color del botón "Cancelar"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
-        }
-        Swal.close();
-    });
+            $filtro.= '<option value="'.$row['u_id'].'" '.$agenteselect.'>'.$row['u_id'].'</option>';
+            
+          }
+
+          $filtro.= '
+        </select>
+      </div>
+      <div class="mb-5" hidden>
+        <label class="mr-sm-2">Page:</label>
+        <div class="position-relative has-icon-left">
+          <input type="text" id="page" name="page" class="form-control" value="" required>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label class="mr-sm-2">Fecha desde:</label>
+        <div class="position-relative has-icon-left">
+          <input type="date" id="fini" name="fini" class="form-control" value="'.$fini.'" required>
+          <input hidden type="date" id="fini2" class="form-control" value="'.date('Y-m-d',strtotime('-20 days')).'">
+          <div class="form-control-position">
+            <i class="icon-calendar5"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-5">
+        <label class="mr-sm-2">Fecha hasta:</label>
+        <div class="position-relative has-icon-left">
+          <input type="date" id="ffin" name="ffin" class="form-control" value="'.$ffin.'" required>
+          <input hidden type="date" id="ffin2" class="form-control" value="'.date('Y-m-d',strtotime('last day of this month')).'">
+          <div class="form-control-position">
+            <i class="icon-calendar5"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-2">
+        <label class="mr-sm-2">Hora desde:</label>
+        <div class="position-relative has-icon-left">
+          <input type="time" id="hini" name="hini" class="form-control" value="'.$hini.'" required>
+          <div class="form-control-position">
+            <i class="icon-calendar5"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="mr-sm-2">Hora hasta:</label>
+        <div class="position-relative has-icon-left">
+          <input type="time" id="hfin" name="hfin" class="form-control" value="'.$hfin.'" required>
+          <div class="form-control-position">
+            <i class="icon-calendar5"></i>
+          </div>
+        </div>
+      </div>
+      <div class="mb-5">
+    <label class="mr-sm-2">Estatus:</label>
+    <select name="estatus" id="estatus" class="form-control" >
+      <option value="">Todos</option>
+      <option value="A" ' . ($estatus == "A" ? "selected" : "") . '>Activo</option>
+      <option value="F" ' . ($estatus == "F" ? "selected" : "") . '>Finalizado</option>
+    </select>
+    </div>
+      <div class="mb-5">
+        <label>Acciones:</label><br>
+        <button type="button" onclick="mandar(0)" class="btn btn-success"><i class="icon-funnel"></i> Filtrar </button>
+        <!-- <a href="?modulo=prospectos&accion=index"><button type="button" class="btn btn-warning"> -->
+        <button type="button" onclick="mandar(1)" class="btn btn-warning">
+        <span class="glyphicon glyphicon-record"></span> <i class="icon-android-cancel"></i> Limpiar
+        </button><!-- </a> -->
+      </div>
+    </form>
+    ';
+
+    toolbar($_GET['modulo'],$nuevo,$filtro,$hojaactual);
+      ?>
+  <script>
+// Limpia TODO el modal de hoja
+function resetHojaModal() {
+  // 1) Quita cualquier handler que hayas agregado en "editar"
+  $('#newtablero').off('shown.bs.modal._loadFiles');
+
+  // 2) Reset del form
+  const form = document.getElementById('formNuevaHoja');
+  if (form) form.reset();
+
+  // 3) Valores de control
+  $('#idHoja').val('');
+  $('#modo').val('insert');
+  $('#internacional').prop('checked', false);
+
+  // 4) Limpia editor
+  if (tinymce.get('observacion')) tinymce.get('observacion').setContent('');
+
+  // 5) Limpia archivos (nuevos y existentes)
+  const inputFiles = document.getElementById('mediaFiles');
+  const newFilesList = document.getElementById('newFilesList');
+  if (inputFiles) inputFiles.value = '';
+  if (newFilesList) { newFilesList.innerHTML=''; newFilesList.classList.add('d-none'); }
+  $('#existingFilesList').empty();
+
+  // 6) Refresca fecha/hora local actual para #fini (YYYY-MM-DDTHH:mm:ss)
+  const pad = n => String(n).padStart(2,'0');
+  const now = new Date();
+  const valNow = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  $('#fini').val(valNow);
+
+  // (Opcional) Si tus IDs reales son otros para el título/botón, cámbialos aquí
+  $('#myModalLabel33').text('Nueva hoja de prospectos'); // título visible
+  // $('#btnRegistrarHoja').text('Registrar hoja nueva'); // si quieres cambiar el texto del botón
 }
 </script>
-<?php
-          //Modal - Nuevo deal - TABLERO
-          echo '
-          <div class="modal fade text-xs-left" id="newtablero" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h4 class="modal-title" id="myModalLabel33">Nueva hoja de prospectos</h4>
-                </div>
-                <form method="post" action="?modulo=prospectos&accion=insert" autocomplete="off" id="formNuevaHoja">
-                  <div class="modal-body row">
-                  <div class="col-md-12 col-xs-12">
-                    <label>Estado de la República:</label>
-                    <div class="mb-5">
-                      <div class="position-relative has-icon-left">
-                        <input type="text" name="estado" id="estado" class="form-control text-uppercase" oninput="this.value = this.value.toUpperCase();" required placeholder="EJEMPLO: JALISCO">
-                        <div class="form-control-position">
-                          <i class="icon-map"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                    <div class="col-md-6 col-xs-12">
-                      <label>Fecha inicio: </label>
+  <script>
+  function alertSweet(icono, titulo, mensaje) {
+      Swal.fire({
+          icon: icono,
+          title: titulo,
+          text: mensaje
+      }).then((result) => {
+          if (result.isConfirmed || result.isDenied) {
+              Swal.close();
+          }
+      });
+  }
+
+  // Obtener el elemento del botón con el ID "nuevo"
+  const botonNuevo = document.getElementById('nuevo');
+  // Agregar un evento de clic al botón nuevo
+  botonNuevo.addEventListener('click', function(event) {
+      // Prevenir el comportamiento predeterminado del evento
+      event.preventDefault();
+      $.ajax({
+          type: "POST",
+          url: "query/consultahoja.php",
+          success: function(data) {
+            // Limpia SIEMPRE antes de abrir el modal
+              resetHojaModal();
+              // Comprobar si el resultado de la solicitud AJAX es diferente de "0" (Que haya una hoja abierta)
+              if (data == 2) {
+                  // Si el resultado no es "0", mostrar una alerta
+                  alertSweet("error", "Atención", "No puede crear más de una hoja por día");
+                  //} else if (data == 3) {
+                  // Hay una hoja abierta de un día diferente a hoy
+                  //alertSweet("error", "Atención", "Existe una hoja sin finalizar de algún día previo");
+              } else {
+                  // Si el resultado es "0", realizar las siguientes acciones
+                  // Obtener el atributo "data-bs-target" del botón
+                  const modalTarget0 = botonNuevo.getAttribute("data-bs-target");
+                  // Comprobar si el atributo "data-bs-target" ya existe 
+                  if (!modalTarget0) {
+                      // Si el atributo "data-bs-target" no existe, configurar los atributos "data-bs-target" y "data-bs-toggle" del botón
+                      const modalTarget = botonNuevo.setAttribute("data-bs-target", "#newtablero");
+                      const modalToggle = botonNuevo.setAttribute("data-bs-toggle", "modal");
+                      // Obtener el elemento modal con el ID "newtablero"
+                      const modal = document.querySelector(modalTarget);
+                      // Comprobar si el elemento modal existe
+                      if (modal) {
+                          // Si existe, crear un objeto Modal de Bootstrap y mostrar el modal
+                          const bsModal = new bootstrap.Modal(modal);
+                          bsModal.show();
+                      }
+                      // Obtener nuevamente el elemento del botón
+                      const modalT = document.querySelector(modalToggle);
+                      // Comprobar si el elemento del botón existe
+                      if (modalT) {
+                          // Si existe, crear un objeto Modal de Bootstrap y mostrar el modal nuevamente
+                          const bsModalT = new bootstrap.Modal(modalT);
+                          bsModalT.show();
+                      }
+                      // Simular un clic en el botón "nuevo" para que se abra el modal recién configurado
+                      botonNuevo.click();
+                  }
+              }
+          }
+      });
+  });
+
+
+  // Agregar un evento que se ejecutará cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', function() {
+      // Obtener el elemento del modal con el ID "newtablero"
+      const modalNewTablero = document.getElementById('newtablero');
+      // Comprobar si el elemento del modal existe en el DOM
+      if (modalNewTablero) {
+          // Si el modal existe, agregar un evento que se ejecutará cuando se oculte el modal
+          modalNewTablero.addEventListener('hidden.bs.modal', function() {
+              // Obtener el botón con el ID "nuevo"
+              const botonNuevo = document.getElementById('nuevo');
+              // Remover los atributos "data-bs-target" y "data-bs-toggle" del botón "nuevo"
+              botonNuevo.removeAttribute("data-bs-target");
+              botonNuevo.removeAttribute("data-bs-toggle");
+          });
+      }
+  });
+
+  /* function mandar(id){
+    document.getElementById("page").value = id;
+    document.getElementById("filtro").submit();
+  } */
+
+  function finalizar(id) {
+      Swal.fire({
+          icon: "question",
+          title: "Atención",
+          html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
+          showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
+          showCancelButton: true, // Muestra el botón de cancelar
+          focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
+          confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
+          confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
+          cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
+          cancelButtonColor: "#d33", // Color del botón "Cancelar"
+      }).then((result) => {
+          if (result.isConfirmed) {
+              window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
+          }
+          Swal.close();
+      });
+  }
+  </script>
+  <?php
+            //Modal - Nuevo deal - TABLERO
+            echo '
+            <div class="modal fade text-xs-left" id="newtablero" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel33">Nueva hoja de prospectos</h4>
+                  </div>
+                  <form method="post" action="?modulo=prospectos&accion=insert" enctype="multipart/form-data" autocomplete="off" id="formNuevaHoja">
+                    <input type="hidden" id="idHoja" name="idHoja" value="">
+                    <input type="hidden" id="modo" name="modo" value="insert">                    
+                  <div class="modal-body row">
+                    <div class="col-md-12 col-xs-12">
+                      <label>Nombre de la hoja:</label>
                       <div class="mb-5">
                         <div class="position-relative has-icon-left">
-                          <input type="datetime-local" id="fini" name="fini" class="form-control" value="'.date('Y-m-d').'T'.date('H:i:s').'" step="any" required readonly>
+                          <input type="text" name="estado" id="estado" class="form-control text-uppercase" oninput="this.value = this.value.toUpperCase();" required placeholder="Ingresa el nombre de la hoja">
                           <div class="form-control-position">
-                            <i class="icon-calendar5"></i>
+                            <i class="icon-map"></i>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div class="col-md-6 col-xs-12">
-                      <label>Usuario: </label>
-                      <div class="mb-5">
-                      <input type="text" id="ugen" name="ugen" class="form-control" value="'.$_SESSION['uid'].'" required readonly>
-                      </div>
-                    </div>
-                    <div class="col-md-12 col-xs-12">
-                      <label>Observaciones: </label>
-                      <div class="mb-5">
-                        <textarea id="observacion" class="form-control" rows="4" name="observacion" placeholder="Escribe una obervación"></textarea>
-                      </div>
+
+                    <div class="form-check mb-4">
+                      <input class="form-check-input" type="checkbox" value="1" id="internacional" name="internacional">
+                      <label class="form-check-label" for="internacional">
+                        ¿Internacional? <small class="text-muted">(desmarcado = Nacional)</small>
+                      </label>
                     </div>
 
-                    <div class="col-12">
-                    <table width="100%" class="mb-0 table table-hover table-striped" id="myTable2">
-                    <thead class="bg-light-blue bg-darken-2 ">
+                      <div class="col-md-6 col-xs-12">
+                        <label>Fecha inicio: </label>
+                        <div class="mb-5">
+                          <div class="position-relative has-icon-left">
+                            <input type="datetime-local" id="fini" name="fini" class="form-control" value="'.date('Y-m-d').'T'.date('H:i:s').'" step="any" required readonly>
+                            <div class="form-control-position">
+                              <i class="icon-calendar5"></i>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-6 col-xs-12">
+                        <label>Usuario: </label>
+                        <div class="mb-5">
+                        <input type="text" id="ugen" name="ugen" class="form-control" value="'.$_SESSION['uid'].'" required readonly>
+                        </div>
+                      </div>
+                      <div class="col-md-12 col-xs-12">
+                        <div class="d-flex align-items-center justify-content-between">
+                          <label class="mb-1">Plantillas de correo:</label>
+                          <small class="text-muted ms-2">Selecciona para precargar el contenido</small>
+                        </div>
+                        <div class="mb-3">
+                          <select id="tplSelector" class="form-control">
+                            <option value="">-- Selecciona una plantilla --</option>
+                            <!-- aquí JS inyecta opciones -->
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="col-md-12 col-xs-12">
+                        <label>Correo electrónico personalizado: </label>
+                        <div class="mb-5">
+                          <textarea id="observacion" class="form-control" rows="6" name="observacion"
+                                    placeholder="Escribe un texto personalizado"></textarea>
+                        </div>
+                      </div>
+
+                      <!-- Archivos multimedia -->
+                      <div class="col-md-12 col-xs-12">
+                        <label>Archivos multimedia (múltiples): </label>
+                        <div class="mb-2">
+                          <input type="file" id="mediaFiles" name="mediaFiles[]" class="form-control" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
+                        </div>
+                        <!-- archivos nuevos (antes de enviar) -->
+                        <div id="newFilesList" class="list-group mb-2 d-none"></div>
+                        <!-- archivos ya guardados (cuando edita) -->
+                        <div>
+                          <label class="mb-1">Archivos existentes:</label>
+                          <div id="existingFilesList" class="list-group small"></div>
+                        </div>
+                      </div>
+
+                      <div class="col-12" hidden>
+                      <table width="100%" class="mb-0 table table-hover table-striped" id="myTable2">
+                      <thead class="bg-light-blue bg-darken-2 ">
+                        <tr>
+                          <th><b>Vendedor</b></th>
+                          <th><b>Estatus</b></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      </tbody>
+                      </table>
+                      </div>
+
+                    </div>
+                    <div class="modal-footer p-2">
+                      <center>
+                        <button type="button" id="btnRegistrarHoja" class="btn btn-primary">
+                          <i class="fa fa-check"></i> Registrar hoja nueva
+                        </button>
+                      </center>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>';
+
+            echo '<script src="assets/tinymce/tinymce.min.js"></script>';
+
+            echo "<script>
+  tinymce.init({
+    selector: '#observacion',
+    height: 280,
+    menubar: false,
+    plugins: 'link lists code table autoresize emoticons',
+    toolbar: 'undo redo | bold italic underline | bullist numlist | link | table | emoticons | removeformat | code',
+    branding: false,
+license_key: 'gpl',
+    base_url: 'assets/tinymce',
+    suffix: '.min'
+  });
+</script>
+";
+            //filtro
+          echo '
+        <div class="card mt-3">
+          <div class="card-body row" >';
+            echo '<div class="col-md-12 col-12 col-sm-12">
+              <div class="table-responsive text-medium" >
+                <center>
+                  <table width="90%" class="mb-0 table-hover table-striped" id="myTable">
+                    <thead class="bg-light-blue bg-darken-2">
                       <tr>
-                        <th><b>Vendedor</b></th>
-                        <th><b>Estatus</b></th>
+                        <th width="8%"><b>No. Hoja</b></th>
+                        <th width="10%"><b>Nombre</b></th>
+                        <th width="10%"><b>Usuario</b></th>
+                        <th width="10%"><b>No. Prospectos</b></th>
+                        <th width="10%"><b>Fecha</b></th>
+                        <th width="10%"><b>Hora inicio</b></th>
+                        <th width="10%"><b>Hora final</b></th>
+                        <th width="17%"><b>Observaciones</b></th>
+                        <th width="8%"><b>Estatus</b></th>
+                        <th width="10%"></th>
                       </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                    </table>
-                    </div>
-
-                  </div>
-                  <div class="modal-footer p-2">
-                    <center>
-                      <button type="button" id="btnRegistrarHoja" class="btn btn-primary">
-                        <i class="fa fa-check"></i> Registrar hoja nueva
-                      </button>
-                    </center>
-                  </div>
-                </form>
+                    </thead>';
+                  echo '</table>
+                </center>
               </div>
             </div>
-          </div>';
-          //filtro
-        echo '
-      <div class="card mt-3">
-        <div class="card-body row" >';
-          echo '<div class="col-md-12 col-12 col-sm-12">
-            <div class="table-responsive text-medium" >
-              <center>
-                <table width="90%" class="mb-0 table-hover table-striped" id="myTable">
-                  <thead class="bg-light-blue bg-darken-2">
-                    <tr>
-                      <th width="8%"><b>No. Hoja</b></th>
-                      <th width="10%"><b>Estado</b></th>
-                      <th width="10%"><b>Usuario</b></th>
-                      <th width="10%"><b>No. Prospectos</b></th>
-                      <th width="10%"><b>Fecha</b></th>
-                      <th width="10%"><b>Hora inicio</b></th>
-                      <th width="10%"><b>Hora final</b></th>
-                      <th width="17%"><b>Observaciones</b></th>
-                      <th width="8%"><b>Estatus</b></th>
-                      <th width="10%"></th>
-                    </tr>
-                  </thead>';
-                echo '</table>
-              </center>
-            </div>
           </div>
-        </div>
-      </div>';
+        </div>';
 
-      echo '<script>
-      function mandar(id){
-        var fini = document.getElementById("fini");
-        var ffin = document.getElementById("ffin");
-        var hini = document.getElementById("hini");
-        var hfin = document.getElementById("hfin");
-        var ugen = document.getElementById("nmb");
-        var estatus = document.getElementById("estatus");
+        echo '<script>
+        function mandar(id){
+          var fini = document.getElementById("fini");
+          var ffin = document.getElementById("ffin");
+          var hini = document.getElementById("hini");
+          var hfin = document.getElementById("hfin");
+          var ugen = document.getElementById("nmb");
+          var estatus = document.getElementById("estatus");
 
-        if(id == 1){
-          search = "";
-          fini.value = document.getElementById("fini2").value;
-          ffin.value = document.getElementById("ffin2").value;
-          hini.value = "";
-          hfin.value = "";
-          ugen.value = "";
-          estatus.value = "";
+          if(id == 1){
+            search = "";
+            fini.value = document.getElementById("fini2").value;
+            ffin.value = document.getElementById("ffin2").value;
+            hini.value = "";
+            hfin.value = "";
+            ugen.value = "";
+            estatus.value = "";
+          }
+
+          $("#myTable").DataTable().clear().draw();
+          $("#myTable").DataTable().destroy();
+
+          $("#myTable").DataTable( {
+            paging: true,
+            scrollY: 400,
+            processing: true,
+            serverside: true,
+            ordering: false,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+            },
+            ajax: {
+              url: "query/datatableprospectos.php",
+              type: "POST",
+              datatype: "json",
+              data:{ 
+                "fini": fini.value,
+                "ffin": ffin.value,
+                "hini": hini.value,
+                "hfin": hfin.value,
+                "ugen" : ugen.value,
+                "estatus" : estatus.value
+              }
+            },
+            pageLength: "50",
+            responsivePriority: 1,
+            columnDefs: [
+              { type: "num", targets: 0 } // Indicar que la columna 0 debe tratarse como numérica
+          ],
+          order: [[0, "desc"]]
+          });
+          $("#myTable").on("draw.dt", function () {
+            aplicarEstiloColumna(8);
+          });
         }
 
-        $("#myTable").DataTable().clear().draw();
-        $("#myTable").DataTable().destroy();
+        mandar(1);
 
-        $("#myTable").DataTable( {
+        function aplicarEstiloColumna(col) {
+          var columnaNumero = col;
+          $("#myTable tbody tr").each(function() {
+            var celdas = $(this).find("td");
+            if (celdas.length > columnaNumero) {
+              celdas.eq(columnaNumero).css("width", "70px");
+              celdas.eq(columnaNumero).css("height", "34px");
+              celdas.eq(columnaNumero).css("display", "table-cell");
+              celdas.eq(columnaNumero).addClass("btn");
+              celdas.eq(columnaNumero).addClass("no-border");
+              celdas.eq(columnaNumero).addClass("text-middle");
+              celdas.eq(columnaNumero).addClass("btn-sm"); 
+
+              if(celdas.eq(columnaNumero).html() == "Finalizado"){
+                celdas.eq(columnaNumero).addClass("btn-success");
+              } else{
+                celdas.eq(columnaNumero).addClass("btn-warning");
+              }
+            }
+          });
+        }
+        
+
+        //var table = $("#myTable").DataTable();
+        $("#myTable2").DataTable().clear().draw();
+        $("#myTable2").DataTable().destroy();
+      
+      
+        $("#myTable2").DataTable( {
           paging: true,
-          scrollY: 400,
+          
           processing: true,
-          serverside: true,
-          ordering: false,
           language: {
               url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
           },
           ajax: {
-            url: "query/datatableprospectos.php",
+            url: "query/datatableordenvendedores.php",
             type: "POST",
             datatype: "json",
-            data:{ 
-              "fini": fini.value,
-              "ffin": ffin.value,
-              "hini": hini.value,
-              "hfin": hfin.value,
-              "ugen" : ugen.value,
-              "estatus" : estatus.value
-            }
+            data: {tipo: 1}
           },
           pageLength: "50",
-          responsivePriority: 1,
-          columnDefs: [
-            { type: "num", targets: 0 } // Indicar que la columna 0 debe tratarse como numérica
-        ],
-        order: [[0, "desc"]]
+          responsivePriority: 1
         });
-        $("#myTable").on("draw.dt", function () {
-          aplicarEstiloColumna(8);
-        });
-      }
-
-      mandar(1);
-
-      function aplicarEstiloColumna(col) {
-        var columnaNumero = col;
-        $("#myTable tbody tr").each(function() {
-          var celdas = $(this).find("td");
-          if (celdas.length > columnaNumero) {
-            celdas.eq(columnaNumero).css("width", "70px");
-            celdas.eq(columnaNumero).css("height", "34px");
-            celdas.eq(columnaNumero).css("display", "table-cell");
-            celdas.eq(columnaNumero).addClass("btn");
-            celdas.eq(columnaNumero).addClass("no-border");
-            celdas.eq(columnaNumero).addClass("text-middle");
-            celdas.eq(columnaNumero).addClass("btn-sm"); 
-
-            if(celdas.eq(columnaNumero).html() == "Finalizado"){
-              celdas.eq(columnaNumero).addClass("btn-success");
-            } else{
-              celdas.eq(columnaNumero).addClass("btn-warning");
-            }
-          }
-        });
-      }
       
-
-      //var table = $("#myTable").DataTable();
-      $("#myTable2").DataTable().clear().draw();
-      $("#myTable2").DataTable().destroy();
-    
-    
-      $("#myTable2").DataTable( {
-        paging: true,
+        document.getElementById("btnRegistrarHoja").addEventListener("click", function (e) {
+        e.preventDefault();
         
-        processing: true,
-        language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
-        },
-        ajax: {
-          url: "query/datatableordenvendedores.php",
+        let estadoInput = document.getElementById("estado");
+        let form = document.getElementById("formNuevaHoja");
+
+        if (!estadoInput || estadoInput.value.trim() === "") {
+          Swal.fire("Error", "Debes ingresar un estado.", "warning");
+          return;
+        }
+
+        let estado = estadoInput.value.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        var modo = document.getElementById("modo").value;
+        $.ajax({
+          url: "query/validarestadohoja.php",
           type: "POST",
-          datatype: "json",
-          data: {tipo: 1}
-        },
-        pageLength: "50",
-        responsivePriority: 1
-      });
-    
-      document.getElementById("btnRegistrarHoja").addEventListener("click", function (e) {
-      e.preventDefault();
-      
-      let estadoInput = document.getElementById("estado");
-      let form = document.getElementById("formNuevaHoja");
+          data: { estado: estado },
+          dataType: "json",
+          success: function (data) {
+            if (data.existe && modo != "update") {
+              Swal.fire({
+                icon: "warning",
+                title: "Estado duplicado",
+                text: "Ya existe una hoja activa para ese estado. ¿Deseas ser redirigido a la hoja?",
+                showCancelButton: true,
+                confirmButtonText: "Ir a la hoja",
+                cancelButtonText: "Cancelar"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  window.location.href = "?modulo=prospectos&accion=show&id=" + data.id;
+                }
+              });
+            } else ';
+            echo " 
+            if(modo == 'update'){
+            const form = document.getElementById('formNuevaHoja');
+            const fd = new FormData(form);
 
-      if (!estadoInput || estadoInput.value.trim() === "") {
-        Swal.fire("Error", "Debes ingresar un estado.", "warning");
-        return;
-      }
+            // TinyMCE HTML
+            if (tinymce.get('observacion')) {
+              fd.set('observacion', tinymce.get('observacion').getContent());
+            }
 
-      let estado = estadoInput.value.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // modo: insert | update
+            const modo = $('#modo').val() || 'insert';
+            fd.set('modo', modo);
 
-      $.ajax({
-        url: "query/validarestadohoja.php",
-        type: "POST",
-        data: { estado: estado },
-        dataType: "json",
-        success: function (data) {
-          if (data.existe) {
-            Swal.fire({
-              icon: "warning",
-              title: "Estado duplicado",
-              text: "Ya existe una hoja activa para ese estado. ¿Deseas ser redirigido a la hoja?",
-              showCancelButton: true,
-              confirmButtonText: "Ir a la hoja",
-              cancelButtonText: "Cancelar"
-            }).then((result) => {
-              if (result.isConfirmed) {
-                window.location.href = "?modulo=prospectos&accion=show&id=" + data.id;
+            // en update, manda idHoja
+            if (modo === 'update') {
+              fd.set('idHoja', $('#idHoja').val());
+            }
+
+            fd.set('internacional', $('#internacional').is(':checked') ? 1 : 0);
+
+            $.ajax({
+              url: 'query/save_hoja.php',
+              type: 'POST',
+              data: fd,
+              contentType: false,
+              processData: false,
+              dataType: 'json',
+              success: function (r) {
+                if (r && r.ok) {
+                  $('#newtablero').modal('hide');
+                  if (window.myTable && window.myTable.ajax) {
+                    window.myTable.ajax.reload(null, false);
+                  } else {
+                    location.reload();
+                  }
+                } else {
+                  alert((r && r.msg) ? r.msg : 'No fue posible guardar.');
+                }
+              },
+              error: function (xhr) {
+                console.error('save_hoja.php fail', xhr.status, xhr.responseText);
+                alert('Error al enviar el formulario.');
               }
             });
-          } else {
-            form.submit();
-          }
-        }
-      });
-    });
-
-    </script>';
-
-
-/*       echo '
-      <script>
-        $("#myTable").DataTable( {
-            paging: true,
-            scrollY: 400,
-            processing: true,
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
-            },
-             ajax: {
-            url: "query/datatableprospectos.php",
-            type: "POST",
-            datatype: "json",
-            data:{ 
-              "fini": document.getElementById("fini2").value,
-              "ffin": document.getElementById("ffin2").value,
-              "hini": "",
-              "hfin": "",
-              "ugen" : "",
-              "estatus" : ""
+            } else {
+              form.submit();
             }
-            },
-            pageLength: "50",
-            responsivePriority: 1,
-            order: [[0, "desc"]], // Ordenar en orden descendente por la columna 0
+          }
         });
-        $("#myTable").on("draw.dt", function () {
-          aplicarEstiloColumna(7);
-        });
-      </script>
-      '; */
+      });
+      
 
-    }
+      </script>";
+      ?>
+      <script>
+          // previsualizar archivos NUEVOS (antes de enviar)
+          const inputFiles = document.getElementById('mediaFiles');
+          const newFilesList = document.getElementById('newFilesList');
+
+          if (inputFiles) {
+            inputFiles.addEventListener('change', () => {
+              newFilesList.innerHTML = '';
+              if (inputFiles.files.length > 0) {
+                newFilesList.classList.remove('d-none');
+                [...inputFiles.files].forEach((f, idx) => {
+                  const item = document.createElement('div');
+                  item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                  item.innerHTML = `
+                    <span class="text-truncate" style="max-width:75%">${f.name} <small class="text-muted">(${(f.size/1024).toFixed(1)} KB)</small></span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-remove-index="${idx}">
+                      <i class="fa fa-times"></i> Quitar
+                    </button>`;
+                  newFilesList.appendChild(item);
+                });
+
+                // quitar archivo de la selección (creando un nuevo FileList)
+                newFilesList.addEventListener('click', (e) => {
+                  const btn = e.target.closest('[data-remove-index]');
+                  if (!btn) return;
+                  const idx = parseInt(btn.getAttribute('data-remove-index'),10);
+                  const dt = new DataTransfer();
+                  [...inputFiles.files].forEach((f, i) => { if(i!==idx) dt.items.add(f); });
+                  inputFiles.files = dt.files;
+                  // refresco vista
+                  const evt = new Event('change');
+                  inputFiles.dispatchEvent(evt);
+                }, {once:true});
+              } else {
+                newFilesList.classList.add('d-none');
+              }
+            });
+          }
+
+          // abrir modal MODO NUEVO (global para poder llamarla desde otros lados si quieres)
+          window.openNuevoTablero = function(){
+            resetHojaModal();
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('newtablero'));
+            modal.show();
+          };
+
+          window.editarHoja = function(idHoja){
+            console.log('Editar hoja con ID:', idHoja);
+            resetHojaModal();
+            $('#idHoja').val(idHoja);
+            $('#modo').val('update');
+            $('#modal-title-text').text('Editar hoja de prospectos');
+            $('#btnText').text('Guardar cambios');
+
+            const inputFiles = document.getElementById('mediaFiles');
+            const newFilesList = document.getElementById('newFilesList');
+            if (inputFiles) inputFiles.value = '';
+            if (newFilesList) { newFilesList.innerHTML = ''; newFilesList.classList.add('d-none'); }
+
+            $.getJSON('query/get_hoja.php?id=' + idHoja, function(res){
+              $('#estado').val(res.estado || '');
+              $('#fini').val(res.fini || '');
+              $('#ugen').val(res.ugen || '');
+              if (tinymce.get('observacion')) tinymce.get('observacion').setContent(res.observacionHTML || '');
+
+              // <-- ámbito
+              $('#internacional').prop('checked', !!(+res.internacional)); // 1 -> true
+
+              // después muestras y cargas archivos
+              $('#newtablero')
+                .off('shown.bs.modal._loadFiles')
+                .on('shown.bs.modal._loadFiles', function(){
+                  window.loadExistingFiles(idHoja);
+                });
+              $('#newtablero').modal('show');
+            })
+            .fail(function(xhr){
+              console.error('get_hoja falló', xhr.status, xhr.responseText);
+              Swal.fire('Error','No se pudo cargar la hoja.','error');
+            });
+          };
+
+          window.enviarCorreosHoja = function(idHoja){
+            Swal.fire({
+              icon: 'question',
+              title: '¿Enviar correos masivos?',
+              text: 'Se enviará un correo individual a cada lead único por correo de esta hoja.',
+              showCancelButton: true,
+              confirmButtonText: 'Sí, enviar',
+              cancelButtonText: 'Cancelar'
+            }).then((res) => {
+              if (!res.isConfirmed) return;
+
+              $.ajax({
+                url: 'query/send_bulk_emails.php',
+                type: 'POST',
+                dataType: 'json',
+                data: { idHoja: idHoja },
+                success: function(r){
+                  if (r && r.ok) {
+                    const detalle = `Total leads: ${r.total}\nCorreos únicos: ${r.unicos}\nEnviados: ${r.enviados}\nFallidos: ${r.fallidos}`;
+                    Swal.fire('Envío completado', detalle, 'success');
+                  } else {
+                    Swal.fire('Error', (r && r.msg) ? r.msg : 'No se pudo completar el envío.', 'error');
+                  }
+                },
+                error: function(xhr){
+                  console.error('send_bulk_emails.php fail', xhr.status, xhr.responseText);
+                  Swal.fire('Error', 'Fallo la petición al servidor.', 'error');
+                }
+              });
+            });
+          }
+
+
+    // Carga la lista de archivos existentes
+      window.loadExistingFiles = function(idHoja){
+        console.log("[loadExistingFiles] start, idHoja=", idHoja);
+
+        const list = $('#existingFilesList');
+        if (!list.length) {
+          console.warn('[loadExistingFiles] #existingFilesList no existe aún en el DOM');
+        }
+        list.empty().append('<div class="list-group-item text-muted">Cargando...</div>');
+
+        // Usa el mismo backend que ya tienes funcionando; si usas el módulo, mejor:
+        $.ajax({
+          //url: '?modulo=prospectos&accion=list_files',   // <-- si ya lo tienes en tu controlador
+          url: 'query/list_archivos.php',             // <-- si lo pusiste como archivo suelto
+          type: 'GET',
+          data: { id: idHoja },
+          dataType: 'json',
+          cache: false
+        })
+        .done(function(files){
+          console.log('[loadExistingFiles] ok, files=', files);
+          list.empty();
+          if(!files || !files.length){
+            list.append('<div class="list-group-item text-muted">Sin archivos</div>');
+            return;
+          }
+          files.forEach(function(f){
+            const row = $(`
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" style="max-width:58%">
+                  <i class="fa fa-paperclip me-1"></i>
+                  <a href="${f.url}" target="_blank" class="text-truncate">${f.filename}</a>
+                </div>
+                <div class="btn-group">
+                  <a href="${f.url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="fa fa-eye"></i> Ver
+                  </a>
+                  <a href="${f.url}" download class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-download"></i> Descargar
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-danger btn-del-file" data-file-id="${f.id}">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </div>`);
+            list.append(row);
+          });
+        })
+        .fail(function(xhr){
+          console.error('[loadExistingFiles] fail', xhr.status, xhr.responseText);
+          $('#existingFilesList').empty()
+            .append('<div class="list-group-item text-danger">No se pudieron cargar los archivos.</div>');
+        });
+      };
+
+      // Eliminar archivo existente (delegado)
+      $(document).on('click', '.btn-del-file', function(){
+        const fileId = $(this).data('file-id');
+        if(!confirm('¿Eliminar este archivo?')) return;
+
+        $.post('query/delete_archivo.php', { id:fileId }, function(r){
+          if (r && r.ok) {
+            const idHoja = $('#idHoja').val();
+            loadExistingFiles(idHoja);
+          } else {
+            Swal.fire('Error', r.msg || 'No se pudo eliminar el archivo', 'error');
+          }
+        }, 'json').fail(function(xhr){
+          Swal.fire('Error', 'No se pudo eliminar (error de red).', 'error');
+        });
+      });
+          // listar archivos existentes (privada; la usa editarHoja)
+          function loadExistingFiles(idHoja){
+            const list = $('#existingFilesList');
+            list.empty();
+            $.getJSON('?modulo=prospectos&accion=list_files&id=' + idHoja, function(files){
+              if(!files || files.length===0){
+                list.append('<div class="list-group-item text-muted">Sin archivos</div>');
+                return;
+              }
+              files.forEach(f => {
+                const row = $(`
+                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="${f.url}" target="_blank" class="text-truncate" style="max-width:75%">${f.filename}</a>
+                    <div>
+                      <a href="${f.url}" download class="btn btn-sm btn-outline-secondary"><i class="fa fa-download"></i></a>
+                      <button type="button" class="btn btn-sm btn-outline-danger btn-del-file" data-file-id="${f.id}">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>`);
+                list.append(row);
+              });
+            });
+          }
+
+          // eliminar archivo existente (delegado)
+          $(document).on('click', '.btn-del-file', function(){
+            const fileId = $(this).data('file-id');
+            if(!confirm('¿Eliminar este archivo?')) return;
+            $.post('?modulo=prospectos&accion=delete_file', { id:fileId }, function(){
+              const idHoja = $('#idHoja').val();
+              loadExistingFiles(idHoja);
+            }, 'json');
+          });
+
+          // submit (insert/update) con archivos
+          $('#btnRegistrarHoja').on('click', function(){
+            
+
+        })();
+      </script>
+
+      <script>
+      (function(){
+        const uId = "<?php echo addslashes($_SESSION['uid'] ?? ''); ?>";
+        const selector = '#observacion'; // tu editor
+        const sel = document.getElementById('tplSelector');
+
+        // Asegura que Tiny esté listo antes de trabajar con él
+        function withEditorReady(cb){
+          const inst = tinymce.get('observacion');
+          if (inst) { cb(inst); return; }
+          const iv = setInterval(() => {
+            const ed = tinymce.get('observacion');
+            if (ed) { clearInterval(iv); cb(ed); }
+          }, 80);
+          // timeout opcional si quieres abortar después de X segundos
+        }
+
+        // Rellena opciones del select
+        function loadTplTitles(){
+          if (!sel) return;
+          // limpia dejando el placeholder
+          sel.innerHTML = '<option value="">-- Selecciona una plantilla --</option>';
+          $.getJSON('query/user_tpl_titles.php', { u_id: uId }, function(r){
+            if (!r || !r.ok) return;
+            r.items.forEach(it => {
+              const opt = document.createElement('option');
+              opt.value = it.id;
+              opt.textContent = it.title || ('Plantilla #'+it.id);
+              sel.appendChild(opt);
+            });
+          });
+        }
+
+        // Cuando se abra el modal, cargamos títulos (para que siempre esté fresco)
+        $('#newtablero').on('shown.bs.modal', function(){
+          loadTplTitles();
+        });
+
+        // Al cambiar de plantilla: pedir confirmación y cargar HTML al editor
+        sel?.addEventListener('change', function(){
+          const tplId = parseInt(this.value || '0', 10);
+          if (!tplId) return;
+
+          Swal.fire({
+            title: 'Usar esta plantilla',
+            text: 'Esto reemplazará el contenido actual del correo personalizado. ¿Continuar?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reemplazar',
+            cancelButtonText: 'Cancelar'
+          }).then(result => {
+            if (!result.isConfirmed) {
+              this.value = ''; // vuelve al placeholder
+              return;
+            }
+            $.getJSON('query/user_tpl_get.php', { id: tplId, u_id: uId }, function(r){
+              if (r && r.ok) {
+                withEditorReady(ed => {
+                  ed.setContent(r.html || '');
+                  // opcional: enfocar editor
+                  ed.focus();
+                });
+              } else {
+                Swal.fire('Error', (r && r.msg) ? r.msg : 'No se pudo cargar la plantilla', 'error');
+              }
+              // vuelve al placeholder para evitar re-cargar al abrir el modal
+              sel.value = '';
+            }).fail(xhr => {
+              console.error('user_tpl_get fail', xhr.status, xhr.responseText);
+              Swal.fire('Error','Fallo la petición','error');
+              sel.value = '';
+            });
+          });
+        });
+
+        // Si tú mismo llamas a openNuevoTablero() o editarHoja(), Tiny ya existe;
+        // si no, dale un pequeño delay para asegurar init antes de interacciones:
+        // setTimeout(loadTplTitles, 300);
+
+      })();
+      </script>
+
+      <?php
+
+
+  /*       echo '
+        <script>
+          $("#myTable").DataTable( {
+              paging: true,
+              scrollY: 400,
+              processing: true,
+              language: {
+                  url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+              },
+              ajax: {
+              url: "query/datatableprospectos.php",
+              type: "POST",
+              datatype: "json",
+              data:{ 
+                "fini": document.getElementById("fini2").value,
+                "ffin": document.getElementById("ffin2").value,
+                "hini": "",
+                "hfin": "",
+                "ugen" : "",
+                "estatus" : ""
+              }
+              },
+              pageLength: "50",
+              responsivePriority: 1,
+              order: [[0, "desc"]], // Ordenar en orden descendente por la columna 0
+          });
+          $("#myTable").on("draw.dt", function () {
+            aplicarEstiloColumna(7);
+          });
+        </script>
+        '; */
+
+}
     
 function show(){      
     $estatus = busca($_GET['id'], "crm_capturaleads", "cc_id", "cc_estatus");
@@ -1087,9 +1668,49 @@ function show(){
       } 
     
     $otro = '<button type="button" id="guardarOrden" class="btn btn-sm btn-primary" '.$disb.'><i class="fas fa-clipboard-check"></i>Asignar prospectos</button>';
+    $otro = '<button type="button"
+            onClick="enviarCorreosHoja('.$_GET['id'].');"
+            class="btn btn-sm btn-info"
+            title="Enviar correos a todos los leads de esta hoja">
+      <i class="fa fa-envelope"></i> Correos
+    </button>';
     $finalizar = '<button type="button" onClick="finalizar('.$_GET['id'].')" class="btn btn-sm btn-danger"><i class="fas fa-window-close"></i>Finalizar hoja</button>';
     
+?>
+<script>
+  window.enviarCorreosHoja = function(idHoja){
+            Swal.fire({
+              icon: 'question',
+              title: '¿Enviar correos masivos?',
+              text: 'Se enviará un correo individual a cada lead único por correo de esta hoja.',
+              showCancelButton: true,
+              confirmButtonText: 'Sí, enviar',
+              cancelButtonText: 'Cancelar'
+            }).then((res) => {
+              if (!res.isConfirmed) return;
 
+              $.ajax({
+                url: 'query/send_bulk_emails.php',
+                type: 'POST',
+                dataType: 'json',
+                data: { idHoja: idHoja },
+                success: function(r){
+                  if (r && r.ok) {
+                    const detalle = `Total leads: ${r.total}\nCorreos únicos: ${r.unicos}\nEnviados: ${r.enviados}\nFallidos: ${r.fallidos}`;
+                    Swal.fire('Envío completado', detalle, 'success');
+                  } else {
+                    Swal.fire('Error', (r && r.msg) ? r.msg : 'No se pudo completar el envío.', 'error');
+                  }
+                },
+                error: function(xhr){
+                  console.error('send_bulk_emails.php fail', xhr.status, xhr.responseText);
+                  Swal.fire('Error', 'Fallo la petición al servidor.', 'error');
+                }
+              });
+            });
+          }
+  </script>
+<?php
     $atras = '
     <a href="?modulo=prospectos&accion=index">
       <button class="btn btn-sm btn-warning">
@@ -1114,6 +1735,68 @@ function show(){
       </button>
         </a>
       ';
+    $vendedores = '';
+
+      $filtro = '
+        <form autocomplete="off" action="?modulo=leadscapturados&accion=index" method="post" id="filtro" class="">
+          <div class="mb-5" hidden>
+            <label class="mr-sm-2">Page:</label>
+            <div class="position-relative has-icon-left">
+              <input type="text" id="page" name="page" class="form-control" value="'.$page.'" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="mr-sm-2">Telefono:</label>
+            <div class="position-relative has-icon-left">
+              <input type="number" id="telefono" name="telefono" placeholder="Buscar por número de telefono" class="form-control" value="'.$telefono.'" required>
+              <div class="form-control-position">
+                <i class="icon-calendar5"></i>
+              </div>
+            </div>
+          </div>
+          <div class="mb-5" style="max-width: 250px">
+            <label for="">Buscar por vendedor:</label>
+            <select id="uvendedor" class="form-control" name="uvendedor">
+              <option value="">Todos</option>';
+              $sqlvend = 'SELECT * FROM usuarios WHERE u_estatus = "A" AND u_grupo = "VENTAS"';
+              $resultvend = setq($sqlvend);
+              while($row = $resultvend->fetch_array()){
+                if($vendedor == $row['u_id']) $sel = 'selected';
+                else $sel = '';
+                $filtro .= '<option value="'.$row['u_id'].'">'.$row['u_nmb'].' '.$row['u_apellidos'].'</option> '.$sel.'';
+              }
+              $filtro .= 
+            '</select>
+          </div>
+
+          <div class="mb-5" style="max-width: 250px">
+            <label for="">Buscar por estatus:</label>
+            <select id="estatusfiltro" class="form-control" name="estatus">
+              <option value="">Todos</option>
+              <option value="X" '.$estatus.'>Sin negociación</option>
+              <option value="A" '.$estatus.'>Asignados</option>
+              <option value="R" '.$estatus.'>Reasignados</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="mr-sm-2">Fecha:</label>
+            <div class="position-relative has-icon-left">
+              <input type="date" id="fecha" name="fecha" class="form-control" value="" required>
+              <div class="form-control-position">
+                <i class="icon-calendar5"></i>
+              </div>
+            </div>
+          </div>
+          <div class="mb-5">
+            <label>Acciones:</label><br>
+            <button type="button" onclick="mandar(0)" class="btn btn-success"><i class="fas fa-search"></i> Filtrar </button>
+            <a href="?modulo=leadscapturados&accion=index"><button type="button" class="btn btn-warning">
+              <span class="glyphicon glyphicon-record"></span> <i class="fas fa-broom"></i> Limpiar
+            </a>
+          </div>
+        </form>
+        ';
 
     if($estatus == "A"){
       toolbar($_GET['modulo'],$atras,'',$finalizar.$otro.$vendedores, $detalles);
@@ -1264,176 +1947,677 @@ function show(){
       ';
       //MODAL NUEVO PROSPECTO
       echo '
-      <div class="modal fade" id="modalNuevoProspecto" tabindex="-1" aria-labelledby="modalNuevoProspectoLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalNuevoProspectoLabel">Nuevo Prospecto</h5>
-              <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+<div class="modal fade" id="modalNuevoProspecto" tabindex="-1" aria-labelledby="modalNuevoProspectoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="modalNuevoProspectoLabel">Prospecto</h5>
+        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formNuevoProspecto" autocomplete="off">
+          <!-- NUEVO: id para edición -->
+          <input type="hidden" id="id" name="id" value="">
+          <!-- FIX: comilla faltante en value -->
+          <input type="hidden" id="lead" name="lead" value="' . htmlspecialchars($_GET['id'] ?? '', ENT_QUOTES, 'UTF-8') . '">
+          <input type="hidden" id="code" name="code" value="">
+          <input type="hidden" id="pais" name="pais" value="">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label for="obs" class="form-label">Empresa</label>
+              <input type="text" id="obs" name="obs" class="form-control">
             </div>
-            <div class="modal-body">
-              <form id="formNuevoProspecto">
-                <input type="hidden" id="lead" name="lead" value="' . $_GET['id'] . '>
-                <input type="hidden" id="code">
-                <input type="hidden" id="pais">
-                <div class="row g-2">
-                  <div class="col-md-4">
-                    <label for="telefono" class="form-label">Teléfono *</label>
-                    <input type="text" id="telefono" name="telefono" maxlength="30" class="form-control" required>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="nmb" class="form-label">Nombre completo *</label>
-                    <input type="text" id="nmb" name="nmb" class="form-control" required>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="cp" class="form-label">Código Postal</label>
-                    <input type="number" id="cp" name="cp" class="form-control">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="correo" class="form-label">Correo electrónico</label>
-                    <input type="email" id="correo" name="correo" class="form-control">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="obs" class="form-label">Observaciones</label>
-                    <input type="text" id="obs" name="obs" class="form-control">
-                  </div>
-                </div>
-              </form>
+            <div class="col-md-6">
+              <label for="telefono" class="form-label">Teléfono *</label>
+              <input type="number" id="telefono" name="telefono" maxlength="12" class="form-control" required>
             </div>
-            <div class="modal-footer">
-              <button id="btnGuardarProspecto" type="button" class="btn btn-primary" onclick="addProspecto()">
-                <i class="fas fa-save"></i> Guardar
-              </button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Cancelar
-              </button>
+            <div class="col-md-6">
+              <label for="nmb" class="form-label">Nombre completo *</label>
+              <input type="text" id="nmb" name="nmb" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label for="cp" class="form-label">Código Postal</label>
+              <input type="number" id="cp" name="cp" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label for="correo" class="form-label">Correo electrónico</label>
+              <input type="email" id="correo" name="correo" class="form-control">
             </div>
           </div>
-        </div>
+        </form>
       </div>
+      <div class="modal-footer">
+        <button id="btnGuardarProspecto" type="button" class="btn btn-primary" onclick="addProspecto()">
+          <i class="fas fa-save"></i> Guardar
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>';
 
+
+      ?>
+
+      <?php
+          ?>
+    <script>
+
+    function alertSweet(icono, titulo, mensaje) {
+        Swal.fire({
+            icon: icono,
+            title: titulo,
+            text: mensaje
+        }).then((result) => {
+            if (result.isConfirmed || result.isDenied) {
+                Swal.close();
+            }
+        });
+    }
+
+    /* function mandar(id){
+      document.getElementById("page").value = id;
+      document.getElementById("filtro").submit();
+    } */
+
+    function finalizar(id) {
+      Swal.fire({
+        icon: "question",
+        title: "Atención",
+        html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
+        showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
+        showCancelButton: true, // Muestra el botón de cancelar
+        focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
+        confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
+        confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
+        cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
+        cancelButtonColor: "#d33", // Color del botón "Cancelar"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "?modulo=leadscapturados&accion=finalizar&id=" + id;
+        }
+        Swal.close();
+      });
+    }
+
+
+    </script>
+
+          <?php
+          //Modal - Nuevo deal - TABLERO
+          echo '
+          <div class="modal fade text-xs-left" id="newtablero" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title" id="myModalLabel33">Nueva hoja de leadscapturados</h4>
+                </div>
+                <form method="post" action="?modulo=leadscapturados&accion=insert" autocomplete="off" >
+                  <div class="modal-body row">
+                    <div class="col-md-6 col-xs-12">
+                      <label>Fecha inicio: </label>
+                      <div class="mb-5">
+                        <div class="position-relative has-icon-left">
+                          <input type="datetime-local" id="fini" name="fini" class="form-control" value="'.date('Y-m-d').'T'.date('H:i:s').'" step="any" required readonly>
+                          <div class="form-control-position">
+                            <i class="icon-calendar5"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6 col-xs-12">
+                      <label>Usuario: </label>
+                      <div class="mb-5">
+                      <input type="text" id="ugen" name="ugen" class="form-control" value="'.$_SESSION['uid'].'" required readonly>
+                      </div>
+                    </div>
+                    <div class="col-md-12 col-xs-12">
+                      <label>Observaciones: </label>
+                      <div class="mb-5">
+                        <textarea id="observacion" class="form-control" rows="4" name="observacion" placeholder="Escribe una obervación"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer p-2">
+                    <center><button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Registrar hoja nueva</button></center>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>';
+          //filtro
+      echo '
+      <form hidden id="formreg" method="post" action="?modulo=clientes&accion=edit" autocomplete="off">
+        <input type="number" name="flag" value="1" hidden>
+        <input type="text" id="idp" name="idp" hidden>
+        <input type="text" id="nmbp" name="nmbp" hidden>
+        <input type="text" id="telefonop" name="telefonop" hidden>
+        <input type="text" id="correop" name="correop" hidden>
+        <input type="text" id="cpp" name="cpp" hidden>
+        <input type="text" id="observacionesp" name="observacionesp" hidden>
+      </form>
       ';
 
       echo '
+      <form hidden id="formtablero" method="post" action="?modulo=tableros&accion=index" autocomplete="off">
+        <input type="number" name="flag" value="1" hidden>
+        <!-- <input type="text" id="aliasp2" name="aliasp" hidden> -->
+        <input type="text" id="idlead" name="idlead" hidden>
+      </form>
+      ';
+      $nombres = array();
+      $sqlnmb = 'SELECT u_nmb, u_apellidos, u_id FROM usuarios WHERE u_grupo = "VENTAS" AND u_estatus = "A" ';
+      $resultnmb = setq($sqlnmb);
+      while($rownmb = $resultnmb -> fetch_array()){
+        $nombres[$rownmb['u_id']] = $rownmb['u_nmb'].' '.$rownmb['u_apellidos'];
+      }
 
-      <input type="hidden" name="code" id="code" value="">
-      <input type="hidden" name="pais" id="pais" value="">
-      <div class="mx-5">
-        <div class="table-container ">
-            <table id="mi-tabla" class="list table-responsive">
-                <thead class="">
-                  <tr>
-                    <th >Telefono</th>
-                    <th >Nombre</th>
-                    <th >Código postal</th>
-                    <th >Correo</th>
-                    <th >Observaciones</th>
-                    <th></th>
-                  </tr>
-                ';
-                $nvendedores = getmax("uo_orden", "usuarios_orden", false, false); //Consultamos el total de usuarios asignados para ventass
-                $read = "readonly";
-                $onfocus = "";
 
-                if($this->model->resultt->num_rows < $nvendedores){
-                  $read = "";
-                } else{
-                  $read = "readonly";
-                }
-                
-                echo '<form>
-                        <input class="form-control" type="hidden" id="lead" name="lead" value="'.$_GET['id'].'">
-                        <input class="form-control" type="hidden" id="id" name="id" value="">
+      echo '
+      <div class="card mt-3">
+        <div class="card-body row" >';
+          echo '<div class="col-md-12 col-12 col-sm-12">
+            <div class="table-responsive text-medium" >
+              <center>
+                <table width="90%" class="mb-0 table-hover table-striped" id="myTable">
+                  <thead class="bg-light-blue bg-darken-2">
+                    <tr>
+                      <th><b>Empresa</b></th>
+                      <th><b>Nombre</b></th>
+                      <th><b>Teléfono</b></th>
+                      <th><b>Correo</b></th>
+                      <th><b>Fecha Límite</b></th>
+                      <th><b>Acercamiento</b></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>';
                     
-                    </form>';
-                    if($estatus == "A"){
-                    echo '
-                      <button disabled hidden type="button" onClick="addProspecto()" id="btnguardar" class="btn btn-sm btn-success" /><i class="fas fa-save"></i></button>';
-                    }
-                  echo '</thead>';
-                
-                echo '<tbody id="mi-contenido">';
-                $i = 1;
-                $telefonos = "";
-                $codes = '';
-                while($row = $this->model->result->fetch_array()){
-                  if($row['cl_estatus'] == "A" || $row['cl_estatus'] == "F"){
-                    $backg = 'background: #deffde;';
-                  } else if($row['cl_estatus'] == "X"){
-                    $backg = 'background: #f5000026;';
-                  } /* else if($row['cl_estatus'] == "R"){
-                    $backg = 'background: #005ef526;';
-                  }  */else {
-                    $backg = '';
-                  }
-
-                echo'
-                  <tr class="">
-                    <th style="height: 44.84px;'.$backg.'">+'.$row['cl_code']." ".$row['cl_telefono'].'</span></th>
-                    <th style="height: 44.84px; text-wrap: wrap;'.$backg.'"><span>'.$row['cl_nmb'].'</span></th>
-                    <th style="height: 44.84px;'.$backg.'">'.$row['cl_cp'].'</span></th>
-                    <th style="height: 44.84px;'.$backg.'">'.$row['cl_correo'].'</span></th>
-                    <th style="height: 44.84px; text-wrap: wrap;'.$backg.'">'.$row['cl_observacion'].'</span></th>
-                    <th style="height: 44.84px; '.$backg.'">';
-                    if($row['cl_estatus'] == "P"){
-                      echo '
-                      <button type="button" onClick="editarLead('.$row['cl_id'].');" class="btn btn-sm btn-primary" /><i class="fas fa-user-edit"></i></button>  
-                      <button type="button" onClick="borrarLead('.$row['cl_id'].');" class="btn btn-sm btn-danger" /><i class="fa fa-trash"></i></button>';
-                    } else if($row['cl_estatus'] == "A"){
-                      $bandera = 1;
-                      /*$existe = busca($row['cl_telefono'], "crm_clientes", "c_telefono1 = '".$row['cl_telefono']."' OR c_telefono2", "c_id");
-                      if(!empty($existe)){
-                        $tablerof = intval(busca($existe, "crm_tableros", "ct_estatus != 'F' AND ct_cliente", "COUNT(*)"));
-                        if($tablerof > 0){
-                          $bandera = 0;
-                        } else{
-                          $bandera = 1;
-                        }
+                    while($row = $this->model->result->fetch_array()){
+                      // if($_SESSION['uid'] == "ADMIN") echo $row['cl_vendedor'].'<br>';
+                      $nmbcompleto = $nombres[$row['cl_vendedor']];
+                      // Decodificar entidades HTML
+                      $html = html_entity_decode($texto);
+                      // Reemplazar saltos de línea con saltos de línea reales
+                      $texto = str_replace('<br>', "\n", $html);
+                      // Eliminar etiquetas HTML restantes
+                      $texto = strip_tags($texto); 
+                      $texto_codificado = urlencode($texto);
+                      if(empty($texto)){
+                        /* $phone = $row['cl_telefono']; */
+                        $texton = "¡Hola, un gusto saludarte!";
+                        $texto_codificado = urlencode($texton);
                       }
+                      //$numero_de_telefono = "+".$row['cl_code'].$row['cl_telefono']; // Reemplaza con tu número de teléfono en formato internacional
+                      $numero_de_telefono = $row['cl_telefono']; // Reemplaza con tu número de teléfono en formato internacional
 
-                      $vend = '';
-                      if($bandera == 1){
-                         echo '<div class="row">
-                        <div class="col-md-6">
-                            <select class="form-control" id="idvendedor' . $row['cl_id'] . '" name="idvendedor' . $row['cl_id'] . '" onchange="cambiarvendedor(' . $row['cl_id'] . ');">';
-                            $sqlv = 'SELECT * FROM usuarios_orden WHERE uo_estatus = "A"';
-                            $resultv = setq($sqlv);
-                            while ($rowv = $resultv->fetch_array()) {
-                                $nmb = busca($rowv['uo_uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-                                if ($row['cl_vendedor'] == $rowv['uo_uid']) {
-                                    $sel = 'selected';
-                                    $vend = $row['cl_vendedor'];
-                                } else {
-                                    $sel = '';
-                                }
-                                echo '<option value="' . $rowv['uo_uid'] . '" ' . $sel . '>' . $nmb . '</option>';
-                            }
-                            echo '</select>
-                            </div>
-                            <div class="col-md-2">
-                                <input type="hidden" value="'.$vend.'" id="venoriginal'.$row['cl_id'].'">
-                                <button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>
-                            </div>
-                        </div>'; 
-                      }*/
-                  
-                    }
-                    echo '</th>
-                  </tr>';
-                  if($i == 1){
-                    $telefonos .= $row['cl_telefono'];
-                    $codes .= $row['cl_code'];
-                  } else{
-                    $telefonos .= ",".$row['cl_telefono'];
-                    $codes .= ",".$row['cl_code'];
-                  }
-                  $i++;
+                      $link_whatsapp = "https://api.whatsapp.com/send?phone=$numero_de_telefono&text=$texto_codificado";
+                      
+                      /* $phone = '<a href="'.$link_whatsapp.'" target="_blank">'.'+'.$row['cl_code'].$row['cl_telefono'].'&nbsp;
+                      <button style="border: 0px; background: white;" title="Contactar por WhatsApp">
+                          <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
+                      </button>
+                      </a>'; */
+                      $phone = '<a href="'.$link_whatsapp.'" target="_blank">'.$row['cl_telefono'].'&nbsp;
+                      <button style="border: 0px; background: white;" title="Contactar por WhatsApp">
+                          <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
+                      </button>
+                      </a>';
+
+                      if($row['cl_estatus'] == "A"){
+                        $estatusdesc = "Asignado";
+                      } else if($row['cl_estatus'] == "R" && $grupo != "ADMIN" && $grupo != "GERENCIA"){
+                        $estatusdesc = "Asignado";
+                      } else if($row['cl_estatus'] == "R"){
+                        $estatusdesc = "Reasignado";
+                      } else {
+                        $estatusdesc = "Sin negociación";
+                        /* $acciones = '<center><span><em>Lead "Sin negociación"</em></span></center>'; */
+                        $acciones = '';
+                      }
+                      if($row['cl_acercamiento'] == 0){
+                        $check = "";
+                      } else{
+                        $check = " checked disabled";
+                        /* $acciones = '<center><span><em>Se hizo acercamiento a este lead</em></span></center>'; */
+                      }
+  echo '
+  <style>
+    .estatus-select option[value="No iniciado"] {
+      background-color: #00bcd4; /* Azul claro */
+      color: white;
+    }
+    .estatus-select option[value="Correo Enviado"] {
+      background-color: #4caf50; /* Verde */
+      color: white;
+    }
+    .estatus-select option[value="No localizado"] {
+      background-color: #f57c00; /* Naranja */
+      color: white;
+    }
+    .estatus-select option[value="Reunion concretada"] {
+      background-color: #1565c0; /* Azul fuerte */
+      color: white;
+    }
+    .estatus-select option[value="Grupo Creado"] {
+      background-color: #00897b; /* Verde azulado */
+      color: white;
+    }
+    .estatus-select option[value="Buzon"] {
+      background-color: #ffeb3b; /* Amarillo */
+      color: black;
+    }
+    .estatus-select option[value="Negado"] {
+      background-color: #424242; /* Gris oscuro */
+      color: red;
+    }
+    .estatus-select option[value="Contactar Nuevamente"] {
+      background-color: #b71c1c; /* Rojo fuerte */
+      color: white;
+    }
+  </style>
+
+  <script>
+  function aplicarColorSelect(select) {
+      let color = "#00bcd4"; // default "No iniciado"
+      let textColor = "white";
+
+      switch (select.value) {
+          case "": // si no tiene valor
+          case "No iniciado": 
+              color = "#00bcd4"; 
+              break;
+          case "Correo Enviado": 
+              color = "#4caf50"; 
+              break;
+          case "No localizado": 
+              color = "#f57c00"; 
+              break;
+          case "Reunion concretada": 
+              color = "#1565c0"; 
+              break;
+          case "Grupo Creado": 
+              color = "#00897b"; 
+              break;
+          case "Buzon": 
+              color = "#ffeb3b"; 
+              textColor = "black"; 
+              break;
+          case "Negado": 
+              color = "#424242"; 
+              textColor = "red"; 
+              break;
+          case "Contactar Nuevamente": 
+              color = "#b71c1c"; 
+              break;
+      }
+
+      select.style.backgroundColor = color;
+      select.style.color = textColor;
+  }
+
+  // Aplicar al cargar la página
+  document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".estatus-select").forEach(select => {
+          aplicarColorSelect(select);
+          select.addEventListener("change", function() {
+              aplicarColorSelect(this);
+          });
+      });
+  });
+  </script>
+  ';
+
+  $acciones = '
+  <div class="row">
+    <div class="col-5">
+      <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero">
+        <i class="fas fa-book-open"></i> Iniciar
+      </button>
+      <button type="button" onClick="editarLead('.$row['cl_id'].');" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Editar prospecto">
+        <i class="bi bi-pencil-fill fs-7"></i> Editar
+      </button>
+    </div>
+    <div class="col-4">
+      <select class="form-control form-control-sm estatus-select" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
+        <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
+        <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
+        <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
+        <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
+        <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
+        <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
+        <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
+        <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
+      </select>
+    </div>
+  </div>';
+
+
+  $checkb = '<center><input class="form-check-input consult-check" onclick="marcarAcercamiento('.$row['cl_id'].')" type="checkbox" name="select'.$row['cl_id'].'" id="select'.$row['cl_id'].'" '.$check.'></center>';
+  // Asegura TZ para evitar brincos de día
+
+  // 1) Calcula la fecha límite (7 días desde fasigna) SOLO si no existe en DB
+  $fasignaDt = !empty($row['cl_fasigna']) ? new DateTime($row['cl_fasigna']) : new DateTime('today');
+
+  if (!empty($row['cl_fechalimite'])) {
+      $limiteDt = new DateTime($row['cl_fechalimite']);
+  } else {
+      $limiteDt = (clone $fasignaDt)->modify('+7 days');
+  }
+
+  // 2) Formatea para mostrar
+  $fechaContactoStr = $limiteDt->format('d-m-Y');
+
+  // 3) Semáforo de color
+  $hoy = new DateTime('today');
+  $amarilloDesde = (clone $limiteDt)->modify('-2 days');
+
+  $badgeClass = 'badge bg-success';   // verde (a buen tiempo)
+  if ($hoy > $limiteDt) {
+      $badgeClass = 'badge bg-danger'; // rojo (vencido)
+  } elseif ($hoy >= $amarilloDesde) {
+      $badgeClass = 'badge bg-warning text-dark'; // amarillo (faltan ≤ 2 días)
+  }
+
+  // 4) Render de fila
+  echo '<tr>
+          <td>'.$row['cl_observacion'].'</td>
+          <td>'.$row['cl_nmb'].'</td>
+          <td>'.$phone.'</td>
+          <td>'.$row['cl_correo'].'</td>
+          <td><span class="'.$badgeClass.'" title="Vigencia de 7 días desde la asignación">'.$fechaContactoStr.'</span></td>
+          <td>'.$checkb.'</td>
+          <td>'.$acciones.'</td>
+        </tr>';
+
+                      }
+                    echo '</tbody>';
+                  echo '</table>
+                </center>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ';
+
+      
+      if($_REQUEST['page'] == 0){
+        $hidden = 'style="pointer-events: none;
+        background: #70707026;
+        color: black;"';
+      }else $hidden = "";
+
+      echo '<div class="col-md-12 mt-5 text-xs-center">
+        <div class="mb-3">
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              <li class="page-item">
+                <a class="page-link" onclick="mandar('.($_REQUEST['page']-1).')" aria-label="Previous" '.$hidden.'>
+                  <span aria-hidden="true">&laquo; Ant</span>
+                  <span class="sr-only">Anterior</span>
+                </a>
+              </li>';
+
+              echo '
+              <script>
+                function mandar(id){
+                  document.getElementById("page").value = id;
+                  document.getElementById("filtro").submit();
                 }
-                echo '
-                </tbody>';
-                echo '<input type="hidden" id="tel" value="'.$telefonos.'">
-                      <input type="hidden" id="codes" value="'.$codes.'">';
-            echo '</table>';
+              </script>';
+
+              //$_REQUEST['categoria'],$_REQUEST['marca'],$_REQUEST['page'],$_REQUEST['unidad'],$_REQUEST['linean'],$_REQUEST['esquema']
+      $sqlf = '';
+      if(!empty($estatus)){
+        $sqlf .= ' cl_estatus = "'.$estatus.'"';
+      } else{
+        $sqlf .= ' cl_estatus IN ("R", "A")';
+      }
+      $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+      if($grupo == 'ADMIN' || $grupo == 'GERENCIA'){
+        if(!empty($vendedor)){
+          $sqlf .= ' AND cl_vendedor = "'.$vendedor.'"';
+        } else{
+          $sqlf .= '';
+        }
+      } else {
+        if(!empty($vendedor) && $vendedor != $_SESSION['uid']){
+          $sqlf .= '';
+          $caso = 1;
+        } else{
+          $sqlf .= ' AND cl_vendedor = "'.$_SESSION['uid'].'"';
+        }
+      }
+
+      $bloque = 50;
+      if(trim($sqlf) == ""){
+        $sql = 'SELECT COUNT(*) FROM crm_leads';
+      } else {
+        $sql = 'SELECT COUNT(*) FROM crm_leads WHERE '.$sqlf.'';
+      }
+      
+      $resultpg = setq($sql);
+      list($numg) =  $resultpg->fetch_array();
+      $pageres = ceil($numg/$bloque);
+
+        if($pageres>=10){
+          if($_REQUEST['page'] == 0) { $min = 1; $nombre = "Inicio";}
+          else {$min = $_REQUEST['page']-1; $nombre = "Inicio...";}
+          if($min <= 1) $min = 1;
+
+          if($_REQUEST['page'] == ($pageres-1)) $max = ($pageres-1);
+          else $max = $_REQUEST['page']+3;
+          if($max >= ($pageres-1)) $max = ($pageres-1);
+
+          if($_REQUEST['page'] == 0) $active = "active";
+          else $active = "";
+          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar(0)">'.$nombre.'</a></li>';
+        }elseif($pageres<=9){
+          $max=$pageres;
+          $min=0;
+        }
+        //for($i=0;$i<$pageres;$i++){
+        for($i=$min;$i<$max;$i++){
+          if($_REQUEST['page'] == $i) $active = "active";
+          else $active = "";
+          if($i == 0) $nombre = "Inicio";
+          else $nombre = $i;
+          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.$i.')">'.$nombre.'</a></li>';
+        }
+        if($pageres<=9){
+        }else{
+          if($_REQUEST['page'] == ($pageres-5)) $nombre = ($pageres-2);
+          else $nombre = '... '.($pageres-2);
+          if($_REQUEST['page'] == $i) $active = "active";
+          else $active = "";
+          if($_REQUEST['page'] >= ($pageres-4)) echo '';
+          else echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.($pageres-2).')">'.$nombre.'</a></li>';
+          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.($pageres-1).')">'.($pageres-1).'</a></li>';
+        }
+        if($_REQUEST['page'] == ($pageres-1) || $pageres <= 1) $hidden2 = 'style="pointer-events: none;
+        background: #70707026;
+        color: black;"';
+        else $hidden2 = '';
+        echo '<li class="page-item">
+          <a class="page-link" onclick="mandar('.($_REQUEST['page']+1).')" aria-label="Next" '.$hidden2.'>
+            <span aria-hidden="true">Sig &raquo;</span>
+            <span class="sr-only">Siguiente</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    </div>
+    </div>'; 
+
+      echo '<script>
+
+      /* function mandar(id){
+        var telefono = document.getElementById("telefono");
+        var estatusfiltro = document.getElementById("estatusfiltro");
+        var fecha = document.getElementById("fecha");
+        var vendedor = document.getElementById("uvendedor");
+
+        if(id == 0){          
+          estatusfiltro.value = "";
+          fecha.value = "";
+          vendedor.value = "";
+          telefono.value = "";
+          page.value = "0";
+        } 
+
+        //$("#myTable").DataTable().clear().draw();
+        $("#myTable").DataTable().destroy();
+
+        $("#myTable").DataTable({
+          paging: true,
+          scrollY: 400,
+          processing: true,
+          ordering: false,
+          language: {
+              url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+          },
+          ajax: {
+            url: "query/datatableleadscapturados.php",
+            type: "POST",
+            datatype: "json",
+            data:{ 
+              "estatusfiltro": estatusfiltro.value,
+              "fecha": fecha.value,
+              "vendedor": vendedor.value,
+              "page": page.value,
+              "telefono": telefono.value
+            }
+          },
+          pageLength: "50",
+          responsivePriority: 1,
+        });
+      } */
+
+      function mandar(id){
+        document.getElementById("page").value = id;
+        document.getElementById("filtro").submit();
+      }
+
+      function registrarCliente(id){
+        $.ajax({
+          url: "query/consultalead.php", 
+          type: "POST", 
+          dataType: "json", 
+          data: {
+            "id": id
+          },
+          success: function(data) {
+            document.getElementById("idp").value = id;
+            document.getElementById("nmbp").value = data["nmb"];
+            document.getElementById("telefonop").value = data["telefono"];
+            document.getElementById("correop").value = data["correo"];
+            document.getElementById("cpp").value = data["cp"];
+            document.getElementById("observacionesp").value = data["observaciones"];
+            document.getElementById("formreg").submit();
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+              // Manejo de errores
+              console.log("Error: " + textStatus);
+          }
+      });
+      }
+
+      function iniciarTablero(id){
+        var formulario = document.getElementById("formtablero");
+        document.getElementById("idlead").value = id;
+        formulario.submit();
+      }
+      
+ 
+      function marcarAcercamiento(id){
+        var checkb = document.getElementById("select"+id);
+        var estatus = 0;
+
+        // Verifica si está marcado
+        if (checkb.checked) {
+          estatus = 1;
+        } else {
+          estatus = 0;
+        }
+
+        $.ajax({
+          url: "query/marcaracercamiento.php", 
+          type: "POST",  
+          data: {
+            "id": id,
+            "estatus": estatus
+          },
+          success: function(data) {
+            //mandar(1);
+            window.location.reload();
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+              // Manejo de errores
+              console.log("Error: " + textStatus);
+          }
+      });
+      }
+      //mandar(0);
+
+      function cambiarEstatusLead(select, idLead) {
+        const nuevoEstatus = select.value;
+
+        $.ajax({
+          url: "query/actualiza_estatus_observacion.php",
+          type: "POST",
+          data: {
+            id: idLead,
+            estatus: nuevoEstatus
+          },
+          success: function(response) {
+            //Swal.fire({
+              //icon: "success",
+              //title: "Actualizado",
+              //text: "Estatus actualizado correctamente."
+            //});
+          },
+          error: function() {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "No se pudo actualizar el estatus."
+            });
+          }
+        });
+      }
+
+    </script>';
+
+
+     /*  echo '
+      <script>
+       $("#myTable").DataTable( {
+            paging: true,
+            scrollY: 400,
+            processing: true,
+            ordering: false,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+            },
+             ajax: {
+            url: "query/datatableleadscapturados.php",
+            type: "POST",
+            datatype: "json",
+            data:{ 
+              "estatusfiltro": "",
+              "fecha": ""
+            }
+            },
+            pageLength: "50",
+            responsivePriority: 1,
+        });
+      </script>
+      '; */
+
+
             } else{
       echo '
       <div class="card">
@@ -1484,26 +2668,26 @@ function show(){
           inputElement.focus();
       }
 
-document.getElementById("btnNuevoProspecto").addEventListener("click", function () {
-    document.getElementById("id").value = "";
-    document.getElementById("lead").value = "<?php echo $_GET['id']; ?>";
-    document.getElementById("nmb").value = "";
-    document.getElementById("cp").value = "";
-    document.getElementById("correo").value = "";
-    document.getElementById("telefono").value = "";
-    document.getElementById("obs").value = "";
-    document.getElementById("code").value = "";
-    document.getElementById("pais").value = "";
-    
-    // Reinicia el texto del botón por si vienes de una edición
-    document.getElementById("btnGuardarProspecto").innerHTML = '<i class="fas fa-save"></i> Guardar';
+  document.getElementById("btnNuevoProspecto").addEventListener("click", function () {
+      document.getElementById("id").value = "";
+      document.getElementById("lead").value = "<?php echo $_GET['id']; ?>";
+      document.getElementById("nmb").value = "";
+      document.getElementById("cp").value = "";
+      document.getElementById("correo").value = "";
+      document.getElementById("telefono").value = "";
+      document.getElementById("obs").value = "";
+      //document.getElementById("code").value = "";
+      document.getElementById("pais").value = "";
+      
+      // Reinicia el texto del botón por si vienes de una edición
+      document.getElementById("btnGuardarProspecto").innerHTML = '<i class="fas fa-save"></i> Guardar';
 
-    // Resetea validaciones o focus si usas
-    $("#btnguardar").prop("disabled", true);
+      // Resetea validaciones o focus si usas
+      $("#btnguardar").prop("disabled", true);
 
-    // Restablece la lada por defecto
-    iti.setCountry("mx");
-});
+      // Restablece la lada por defecto
+      iti.setCountry("mx");
+  });
 
 
       document.getElementById("btnguardar").addEventListener("click", function() {
@@ -1638,11 +2822,18 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
       var email = document.getElementById("correo").value;
       var correo = email.toLowerCase();
       var telefono = document.getElementById("telefono").value;
-      var code = document.getElementById("code").value;
+      var code = 0;
+        if(document.getElementById("code"))
+        {
+          code = document.getElementById("code").value
+        };
       var pais = document.getElementById("pais").value;
 
       var observacion = document.getElementById("obs").value;
-      var id = document.getElementById("id").value;
+      var id = "";
+      if(document.getElementById("id")){
+        id = document.getElementById("id").value;
+      }
       if (nmb == "") {
           alertSweet("error", "Atención", 'El campo "Nombre" no puede quedar vacío. Verifique');
       } else {
@@ -1665,6 +2856,7 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
                   },
               })
               .done(function(data) {
+              //alert("DATAAA: " + data.respuesta);
                   if (data.respuesta == 41) { //El telefono ya existe en la pagina
                       alertSweet("error", "Atención", "Ya existe un registro para el vendedor " + data.agente +
                           " con el mismo número de telefono en la tabla. Verifique.");
@@ -1677,6 +2869,7 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
                       alertSweet("error", "Atención",
                           "No hay vendedores activos. No fue posible asignar los prospectos.");
                   } else {
+                    /*
                       document.getElementById("mi-contenido").innerHTML = data.html;
                       document.getElementById("id").value = "";
                       document.getElementById("nmb").value = "";
@@ -1688,6 +2881,7 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
                       document.getElementById("obs").value = "";
                       document.getElementById("tel").value = data.tel;
                       document.getElementById("codes").value = data.codes;
+                    */
                       $("#btnguardar").prop("disabled", true);
                       if (data.respuesta == 0) {
                           alertSweet("error", "Atención", "No se ha podido registrar el prospecto correctamente");
@@ -1696,27 +2890,34 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
                               fcaptura();
                           } else {
                               alertSweet("", "Aviso", "La página está llena");
+                              /*
                               document.getElementById("mi-contenido").innerHTML = data.html;
                               document.getElementById("nmb").setAttribute("readonly", true);
                               document.getElementById("correo").setAttribute("readonly", true);
                               document.getElementById("cp").setAttribute("readonly", true);
                               document.getElementById("telefono").setAttribute("readonly", true);
                               document.getElementById("obs").setAttribute("readonly", true);
+                              */
                           }
                       } else if (data.respuesta == 3) {
                           if (data.enviar == 1) {
+                            /*
                               document.getElementById("mi-contenido").innerHTML = data.html;
                               document.getElementById("nmb").setAttribute("readonly", true);
                               document.getElementById("correo").setAttribute("readonly", true);
                               document.getElementById("cp").setAttribute("readonly", true);
                               document.getElementById("telefono").setAttribute("readonly", true);
                               document.getElementById("obs").setAttribute("readonly", true);
-                              /* fcaptura(); */
+                              */
+                              fcaptura();
                           }
                           alertSweet("success", "Correcto", "Registro actualizado correctamente");
+                          window.location.reload();
                           iti.setCountry("mx");
                           document.getElementById("pais").value = "";
                           document.getElementById("code").value = "";
+                      } else if(data.respuesta == 1){
+                        fcaptura();
                       }
 
                       if (data.registros >= 2) {
@@ -1730,76 +2931,89 @@ document.getElementById("btnNuevoProspecto").addEventListener("click", function 
   }
 
   function editarLead(id) {
-      var leadId = document.getElementById(
-          "id"); // Cambiar el nombre de la variable para evitar conflicto con el parámetro "id"
-      var lead = document.getElementById("lead");
-      var nmb = document.getElementById("nmb");
-      var cp = document.getElementById("cp");
-      var correo = document.getElementById("correo");
-      var telefono = document.getElementById("telefono");
-      var code = document.getElementById("code");
-      var codes = document.getElementById("codes");
-      var tel = document.getElementById("tel");
-      var pais = document.getElementById("pais");
-      var obs = document.getElementById("obs"); // Cambiar el nombre de la variable a "obs"
-      var btnguardar = document.getElementById("btnguardar");
+  // cache de inputs
+  var $id       = document.getElementById("id");
+  var $lead     = document.getElementById("lead");
+  var $nmb      = document.getElementById("nmb");
+  var $cp       = document.getElementById("cp");
+  var $correo   = document.getElementById("correo");
+  var $telefono = document.getElementById("telefono");
+  var $code     = document.getElementById("code");
+  var $pais     = document.getElementById("pais");
+  var $obs      = document.getElementById("obs");
+  var $btnSave  = document.getElementById("btnGuardarProspecto"); // usa el id real del botón
 
-      $.ajax({
-              url: "query/traerprospecto.php",
-              method: "POST",
-              dataType: 'json',
-              data: {
-                  'id': id
-              },
-          })
-          .done(function(data) {
-              if (data.respuesta == 0) {
-                  Swal.fire({
-                      title: 'Atención',
-                      text: 'El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.',
-                      icon: 'error',
-                  }).then((result) => {
-                      if (result.isConfirmed) {
-                          // El usuario hizo clic en el botón de confirmación
-                          window.location.href = "?modulo=prospectos&accion=show&id=" +
-                              <?php echo $_GET['id']; ?>;
-                      } else {
-                          // El usuario cerró la alerta sin hacer clic en el botón de confirmación
-                          window.location.href = "?modulo=prospectos&accion=show&id=" +
-                              <?php echo $_GET['id']; ?>;
-                      }
-                  });
-              } else {
-                  $('#modalNuevoProspecto').modal('show');
-                  document.getElementById("btnGuardarProspecto").innerHTML = '<i class="fas fa-save"></i> Actualizar';
+  $.ajax({
+    url: "query/traerprospecto.php",
+    method: "POST",
+    dataType: "json",
+    data: { id: id }
+  })
+  .done(function(data) {
+    // Si tu endpoint regresa {respuesta:0|1, ...}
+    if (Number(data.respuesta) === 0) {
+      Swal.fire({
+        title: "Atención",
+        text: "El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.",
+        icon: "error"
+      }).then(() => {
+        window.location.href = "?modulo=prospectos&accion=show&id=<?php echo (int)($_GET['id'] ?? 0); ?>";
+      });
+      return;
+    }
 
-                  leadId.value = data.id; // Aquí debes asignar el valor al campo correcto, que parece ser "leadId" y no "id"
-                  lead.value = data.lead;
-                  nmb.value = data.nmb;
-                  cp.value = data.cp;
-                  correo.value = data.correo;
-                  telefono.value = data.telefono;
-                  code.value = data.code;
-                  pais.value = data.pais;
-                  obs.value = data.obs;
-                  /* codes.value = data.codes;
-                  tel.value = data.tel; */
-                  // Aquí debes utilizar el nombre de la variable corregido a "obs"
-                  /* console.log("PAIS: "+pais.value); */
-                  // Establece la lada deseada en la instancia de intlTelInput
-                  iti.setCountry(data.pais);
+    // Abre el modal primero
+    $('#modalNuevoProspecto').modal('show');
 
-                  // Remover el atributo "disabled" de los campos y el botón
-                  nmb.removeAttribute("readonly");
-                  cp.removeAttribute("readonly");
-                  correo.removeAttribute("readonly");
-                  telefono.removeAttribute("readonly");
-                  obs.removeAttribute("readonly");
-                  btnguardar.removeAttribute("disabled");
-                  setFocus();
-              }
-          });
-  }
+    // Cambia el texto del botón
+    if ($btnSave) $btnSave.innerHTML = '<i class="fas fa-save"></i> Actualizar';
+
+    // Normaliza nombres del JSON (usa el que llegue)
+    var d = data.data ? data.data : data; // por si viene anidado
+
+    // Soporta ambas convenciones cl_* o simple
+    var v = {
+      id:        d.id        ?? d.cl_id       ?? id,
+      lead:      d.lead      ?? d.cl_lead     ?? ($lead ? $lead.value : ""),
+      nmb:       d.nmb       ?? d.cl_nmb      ?? "",
+      cp:        d.cp        ?? d.cl_cp       ?? "",
+      correo:    d.correo    ?? d.cl_correo   ?? "",
+      telefono:  d.telefono  ?? d.cl_tel      ?? "",
+      code:      d.code      ?? d.cl_code     ?? "",
+      pais:      d.pais      ?? d.cl_pais     ?? "",
+      obs:       d.obs       ?? d.cl_observacion ?? d.cl_notas ?? ""
+    };
+
+    // Rellena los campos (solo si existen en el DOM)
+    if ($id)       $id.value       = v.id;
+    if ($lead)     $lead.value     = v.lead;
+    if ($nmb)      $nmb.value      = v.nmb;
+    if ($cp)       $cp.value       = v.cp;
+    if ($correo)   $correo.value   = v.correo;
+    if ($telefono) $telefono.value = v.telefono;
+    if ($code)     $code.value     = v.code;
+    if ($pais)     $pais.value     = v.pais;
+    if ($obs)      $obs.value      = v.obs;
+
+    // Protege el uso de intl-tel-input si existe
+    if (window.iti && typeof iti.setCountry === "function") {
+      var paisLower = (v.pais || "mx").toLowerCase();
+      try { iti.setCountry(paisLower); } catch(e) { /* ignora */ }
+    }
+
+    // Si en algún flujo bloqueaste inputs/btn, re-habilita:
+    if ($nmb)      $nmb.removeAttribute("readonly");
+    if ($cp)       $cp.removeAttribute("readonly");
+    if ($correo)   $correo.removeAttribute("readonly");
+    if ($telefono) $telefono.removeAttribute("readonly");
+    if ($obs)      $obs.removeAttribute("readonly");
+    if ($btnSave)  $btnSave.removeAttribute("disabled");
+  })
+  .fail(function(xhr) {
+    console.error(xhr);
+    alert("Error de red al cargar el prospecto.");
+  });
+}
 
   async function compararTelefono() {
       var code = document.getElementById("code");

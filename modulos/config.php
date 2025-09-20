@@ -24,7 +24,7 @@
     }
     function insert(){
       $error =  0;
-      $this->model->setdata($_GET['id'],$_POST['nmb'],$_POST['tel'],$_POST['whatsapp'],$_POST['correo'],$_POST['correofac'],$_POST['razons'],$_POST['rfc'],$_POST['calle'],$_POST['nume'],$_POST['numi'],$_POST['colonia'],$_POST['municipio'],$_POST['cp'],$_POST['estado'],$_POST['pais'],$_POST['grupo'],"A",$_POST['usd'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas']);
+      $this->model->setdata($_GET['id'],$_POST['nmb'],$_POST['tel'],$_POST['whatsapp'],$_POST['correo'],$_POST['correofac'],$_POST['razons'],$_POST['rfc'],$_POST['calle'],$_POST['nume'],$_POST['numi'],$_POST['colonia'],$_POST['municipio'],$_POST['cp'],$_POST['estado'],$_POST['pais'],$_POST['grupo'],"A",$_POST['usd'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas'], $_POST['iva'],$_POST['siglas']);
       if(!empty($_FILES['logo'])){
         if (isset($_FILES['logo']['name'])) {
           $nombre_archivo = $_FILES['logo']['name'];
@@ -57,7 +57,7 @@
     }
     function update(){
       $error =  0;
-      $this->model->setdata($_GET['id'],$_POST['nmb'],$_POST['tel'],$_POST['whatsapp'],$_POST['correo'],$_POST['correofac'],$_POST['razons'],$_POST['rfc'],$_POST['calle'],$_POST['nume'],$_POST['numi'],$_POST['colonia'],$_POST['municipio'],$_POST['cp'],$_POST['estado'],$_POST['pais'],$_POST['grupo'],"A",$_POST['usd'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas']);
+      $this->model->setdata($_GET['id'],$_POST['nmb'],$_POST['tel'],$_POST['whatsapp'],$_POST['correo'],$_POST['correofac'],$_POST['razons'],$_POST['rfc'],$_POST['calle'],$_POST['nume'],$_POST['numi'],$_POST['colonia'],$_POST['municipio'],$_POST['cp'],$_POST['estado'],$_POST['pais'],$_POST['grupo'],"A",$_POST['usd'],$_POST['host'],$_POST['port'],$_POST['seguridad'],$_POST['correopas'], $_POST['iva'],$_POST['siglas']);
       if(!empty($_FILES['logo'])){
         if (isset($_FILES['logo']['name'])) {
           $nombre_archivo = $_FILES['logo']['name'];
@@ -129,8 +129,10 @@
       $this->puerto = $row['e_puerto'];
       $this->seguridad = $row['e_seguridad'];
       $this->correopas = $row['e_passfac'];
+      $this->iva = $row['e_iva'];
+      $this->siglas = $row['e_siglas'];
     }
-    function setdata($id,$nmb,$tel,$whatsapp,$correo,$correofac,$razons,$rfc,$calle,$nume,$numi,$colonia,$municipio,$cp,$estado,$pais,$grupo,$estatus = "A",$usd,$host,$port,$seguridad,$correopas){
+    function setdata($id,$nmb,$tel,$whatsapp,$correo,$correofac,$razons,$rfc,$calle,$nume,$numi,$colonia,$municipio,$cp,$estado,$pais,$grupo,$estatus = "A",$usd,$host,$port,$seguridad,$correopas, $iva, $siglas){
       mb_internal_encoding("UTF-8");
       $simbol = array('"',"'");
       $cambio = "";
@@ -157,6 +159,8 @@
       $this->port = clearvmayus($port,false);
       $this->seguridad = clearvmayus($seguridad,false);
       $this->correopas = clearvmayus($correopas,false);
+      $this->iva = $iva;
+      $this->siglas = clearvmayus($siglas,false);
     }
     function result($contrato){
       $sql = 'SELECT * FROM empresas WHERE e_contrato = "'.$contrato.'" AND e_id = "'.$_SESSION['emp'].'" ORDER BY e_id DESC';
@@ -175,7 +179,9 @@
                 e_host = "'.$this->host.'",
                 e_puerto = "'.$this->port.'",
                 e_seguridad = "'.$this->seguridad.'",
-                e_passfac = "'.base64_encode($this->correopas).'"';
+                e_passfac = "'.base64_encode($this->correopas).'",
+                e_iva = "'.$this->iva.'",
+                e_passfac = "'.$this->siglas.'"';
       setq($sqlemp);
       $sql = 'SELECT MAX(e_id) FROM '.$empresas.' ';
       $result = setq($sql);
@@ -192,7 +198,9 @@
                 e_host = "'.$this->host.'",
                 e_puerto = "'.$this->port.'",
                 e_seguridad = "'.$this->seguridad.'",
-                e_passfac = "'.base64_encode($this->correopas).'"
+                e_passfac = "'.base64_encode($this->correopas).'",
+                e_iva = "'.$this->iva.'",
+                e_siglas = "'.$this->siglas.'"
                 WHERE e_id = "'.$this->id.'"';
       setq($sqlemp);
 
@@ -427,6 +435,12 @@
                     <input type="number" value="'.$this->model->usd.'" id="usd" class="form-control" name="usd" required>
                   </div>
                 </div>
+                <div class="col-md-6">
+                  <div class="mb-5">
+                    <label><b>IVA * </b></label>
+                    <input type="number" step="0.01" value="'.$this->model->iva.'" id="iva" class="form-control" name="iva" required>
+                  </div>
+                </div>
                 <div class="col-md-10 ">
                   <div class="position-relative mb-5">
                     <b><label for="logo" class="">Logotipo de la empresa</label></b>';
@@ -611,6 +625,12 @@
               <div class="position-relative mb-5">
                 <b><label for="rfc" class="">RFC *</label></b>
                 <input type="text" name="rfc" id="rfc" value="'.$this->model->rfc.'" placeholder="RFC" class="form-control text-uppercase">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-5">
+                <label><b>ACRÓNIMO FOLIO * </b></label>
+                <input type="text" value="'.$this->model->siglas.'" id="iva" class="form-control" name="siglas" required>
               </div>
             </div>
             <div class="col-md-8">

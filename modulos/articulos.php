@@ -2259,11 +2259,13 @@ class viewarticulos{
 
     echo '</div></div>';
     ?>
-      <script src="https://cdn.tiny.cloud/1/8pa5qv42xteecb61a6x1i0upvqnos5zztgn0jrzlgxq9r9rd/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+      <script src="assets/js/tinymce/tinymce.min.js"></script>
       <script>
       tinymce.init({
         selector: 'textarea#artiulo-descripcion ',
         height: 150,
+        license_key: 'gpl',
+        base_url: 'assets/tinymce',
         menubar: false,
         plugins: ['advlist autolink lists link image charmap print preview anchor','searchreplace visualblocks code fullscreen','insertdatetime media table paste code help wordcount'],
         toolbar: 'undo redo | formatselect | ' + 'bold italic backcolor | alignleft aligncenter ' + 'alignright alignjustify | bullist numlist outdent indent | ' + 'removeformat ',

@@ -13,8 +13,13 @@ if (isset($_POST['id']) && isset($_POST['estatus'])) {
   $id = trim($id);
   $estatus = trim($estatus);
 
+  if($estatus == "Negado"){
+    $query = 'UPDATE crm_leads SET cl_estatus = "X", cl_observacion = "' . $estatus . '" WHERE cl_id = "' . $id . '"';
+  } else {
+    $query = 'UPDATE crm_leads SET cl_observacion = "' . $estatus . '" WHERE cl_id = "' . $id . '"';
+  }
+
   // Ejecutar la actualización
-  $query = 'UPDATE crm_leads SET cl_observacion = "' . $estatus . '" WHERE cl_id = "' . $id . '"';
   $result = setq($query);
 
   if ($result) {

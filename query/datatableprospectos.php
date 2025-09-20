@@ -43,14 +43,32 @@ while($row = $result->fetch_array()){
     if($row['cc_estatus'] == "A" || $row['cc_estatus'] == "F"){
     $acciones .= '<div>
       <a href="?modulo=prospectos&accion=show&id='.$row['cc_id'].'">
-        <button type="button" class="btn btn-sm btn-info" /><i class="fa fa-eye"></i></button>
+        <button type="button" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></button>
       </a>
-    </div>';
+    </div>
+    <div style="padding-left:5px;">
+    <button type="button"
+            onClick="enviarCorreosHoja('.$row['cc_id'].');"
+            class="btn btn-sm btn-info"
+            title="Enviar correos a todos los leads de esta hoja">
+      <i class="fa fa-envelope"></i>
+    </button>
+  </div>';
     }
     if($row['cc_estatus'] == "A"){
-    $acciones .= '<div style="padding-left: 5px;">
-        <button type="button" onClick="finalizar('.$row['cc_id'].');" class="btn btn-sm btn-danger" /><i class="fa fa-window-close"></i></button>
-    </div>';
+   $acciones .= '
+  <div style="padding-left: 5px;">
+    <button type="button" onClick="editarHoja('.$row['cc_id'].');" class="btn btn-sm btn-warning">
+      <i class="fa fa-edit"></i>
+    </button>
+  </div>
+    <div style="padding-left: 5px;">
+    <button type="button" onClick="finalizar('.$row['cc_id'].');" class="btn btn-sm btn-danger">
+      <i class="fa fa-window-close"></i>
+    </button>
+  </div>
+  
+  ';
     }
   $acciones .= '</div>';
   $arreglo[] = array($row['cc_id'], $row['cc_estado'], $row['cc_ugen'],busca($row['cc_id'], "crm_leads", "cl_lead", "COUNT(*)"),fecha_formato($row['cc_fini'],false,true),$row['cc_hini'],$horafin, $row['cc_observacion'], $estatus, $acciones);

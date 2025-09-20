@@ -1,5 +1,5 @@
 <?php
-//ini_set('display_errors', 1);
+ini_set('display_errors', 1);
 include_once('funciones.php');
 //foreachdie();
 session_start();
@@ -38,7 +38,7 @@ License: For each use you must have a valid license purchased only from above li
 <html lang="en">
 	<!--begin::Head-->
 	<head>	<base href="">
-	<title>Logistica</title>
+	<title>DVLogistics</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta charset="utf-8" />
 	<link rel="shortcut icon" href="assets/media/logos/favicon.png" />
@@ -231,175 +231,208 @@ License: For each use you must have a valid license purchased only from above li
 		#myTableG {
     font-size: 30px; /* Cambia el tamaño de letra deseado */
   }
+
+  /* NUEVOS ESTILOS */
+  /* ====== Layout mejorado login ====== */
+.auth-aside{
+  position: relative;
+  width: 50%;
+  min-height: 100vh;
+  background: linear-gradient(180deg, rgba(23, 32, 150, .88) 0%, rgb(0 0 0 / 78%) 100%), url(img/UNICO-LOGO-OFICIAL-LOGIN.jpg) center right / cover no-repeat;
+}
+/* Separador inclinado entre la imagen y el formulario (da sensación de división) */
+.auth-aside::after{
+  content:"";
+  position:absolute;
+  right:-80px; top:0; bottom:0;
+  width:160px;
+  background:#fff;
+  transform:skewX(-12deg);
+  box-shadow:0 0 0 1px rgba(0,0,0,.04);
+}
+@media (max-width: 1199.98px){
+  .auth-aside{ display:none; }
+}
+
+.auth-content{
+  min-height: 100vh;
+  background: #f8fafc; /* sutilmente más claro que bg-body */
+}
+
+/* Tarjeta del formulario */
+.auth-card{
+  backdrop-filter: saturate(120%);
+  border: 1px solid rgba(0,0,0,.04);
+}
+
+/* Marca principal */
+.brand-title{
+  color:#fff;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: .4px;
+  font-size: clamp(32px, 3.6vw, 56px);
+  margin:0;
+}
+.brand-subtitle{ color: rgba(255,255,255,.85); }
+
+/* Inputs más visibles en este contexto claro */
+.form-control.form-control-solid{
+  background-color: #f4f6f9 !important;
+  border-color: #e9edf3 !important;
+}
+
+/* Botones un poco más redondeados para look moderno */
+.btn{
+  border-radius: 0.75rem;
+}
+
+/* Responsivo: separaciones laterales cómodas en pantallas pequeñas */
+@media (max-width: 575.98px){
+  .auth-card{ padding: 1.75rem !important; }
+}
+
+/* ====== (Tus estilos previos del teclado numérico siguen funcionando) ====== */
+
 	</style>
 		<!--begin::Main-->
 		<div class="d-flex flex-column flex-root">
 			<!--begin::Authentication - Sign-in -->
-			<div class="d-flex flex-column flex-lg-row flex-column-fluid">
-				<!--begin::Aside-->
-				<div class="d-flex flex-column flex-lg-row-auto w-xl-600px positon-xl-relative" style="background-color: #172096">
-					<!--begin::Wrapper-->
-					<div class="d-flex flex-column position-xl-fixed top-0 bottom-0 w-xl-600px scroll-y">
-						<!--begin::Content-->
-						<div class="d-flex flex-column text-center p-5 pt-lg-20">
-							<!--begin::Title-->
-							<h1 class="fw-bolder fs-2qx pb-5 pb-md-10" style="color: #FFFFFF;">LÓGISTICA</h1>
-							<!--end::Title-->
-							<!--begin::Description-->
-							<!--end::Description-->
-						</div>
-						<!--end::Content-->
-						<!--begin::Illustration-->
-						<div class="d-flex flex-row-auto bgi-no-repeat bgi-position-x-center bgi-size-contain bgi-position-y-bottom min-h-100px min-h-lg-350px" style="background-image: url(img/UNICO-LOGO-OFICIAL.png)"></div>
-						<!--end::Illustration-->
-					</div>
-					<!--end::Wrapper-->
-				</div>
-				<!--end::Aside-->
-				<!--begin::Body-->
-				<div class="d-flex flex-column flex-lg-row-fluid py-10">
-					<!--begin::Content-->
-					<div class="d-flex flex-center flex-column flex-column-fluid">
-						<!--begin::Wrapper-->
-						<div class="w-lg-500px p-10 p-lg-15 mx-auto">
-							<!--begin::Form-->
-							<form class="form w-100" method="post" novalidate="novalidate" id="kt_sign_in_form" id="form-login" name="loginform">
-								<!--begin::Heading-->
-								<div class="text-center mb-10">
-									<!--begin::Title-->
-									<h1 class="text-dark mb-3">Inicio de Sesión</h1>
-									<?php
-									$usern = NULL;
-									$passn = NULL;
-									$remen = NULL;
-									if(isset($_COOKIE['login'])){
-										foreach ($_COOKIE['login'] as $name => $value) {
-											if($name == "user") $usern = $value;
-											if($name == "pass") $passn = $value;
-											if($name == "remember" && $value = "1"){
-												$remen = "checked";
-											}
-										}
-									}
-										if(isset($_REQUEST['error'])){
-											if($_REQUEST['error'] == "1"){
-											?>
-												<div class="p-l-100 p-r-100 alert alert-danger" role="alert">
-													Usuario o contraseña invalida
-												</div>
-											<?php
-											} else {
-												?>
-												<div class="p-l-100 p-r-100 alert alert-danger" role="alert">
-													Contraseña invalida
-												</div>
-												<script>
-													document.addEventListener('DOMContentLoaded', function () {
-														sendloginprod();	
-													});
-												</script>
-											<?php
-											}
-										}
-										if(isset($_REQUEST['produccion'])){
-											?>
-												<script>
-													document.addEventListener('DOMContentLoaded', function () {
-														sendloginprod();	
-													});
-												</script>
-											<?php
-										}
-									?>
-									<!--end::Title-->
-								</div>
-								<!--begin::Heading-->
-								<!--begin::Input group-->
-								<div class="fv-row mb-10">
-									<!--begin::Label-->
-									<label id="lblusr" class="form-label fs-6 fw-bolder text-dark required">Usuario</label>
-									<!--end::Label-->
-									<!--begin::Input-->
-									<input class="form-control form-control-lg form-control-solid" type="text" name="uid" id="uid" value="<?php echo $usern; ?>" autofocus="autofocus" />
-									<!--end::Input-->
-								</div>
-								<!--end::Input group-->
-								<!--begin::Input group-->
-								<div class="fv-row mb-10">
-									<!--begin::Wrapper-->
-									<div class="d-flex flex-stack mb-2">
-										<!--begin::Label-->
-										<label class="form-label fw-bolder text-dark fs-6 mb-0 required ">Contraseña</label>
-										<!--end::Label-->
-									</div>
-									<!--end::Wrapper-->
-									<!--begin::Input-->
-									<input class="form-control form-control-lg form-control-solid" type="password" name="pass" id="pass" value="<?php echo $passn; ?>" autocomplete="off" onkeyup="contralong();"/>
-									<input class="form-control" type="hidden" name="tipo" id="tipo" value="1" autocomplete="off"/>
-									<!--end::Input-->
-									<div class="col-xs-4" id="teclado" hidden>
-										<table class="table table_teclado mt-3" id="myTableG" style="user-select: none;">
-											<tr>
-												<td><center><b>1</b></center></td>
-												<td><center><b>2</b></center></td>
-												<td><center><b>3</b></center></td>
-											</tr>
-											<tr>
-												<td><center><b>4</b></center></td>
-												<td><center><b>5</b></center></td>
-												<td><center><b>6</b></center></td>
-											</tr>
-											<tr>
-												<td><center><b>7</b></center></td>
-												<td><center><b>8</b></center></td>
-												<td><center><b>9</b></center></td>
-											</tr>
-											<tr>
-												<td onclick="borrar()"><center><b><i class="fas fa-backspace" style="color:#000; font-size: large;"></i></b></center></td>
-												<td><center><b>0</b></center></td>
-												<td onclick="sendlogin()" id="checktd"><center><b><i class="fas fa-check" style="color:#000; font-size: large;"></i></b></center></td>
-											</tr>
-											<tr></tr>
-										</table>
-									</div>
-								</div>
-								<div class="form-check form-check-custom form-check-solid form-check-lg mb-5" id="recuerdamediv">
-									<input class="form-check-input" id="ckb1" type="checkbox" name="remember-me" <?php echo $remen; ?> >
-									<label class="form-check-label" for="ckb1">
-										Recuerdame
-									</label>
-								</div>
-								<!--end::Input group-->
-								<!--begin::Actions-->
-								<div class="text-center">
-									<!--begin::Submit button-->
-									<button type="button" onclick="sendlogin();" class="btn btn-lg btn-primary w-100 mb-5" id="botonsave">
-										<span class="indicator-label">Iniciar</span>
-										<span class="indicator-progress">Cargando...
-										<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-									</button>
-									<button id="btnprod" type="button" onclick="sendloginprod();" class="btn btn-lg btn-secondary w-100 mb-5">
-										<span class="indicator-label">Producción</span>
-										<span class="indicator-progress">Cargando...
-										<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-									</button>
-									<button id="btnnormal" type="button" onclick="loginatras();" class="btn btn-lg btn-warning w-100 mb-5" hidden>
-										<span class="indicator-label">Atrás</span>
-									</button>
-									<!--end::Submit button-->
-								</div>
-								<!--end::Actions-->
-								<input type=hidden name=ok value=1>
-							</form>
-							<!--end::Form-->
-						</div>
-						<!--end::Wrapper-->
-					</div>
-					<!--end::Content-->
-				</div>
-				<!--end::Body-->
-			</div>
-			<!--end::Authentication - Sign-in-->
+<div class="auth-layout d-flex flex-column flex-lg-row flex-column-fluid">
+
+  <!-- Aside (Imagen + título) -->
+  <aside class="auth-aside d-none d-lg-flex flex-column justify-content-between">
+    <div class="p-10 pt-14">
+      <h1 class="brand-title">DVLogistics</h1>
+      <div class="brand-subtitle mt-3 fs-5">
+        Plataforma logística y operaciones
+      </div>
+    </div>
+    <!-- La imagen se maneja como background en CSS -->
+    <div class="flex-grow-1"></div>
+    <div class="p-10 text-white-50 fs-7">
+      <!-- Pie opcional -->
+    </div>
+  </aside>
+
+  <!-- Contenido (Formulario) -->
+  <main class="auth-content d-flex flex-column flex-lg-row-fluid">
+    <div class="container-xxl d-flex align-items-center justify-content-center py-10 py-lg-0 w-100" style="margin-top: 100px;">
+      <div class="auth-card card shadow-sm w-100 w-lg-500px rounded-4 p-10 p-lg-12 mx-4">
+
+        <!-- Marca compacta en móvil -->
+        <div class="d-lg-none mb-7 text-center">
+          <div class="fw-bold fs-1">DVLogistics</div>
+          <div class="text-gray-600">Plataforma logística y operaciones</div>
+        </div>
+
+        <!--begin::Form-->
+        <form class="form w-100" method="post" novalidate="novalidate" id="kt_sign_in_form" id="form-login" name="loginform">
+          <div class="text-center mb-8">
+            <h2 class="text-dark mb-2">Inicio de Sesión</h2>
+            <?php
+              $usern = NULL; $passn = NULL; $remen = NULL;
+              if(isset($_COOKIE['login'])){
+                foreach ($_COOKIE['login'] as $name => $value) {
+                  if($name == "user") $usern = $value;
+                  if($name == "pass") $passn = $value;
+                  if($name == "remember" && $value = "1"){ $remen = "checked"; }
+                }
+              }
+              if(isset($_REQUEST['error'])){
+                if($_REQUEST['error'] == "1"){ ?>
+                  <div class="alert alert-danger" role="alert">Usuario o contraseña inválida</div>
+                <?php } else { ?>
+                  <div class="alert alert-danger" role="alert">Contraseña inválida</div>
+                  <script>document.addEventListener('DOMContentLoaded', function(){ sendloginprod(); });</script>
+                <?php }
+              }
+              if(isset($_REQUEST['produccion'])){ ?>
+                <script>document.addEventListener('DOMContentLoaded', function(){ sendloginprod(); });</script>
+              <?php } ?>
+          </div>
+
+          <!-- Usuario -->
+          <div class="fv-row mb-6">
+            <label id="lblusr" class="form-label fs-6 fw-bolder text-dark required">Usuario</label>
+            <input class="form-control form-control-lg form-control-solid" type="text" name="uid" id="uid" value="<?php echo $usern; ?>" autofocus="autofocus"/>
+          </div>
+
+          <!-- Contraseña -->
+          <div class="fv-row mb-6">
+            <div class="d-flex flex-stack mb-2">
+              <label class="form-label fw-bolder text-dark fs-6 mb-0 required">Contraseña</label>
+            </div>
+            <input class="form-control form-control-lg form-control-solid" type="password" name="pass" id="pass" value="<?php echo $passn; ?>" autocomplete="off" onkeyup="contralong();"/>
+            <input class="form-control" type="hidden" name="tipo" id="tipo" value="1" autocomplete="off"/>
+
+            <!-- Teclado numérico -->
+            <div class="col-xs-4" id="teclado" hidden>
+              <table class="table table_teclado mt-3" id="myTableG" style="user-select: none;">
+                <tr>
+                  <td><center><b>1</b></center></td>
+                  <td><center><b>2</b></center></td>
+                  <td><center><b>3</b></center></td>
+                </tr>
+                <tr>
+                  <td><center><b>4</b></center></td>
+                  <td><center><b>5</b></center></td>
+                  <td><center><b>6</b></center></td>
+                </tr>
+                <tr>
+                  <td><center><b>7</b></center></td>
+                  <td><center><b>8</b></center></td>
+                  <td><center><b>9</b></center></td>
+                </tr>
+                <tr>
+                  <td onclick="borrar()"><center><b><i class="fas fa-backspace" style="color:#000; font-size: large;"></i></b></center></td>
+                  <td><center><b>0</b></center></td>
+                  <td onclick="sendlogin()" id="checktd"><center><b><i class="fas fa-check" style="color:#000; font-size: large;"></i></b></center></td>
+                </tr>
+                <tr></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recuérdame -->
+          <div class="form-check form-check-custom form-check-solid form-check-lg mb-6" id="recuerdamediv">
+            <input class="form-check-input" id="ckb1" type="checkbox" name="remember-me" <?php echo $remen; ?>>
+            <label class="form-check-label" for="ckb1">Recuérdame</label>
+          </div>
+
+          <!-- Acciones -->
+          <div class="text-center">
+            <button type="button" onclick="sendlogin();" class="btn btn-primary btn-lg w-100 mb-3" id="botonsave">
+              <span class="indicator-label">Iniciar</span>
+              <span class="indicator-progress">Cargando...
+                <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+              </span>
+            </button>
+
+			<!--
+            <button id="btnprod" type="button" onclick="sendloginprod();" class="btn btn-secondary btn-lg w-100 mb-3">
+              <span class="indicator-label">Producción</span>
+              <span class="indicator-progress">Cargando...
+                <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+              </span>
+            </button>
+			  -->
+
+            <button id="btnnormal" type="button" onclick="loginatras();" class="btn btn-warning btn-lg w-100 mb-1" hidden>
+              <span class="indicator-label">Atrás</span>
+            </button>
+          </div>
+
+          <input type="hidden" name="ok" value="1">
+        </form>
+        <!--end::Form-->
+
+      </div>
+    </div>
+  </main>
+</div>
+<!--end::Authentication - Sign-in-->
+
 		</div>
 		<!--end::Main-->
 		<script>var hostUrl = "assets/";</script>
@@ -414,6 +447,7 @@ License: For each use you must have a valid license purchased only from above li
 		<!--end::Javascript-->
 		<script>
 		$("#formrecover").submit(function(event){
+			alert("JOLAA");
 			// Stop form from submitting normally
 			event.preventDefault();
 			// Get some values from elements on the page:
@@ -472,7 +506,8 @@ License: For each use you must have a valid license purchased only from above li
 
 			if($_POST['tipo'] == "1"){
 				$sql = 'SELECT u_password
-							FROM usuarios WHERE u_id="'.$uid.'" AND u_estatus="A" AND u_password = SHA1("'.$password.'")';
+							FROM usuarios WHERE u_id="'.$uid.'" AND u_estatus="A" AND u_password = PASSWORD("'.$password.'")';
+							//die($sql);
 				$result = setq($sql) or die($sql);
 				list($pw1, $pw2) = $result->fetch_row();
 

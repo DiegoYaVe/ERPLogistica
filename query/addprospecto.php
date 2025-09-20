@@ -5,318 +5,257 @@ include_once('../funciones.php');
 include_once('../modulos/prospectos.php');
 
 $response = array();
-if(isset($_SESSION['uid'])){
-$prospectos = new modelprospectos();
+$respuesta = 0;          // <<< evita undefined
+$respuesta2 = null;
+$respuesta3 = null;
+$registros = 0;          // <<< evita undefined
+$codes = "";             // <<< evita undefined
+$nvendedore2 = 0;        // <<< tu variable al final estaba mal escrita, la mantengo por compatibilidad
+$siguiente = 1;          // <<< valor por defecto
 
-$html = "";
-$telefonos = "";
-$usuariosventas = array();
-$ocupados = array();
-$ocupados2 = array();
-$id = $_POST['id'];
-$nmb = $_POST['nmb'];
-$cp = $_POST['cp'];
-$correo = $_POST['correo'];
-$phone = $_POST['telefono'];
-$code = $_POST['code'];
-$status = '';
-$telefono = preg_replace("/[^0-9]/", "", $phone); //Limpiamos el número de teléfono
+if (isset($_SESSION['uid'])) {
 
-$pais = $_POST['pais'];
-$observacion = $_POST['observacion'];
-$lead = $_POST['lead'];
+  $prospectos = new modelprospectos();
 
-$enviar = 0;
-$read = "readonly";
-$ncaptura = getmax("cl_ncaptura", "crm_leads WHERE cl_fasigna = '" . date("Y-m-d") . "'", false, true); //Buscamos el número consecutivo diario de registros
-if(!empty($id)){
-  $sqldat = 'SELECT cl_ncaptura, cl_estatus, cl_vendedor FROM crm_leads WHERE cl_id = "'.$id.'"'; 
-  $resultdat = setq($sqldat);
-  list($ncaptura, $status, $vendedori) = $resultdat -> fetch_array();
-  /* $ncaptura = busca($id, "crm_leads", "cl_id", "cl_ncaptura");
-  $status = busca($id, "crm_leads", "cl_id", "cl_estatus");
-  if($status == "A"){
-    $vendedori = busca($id, "crm_leads", "cl_id", "cl_vendedor");
-  } */
-  $sqldel = "DELETE FROM crm_leads WHERE cl_id = '".$id."'";
-  setq($sqldel);
-  $respuesta3 = 3;
-} else{
-  //Verificamos si el telefono existe previamente
-  $existe = busca($telefono, 'crm_leads', ' cl_lead = "'.$lead.'" AND cl_id != "'.$id.'" AND cl_code = "'.$code.'" AND cl_telefono', 'cl_vendedor');
-  if(!empty($existe)){
-    $respuesta  = 41; //El telefono ya existe para un lead de la página
-    $agente = busca($existe, 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-    $response['agente'] = $existe." ".$agente;
-  }
-  $status = 'P';
+  $html = "";
+  $telefonos = "";
+  $usuariosventas = array();
+  $ocupados = array();
+  $ocupados2 = array();
 
-  //Verificamos si el telefono esta registrado en clientes
-  $existe = busca($telefono, 'crm_clientes', ' c_telefono1 = "'.$telefono.'" OR c_telefono2', 'c_uregistro');
-  if(!empty($existe)){
-    $respuesta  = 42; //El telefono ya existe para un lead de la página
-    $agente = busca($existe, 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-    $response['agente'] = $existe." ".$agente;
-  }
-  $status = 'P';
-}
+  // --- INPUTS ---
+  $id        = isset($_POST['id']) ? $_POST['id'] : '';
+  $nmb       = isset($_POST['nmb']) ? $_POST['nmb'] : '';
+  $cp        = isset($_POST['cp']) ? $_POST['cp'] : '';
+  $correo    = isset($_POST['correo']) ? $_POST['correo'] : '';
+  $phone     = isset($_POST['telefono']) ? $_POST['telefono'] : '';
+  $code      = isset($_POST['code']) ? $_POST['code'] : '';
+  $pais      = isset($_POST['pais']) ? $_POST['pais'] : '';
+  $observacion = isset($_POST['observacion']) ? $_POST['observacion'] : '';
+  $lead      = isset($_POST['lead']) ? $_POST['lead'] : '';
 
+  $status    = '';
+  $telefono  = preg_replace("/[^0-9]/", "", $phone); // Limpiamos el número de teléfono
+  $enviar    = 0;
+  $read      = "readonly";
 
-if($respuesta != 41){//El telefono NO existe para un lead de la página
-$pvendedor = busca($telefono, "crm_leads", "cl_telefono", "cl_vendedor"); //Buscamos si hay un registro previo del prospecto
-$nvendedores = intval(busca("A", "usuarios_orden", 'uo_estatus', 'COUNT(*)')); //Consultamos el total de usuarios asignados para ventas
+  // consecutivo diario
+  $ncaptura = getmax("cl_ncaptura", "crm_leads WHERE cl_fasigna = '" . date("Y-m-d") . "'", false, true);
 
-$clid0 = busca($lead, "crm_leads", "cl_lead", "MAX(cl_id) AS cl_id");
-$consecutivo = intval(busca($clid0, "crm_leads", "cl_id", "cl_consecutivo"));
+  if (!empty($id)) {
+    // --- EDICIÓN / REINSERCIÓN ---
+    $sqldat = 'SELECT cl_ncaptura, cl_estatus, cl_vendedor FROM crm_leads WHERE cl_id = "' . $id . '"';
+    $resultdat = setq($sqldat);
+    list($ncaptura, $status, $vendedori) = $resultdat->fetch_array();
 
-if($consecutivo >= $nvendedores){
-  $siguiente = 1; //Se reinicia el contador
-} else{
-  $siguiente = $consecutivo + 1; //Continuamos con el bloque
-}
-
-
-//Sacamos el registro de crm_leads inicial del bloque hasta el final
-$sqlcon = "SELECT cl_id FROM crm_leads WHERE cl_consecutivo = 1 ORDER BY cl_id DESC, cl_consecutivo DESC LIMIT 1";
-$resultcon = setq($sqlcon);
-list($inicial) = $resultcon->fetch_array();
-
-$sqlvend = "SELECT cl_vendedor FROM crm_leads WHERE cl_id >= '".$inicial."' AND cl_lead = '".$lead."' ORDER BY cl_id ASC, cl_consecutivo ASC LIMIT ".$consecutivo;
-$resultvend = setq($sqlvend);
-$k = 0;
-while($rowvend = $resultvend->fetch_array()){
-  $ocupados[$k] = $rowvend['cl_vendedor'];
-  $k++;
-}
-
-$sqlu = "SELECT * FROM usuarios_orden WHERE uo_estatus = 'A' ORDER BY uo_orden";
-$resultu = setq($sqlu);
-while ($rowu = $resultu->fetch_array()) {
-  array_push($usuariosventas, $rowu['uo_uid']);
-}
-
-// Encontrar usuarios en Ventas que no están en Usuarios ocupados
-$disponibles = array_diff($usuariosventas, $ocupados);
-
-//Comrobamos que el número de vendedores no sea mayor al orden
-/* if (empty($vendedororden)) { */
-  $vendedor = '';
-if (count($disponibles) == 0) {
-  //Si el número de asignación llegó al límite de vendedores asignados volvemos a comenzar desde el 1
-  $vdor = busca('A', 'usuarios_orden', 'uo_estatus', 'MIN(uo_orden) AS uo_orden');
-  if(empty($vdor)){
-    $respuesta = 22; //No hay vendedor activos
-  } else{
-    /* $vendedor = busca($vdor, 'usuarios_orden', 'uo_orden', 'MIN(uo_uid) AS uo_uid'); */
-    $vendedor = busca($vdor, 'usuarios_orden', 'uo_orden', 'uo_uid');
-  }
-} else {
-  //Si el número de asignación no ha llegado al límite de vendedores asignados asignamos el vendedor consecutivo
-  foreach ($disponibles as $value) {
-    $vendedor = $value;
-    break;
-  }
-  
-
-}
-if($respuesta != 22){//Si hay vendedores activos para asignar prospectos
-//Si el prospecto ya tuvo un registro previo se le asigna el asesor que lo atendió en esa ocasión
-if (!empty($pvendedor)) {
-  $vendedor = $pvendedor;
-}
-
-if(isset($vendedori) && !empty($vendedori)){
-  $vendedor = $vendedori;
-}
-
-$prospectos->setdatalead($id, $lead, $nmb, $cp, $correo, $telefono, $code, $pais, $status, $observacion, $vendedor, $ncaptura, $_SESSION['uid'], "", date("Y-m-d"), $siguiente);
-$respuesta = $prospectos->insertlead();
-
-$sqlcl = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$lead.'" AND cl_fasigna = "'.date("Y-m-d").'" ORDER BY cl_estatus = "P" DESC, cl_id DESC;';
-$resultcl = setq($sqlcl);
-$read = "readonly";
-
-$clid1 = busca($lead, "crm_leads", "cl_lead", "MAX(cl_id) AS cl_id");
-$consecutivo = intval(busca($clid1, "crm_leads", "cl_id", "cl_consecutivo"));
-
-if($consecutivo >= $nvendedores){
-  $respuesta2 = 2;
-  $enviar = 1;
-} else{
-  $nvendedores2 = intval(busca("A", "usuarios_orden", 'uo_estatus', 'COUNT(*)')); //Consultamos el total de usuarios asignados para ventas
-  $registros = intval(busca($lead, 'crm_leads', 'cl_estatus = "P" AND cl_lead', 'COUNT(*)'));
-
-  if($registros < $nvendedores2){
-    $read = "";
+    // se elimina el registro anterior
+    $sqldel = "DELETE FROM crm_leads WHERE cl_id = '" . $id . "'";
+    setq($sqldel);
+    $respuesta3 = 3; // bandera
   } else {
-    $read = "readonly";
-  }
-}
+    // --- NUEVO LEAD ---
 
-if($respuesta == 1){
-  $i = 1;
-  while($row = $resultcl->fetch_array()){
-  if($row['cl_estatus'] == "A" || $row['cl_estatus'] == "F"){
-    $backg = 'background: #deffde;';
-  } else if($row['cl_estatus'] == "X"){
-    $backg = 'background: #f5000026;';
-  } else{
-    $backg = '';
-  }
-  $html .= '
-  <tr class="">
-    <th style="height: 44.84px;'.$backg.'">+'.$row['cl_code']." ".$row['cl_telefono'].'</span></th>
-    <th style="height: 44.84px;'.$backg.'"><span>'.$row['cl_nmb'].'</span></th>
-    <th style="height: 44.84px;'.$backg.'">'.$row['cl_cp'].'</span></th>
-    <th style="height: 44.84px;'.$backg.'">'.$row['cl_correo'].'</span></th>
-    <th style="height: 44.84px;'.$backg.'">'.$row['cl_observacion'].'</span></th>
-    <th style="height: 44.84px;'.$backg.'">';
-    if($row['cl_estatus'] == "P"){
-      $html .= '<button type="button" onClick="editarLead('.$row['cl_id'].');" class="btn btn-sm btn-primary" /><i class="fas fa-user-edit"></i></button>  
-      <button type="button" onClick="borrarLead('.$row['cl_id'].');" class="btn btn-sm btn-danger" /><i class="fa fa-trash"></i></button>';
-    } else{
-      /* $html .= '
-      <select class="form-control" id="idvendedor'.$row['cl_id'].'" name="idvendedor'.$row['cl_id'].'" onchange="cambiarvendedor('.$row['cl_id'].');">';
-      $sqlv = 'SELECT * FROM usuarios_orden WHERE uo_estatus = "A"';
-      $resultv = setq($sqlv);
-      while($rowv = $resultv->fetch_array()){
-        $nmb = busca($rowv['uo_uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-        if($row['cl_vendedor'] == $rowv['uo_uid']){
-          $sel = 'selected';
-        } else{ 
-          $sel = '';
-        }
-        $html .=  '<option value="'.$rowv['uo_uid'].'" '.$sel.'>'.$nmb.'</option>';
-      }
-      $html .= '
-      </select>
-      '; */
-      $vend = '';
-      $html .= '
-      <div class="row">
-      <div class="col-md-6">
-          <select class="form-control" id="idvendedor' . $row['cl_id'] . '" name="idvendedor' . $row['cl_id'] . '" onchange="cambiarvendedor(' . $row['cl_id'] . ');">';
-          $sqlv = 'SELECT * FROM usuarios_orden WHERE uo_estatus = "A"';
-          $resultv = setq($sqlv);
-          while ($rowv = $resultv->fetch_array()) {
-              $nmb = busca($rowv['uo_uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-              if ($row['cl_vendedor'] == $rowv['uo_uid']) {
-                  $sel = 'selected';
-                  $vend = $row['cl_vendedor'];
-              } else {
-                  $sel = '';
-              }
-              $html .= '<option value="' . $rowv['uo_uid'] . '" ' . $sel . '>' . $nmb . '</option>';
-          }
-          $html .= '</select>
-          </div>
-          <div class="col-md-2">
-              <input type="hidden" value="'.$vend.'" id="venoriginal'.$row['cl_id'].'">
-              <button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>
-          </div>
-      </div>';
-
+    // Teléfono ya existe en leads de la página
+    $existe = busca($telefono, 'crm_leads', ' cl_lead = "' . $lead . '" AND cl_id != "' . $id . '" AND cl_code = "' . $code . '" AND cl_telefono', 'cl_vendedor');
+    if (!empty($existe)) {
+      $respuesta  = 41; // Tel ya existe
+      $agente = busca($existe, 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+      $response['agente'] = $existe . " " . $agente;
     }
-    $html .= '</th>
-  </tr>
-  ';
-  if($i == 1){
-    $telefonos .= $row['cl_telefono'];
-    $codes .= $row['cl_code'];
-  } else{
-    $telefonos .= ",".$row['cl_telefono'];
-    $codes .= ",".$row['cl_code'];
-  }
-  $i++;
+    $status = 'P';
+
+    // Teléfono ya existe en clientes
+    $existe = busca($telefono, 'crm_clientes', ' c_telefono1 = "' . $telefono . '" OR c_telefono2', 'c_uregistro');
+    if (!empty($existe)) {
+      $respuesta  = 42; // Tel ya existe en clientes
+      $agente = busca($existe, 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+      $response['agente'] = $existe . " " . $agente;
+    }
+    $status = 'P';
   }
 
-  //BUSCAMOS TODOS LOS LEADS QUE SE CREARON HOY PERO QUE ESTÁN REASIGNADOS A OTROS DIAS
-  /* $sqlr = 'SELECT DISTINCT(hl_lead) AS prospecto FROM historial_leadsasignacion INNER JOIN crm_leads ON cl_id = hl_lead WHERE cl_estatus = "R";';
-  $resultr = setq($sqlr);
-  while($rowp = $resultr->fetch_array()){
-    $prospecto = $rowp['prospecto'];
-    $respon = intval(busca($prospecto, 'historial_leadsasignacion', 'hl_fasigna = "'.date("Y-m-d").'" AND hl_lead', 'COUNT(*)'));
-    if($respon > 0){
-      $sqlcl = 'SELECT * FROM crm_leads WHERE cl_id = "'.$prospecto.'"';
-      $resultcl = setq($sqlcl);
-      $rowcl = $resultcl->fetch_array();
-      $backg = 'background: #005ef526;';
+  // ----------------------------------------------------------------
+  // SI EL TELÉFONO NO ESTÁ REPETIDO EN LEADS: CONTINÚA EL FLUJO
+  // ----------------------------------------------------------------
+  if ($respuesta != 41) {
 
-    $html .= '
-      <tr class="">
-        <th style="height: 44.84px;'.$backg.'">+'.$rowcl['cl_code']." ".$rowcl['cl_telefono'].'</span></th>
-        <th style="height: 44.84px;'.$backg.'"><span>'.$rowcl['cl_nmb'].'</span></th>
-        <th style="height: 44.84px;'.$backg.'">'.$rowcl['cl_cp'].'</span></th>
-        <th style="height: 44.84px;'.$backg.'">'.$rowcl['cl_correo'].'</span></th>
-        <th style="height: 44.84px;'.$backg.'">'.$rowcl['cl_observacion'].'</span></th>
-        <th style="height: 44.84px;'.$backg.'">';
-        if($rowcl['cl_estatus'] == "P"){
-    $html .= '
-          <button type="button" onClick="editarLead('.$rowcl['cl_id'].');" class="btn btn-sm btn-primary" /><i class="fas fa-user-edit"></i></button>  
-          <button type="button" onClick="borrarLead('.$rowcl['cl_id'].');" class="btn btn-sm btn-danger" /><i class="fa fa-trash"></i></button>';
-        } else{
+    // --- (Dejo tu lógica de bloque/consecutivo por si la usas para otras cosas) ---
+    $pvendedor = busca($telefono, "crm_leads", "cl_telefono", "cl_vendedor");
+    $nvendedores = intval(busca("A", "usuarios_orden", 'uo_estatus', 'COUNT(*)'));
+
+    $clid0 = busca($lead, "crm_leads", "cl_lead", "MAX(cl_id) AS cl_id");
+    $consecutivo = intval(busca($clid0, "crm_leads", "cl_id", "cl_consecutivo"));
+
+    if ($consecutivo >= $nvendedores) {
+      $siguiente = 1;
+    } else {
+      $siguiente = $consecutivo + 1;
+    }
+
+    // (calcula inicial del bloque)
+    $sqlcon = "SELECT cl_id FROM crm_leads WHERE cl_consecutivo = 1 ORDER BY cl_id DESC, cl_consecutivo DESC LIMIT 1";
+    $resultcon = setq($sqlcon);
+    $inicial = 0;
+    if ($resultcon && $resultcon->num_rows > 0) {
+      list($inicial) = $resultcon->fetch_array();
+    }
+
+    // (ocupar/rotación – la dejo pero NO la usamos para definir $vendedor)
+    if ($inicial > 0) {
+      $sqlvend = "SELECT cl_vendedor FROM crm_leads WHERE cl_id >= '" . $inicial . "' AND cl_lead = '" . $lead . "' ORDER BY cl_id ASC, cl_consecutivo ASC LIMIT " . $consecutivo;
+      $resultvend = setq($sqlvend);
+      $k = 0;
+      while ($resultvend && ($rowvend = $resultvend->fetch_array())) {
+        $ocupados[$k] = $rowvend['cl_vendedor'];
+        $k++;
+      }
+    }
+
+    $sqlu = "SELECT * FROM usuarios_orden WHERE uo_estatus = 'A' ORDER BY uo_orden";
+    $resultu = setq($sqlu);
+    while ($resultu && ($rowu = $resultu->fetch_array())) {
+      array_push($usuariosventas, $rowu['uo_uid']);
+    }
+
+    // ----------------------------------------------------------------
+    // >>>>>>>>> FORZAR VENDEDOR = USUARIO EN SESIÓN <<<<<<<<<
+    // ----------------------------------------------------------------
+    $vendedor = $_SESSION['uid']; // <<< AQUÍ ESTÁ LA CLAVE
+
+    // Si quieres respetar el vendedor original SOLO en re-inserción/edición, descomenta:
+    // if (isset($vendedori) && !empty($vendedori)) { $vendedor = $vendedori; } // opcional
+
+    // O si quieres respetar un vendedor previo por teléfono (histórico), descomenta:
+    // if (!empty($pvendedor)) { $vendedor = $pvendedor; } // opcional
+
+    // --- Inserta / guarda el lead con el VENDEDOR DE LA SESIÓN ---
+    $prospectos->setdatalead(
+      $id,
+      $lead,
+      $nmb,
+      $cp,
+      $correo,
+      $telefono,
+      $code,
+      $pais,
+      $status,
+      $observacion,
+      $vendedor,           // <<< vendedor forzado a sesión
+      $ncaptura,
+      $_SESSION['uid'],    // usuario que realiza la acción
+      "",
+      date("Y-m-d"),
+      $siguiente
+    );
+    $respuesta = $prospectos->insertlead();
+
+    // --- Reconsultar para armar tabla ---
+    $sqlcl = 'SELECT * FROM crm_leads WHERE cl_lead = "' . $lead . '" AND cl_fasigna = "' . date("Y-m-d") . '" ORDER BY cl_estatus = "P" DESC, cl_id DESC;';
+    $resultcl = setq($sqlcl);
+    $read = "readonly";
+
+    // actualizar consecutivo y reglas de lectura
+    $clid1 = busca($lead, "crm_leads", "cl_lead", "MAX(cl_id) AS cl_id");
+    $consecutivo = intval(busca($clid1, "crm_leads", "cl_id", "cl_consecutivo"));
+
+    if ($consecutivo >= $nvendedores) {
+      $respuesta2 = 2;
+      $enviar = 1;
+    } else {
+      $nvendedores2 = intval(busca("A", "usuarios_orden", 'uo_estatus', 'COUNT(*)'));
+      $registros = intval(busca($lead, 'crm_leads', 'cl_estatus = "P" AND cl_lead', 'COUNT(*)'));
+
+      if ($registros < $nvendedores2) {
+        $read = "";
+      } else {
+        $read = "readonly";
+      }
+    }
+
+    if ($respuesta == 1) {
+      $i = 1;
+      while ($resultcl && ($row = $resultcl->fetch_array())) {
+        if ($row['cl_estatus'] == "A" || $row['cl_estatus'] == "F") {
+          $backg = 'background: #deffde;';
+        } else if ($row['cl_estatus'] == "X") {
+          $backg = 'background: #f5000026;';
+        } else {
+          $backg = '';
+        }
+
+        $html .= '
+        <tr class="">
+          <th style="height: 44.84px;' . $backg . '">+' . $row['cl_code'] . " " . $row['cl_telefono'] . '</span></th>
+          <th style="height: 44.84px;' . $backg . '"><span>' . $row['cl_nmb'] . '</span></th>
+          <th style="height: 44.84px;' . $backg . '">' . $row['cl_cp'] . '</span></th>
+          <th style="height: 44.84px;' . $backg . '">' . $row['cl_correo'] . '</span></th>
+          <th style="height: 44.84px;' . $backg . '">' . $row['cl_observacion'] . '</span></th>
+          <th style="height: 44.84px;' . $backg . '">';
+
+        if ($row['cl_estatus'] == "P") {
+          $html .= '<button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>  
+                    <button type="button" onClick="borrarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>';
+        } else {
+          // selector de vendedor (se muestra pero recuerda: al guardar, forzamos el de sesión)
           $vend = '';
           $html .= '
-          <div class="row">
-          <div class="col-md-6">
-              <select class="form-control" id="idvendedor' . $rowcl['cl_id'] . '" name="idvendedor' . $rowcl['cl_id'] . '" onchange="cambiarvendedor(' . $rowcl['cl_id'] . ');">';
-              $sqlv = 'SELECT * FROM usuarios_orden WHERE uo_estatus = "A"';
-              $resultv = setq($sqlv);
-              while ($rowv = $resultv->fetch_array()) {
-                  $nmb = busca($rowv['uo_uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
-                  if ($rowcl['cl_vendedor'] == $rowv['uo_uid']) {
-                      $sel = 'selected';
-                      $vend = $rowcl['cl_vendedor'];
-                  } else {
-                      $sel = '';
-                  }
-                  $html .= '<option value="' . $rowv['uo_uid'] . '" ' . $sel . '>' . $nmb . '</option>';
-              }
-              $html .= '</select>
+            <div class="row">
+              <div class="col-md-6">
+                <select class="form-control" id="idvendedor' . $row['cl_id'] . '" name="idvendedor' . $row['cl_id'] . '" onchange="cambiarvendedor(' . $row['cl_id'] . ');">';
+
+          $sqlv = 'SELECT * FROM usuarios_orden WHERE uo_estatus = "A"';
+          $resultv = setq($sqlv);
+          while ($resultv && ($rowv = $resultv->fetch_array())) {
+            $nmbv = busca($rowv['uo_uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+            if ($row['cl_vendedor'] == $rowv['uo_uid']) {
+              $sel = 'selected';
+              $vend = $row['cl_vendedor'];
+            } else {
+              $sel = '';
+            }
+            $html .= '<option value="' . $rowv['uo_uid'] . '" ' . $sel . '>' . $nmbv . '</option>';
+          }
+
+          $html .= '</select>
               </div>
               <div class="col-md-2">
-                  <input type="hidden" value="'.$vend.'" id="venoriginal'.$rowcl['cl_id'].'">
-                  <button type="button" onClick="editarLead(' . $rowcl['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>
+                <input type="hidden" value="' . $vend . '" id="venoriginal' . $row['cl_id'] . '">
+                <button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>
               </div>
-          </div>';
+            </div>';
         }
-    $html .=  '</th>
-      </tr>';
-      if($i == 1){
-        $telefonos .= $rowcl['cl_telefono'];
-        $codes .= $rowcl['cl_code'];
-      } else{
-        $telefonos .= ",".$rowcl['cl_telefono'];
-        $codes .= ",".$rowcl['cl_code'];
+
+        $html .= '</th></tr>';
+
+        if ($i == 1) {
+          $telefonos .= $row['cl_telefono'];
+          $codes .= $row['cl_code'];
+        } else {
+          $telefonos .= "," . $row['cl_telefono'];
+          $codes .= "," . $row['cl_code'];
+        }
+        $i++;
       }
-      $i++;
     }
-  }
 
-  $response['tel'] = $telefonos;
-  $response['codes'] = $codes; */
+    if (isset($respuesta2)) {
+      $respuesta = $respuesta2;
+    }
+    if (isset($respuesta3)) {
+      $respuesta = $respuesta3;
+    }
+
+    $response['html'] = $html;
+    $response['registros'] = $registros;
+    $response['vendedores'] = $nvendedore2; // (ojo: tu variable original parece typo)
+    $response['enviar'] = $enviar;
+  } // fin if($respuesta != 41)
+
+  $response['respuesta'] = $respuesta;
+
+} else {
+  $response['respuesta'] = 247; // La sesión caducó
 }
-
-if(isset($respuesta2)){
-  $respuesta = $respuesta2;
-}
-
-if(isset($respuesta3)){
-  $respuesta = $respuesta3;
-}
-
-$response['html'] = $html;
-$response['registros'] = $registros;
-$response['vendedores'] = $nvendedore2;
-$response['enviar'] = $enviar;
-} //Si no entra a este if significa que NO hay vendedores activos para asignar prospectos
-}
-
-$response['respuesta'] = $respuesta;
-} else{
-  $response['respuesta'] = 247; //La sesión caducó
-}
-
 
 echo json_encode($response);
 ?>

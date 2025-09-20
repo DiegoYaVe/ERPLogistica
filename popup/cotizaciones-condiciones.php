@@ -1,6 +1,6 @@
 <?php
   session_start();
-  ini_set('display_errors',1);
+  ini_set('display_errors',0);
   header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
   header("Expires: Sat, 1 Jul 2000 05:00:00 GMT"); // Fecha en el pasado
   include('../funciones.php');

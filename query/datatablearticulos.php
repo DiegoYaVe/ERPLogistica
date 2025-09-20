@@ -1,7 +1,7 @@
 <?php
 include_once('../funciones.php');
 session_start();
-  ini_set('display_errors',1);
+  ini_set('display_errors',0);
 
 if($_POST['estatus'] == "T") $estatus = NULL;
 else $estatus = $_POST['estatus'];

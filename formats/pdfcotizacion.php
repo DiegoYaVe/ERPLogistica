@@ -10,94 +10,20 @@ var $widths;
 var $aligns;
 var $alto;
 
-  function Header()
-  {
-    if(isset($_GET['uuid'])) $_GET['idcotiza'] = busca($_GET['uuid'],'crm_cotizaciones','cc_uuid','cc_id');
-    $sql='SELECT * FROM crm_cotizaciones WHERE cc_id="'.$_GET['idcotiza'].'"';
-    $rs=setq($sql) or die($sql);
-    $rw= $rs->fetch_array();
-    $empresa = busca($_GET['idcotiza'],'crm_cotizaciones INNER JOIN crm_tableros ON ct_id = cc_tablero','cc_id','ct_empresa');
-
-    include_once('../modulos/config.php');
-    $emp = new modelconfig();
-    $emp->select($empresa);
-
-    $sql = 'SELECT * FROM almacenes WHERE a_id = "1"';
-    $result = setq($sql);
-    $rowalm = $result->fetch_array();
-
-    $imglogo = busca('1', 'empresas', 'e_id', 'e_logo');
-    
-    if(!empty($imglogo)) $logo = '../'.$imglogo;
-    else $logo = NULL;
-    
-    
-
-    //if(file_exists('../'.$emp->logo) && $emp->logo != NULL) $logo = '../'.$emp->logo;
-    //else $logo = NULL;
-
-    include_once('../modulos/cotizaciones.php');
-    $cotiza = new modelcotizaciones();
-    $cotiza->select($_GET['idcotiza']);
-    if($cotiza->estatus != "A" && $cotiza->estatus != "V"){
-      $this->Image('../assets/media/preview.png',5,30,200);
-    }
-
-    // Logo
-    if($logo)
-      //$this->Image($logo,163,2,30);
-    //$this->Image($logo,163,2,35);
-    // Arial bold 15
-    $this->AddFont('kalinga','','kalinga.php');
-    $this->AddFont('kalingab','','kalingab.php');
-    $this->SetFont('kalinga','',8);
-    // Movernos a la derecha
-    $this->Cell(80);
-    $this->SetDrawColor(100, 152, 201);
-    $this->Line(160,10,160,30);
-    $this->SetTextColor(0,0,0);
-    // Título
-    $this->SetTextColor(0,0,0);
-    /* $this->Cell(70,4,utf8_decode(ucwords(strtolower(''.$emp->tel))),0,2,'R');
-    $this->Cell(70,4,utf8_decode(ucwords(strtolower(''.$emp->correo))),0,2,'R');
-    $this->Cell(70,4,utf8_decode(ucwords(strtolower(''.$emp->calle.' '.$emp->nume.' '.$emp->numi))),0,2,'R');
-    $this->Cell(70,4,utf8_decode(ucwords(strtolower($emp->colonia.' '.$emp->cp.' '.$emp->ciudad.' '.$emp->estado))),0,2,'R'); */
-    $this->Cell(70,4,utf8_decode(ucwords(strtolower(''.$rowalm['a_telefono']))),0,2,'R');
-    $this->Cell(70,4,utf8_decode(ucwords(strtolower(''.$rowalm['a_correo']))),0,2,'R');
-    $this->Cell(70,4,ucwords(strtolower(utf8_decode(''.$rowalm['a_calle'].' '.$rowalm['a_nume'].' '.$rowalm['a_numi']))),0,2,'R');
-    $this->Cell(70,4,ucwords(strtolower(utf8_decode($rowalm['a_colonia'].' '.$rowalm['a_cp'].' '.$rowalm['a_ciudad'].' '.$rowalm['a_estado']))),0,2,'R');
-    //$this->Cell(70,4,ucwords(strtolower(utf8_decode(''.$rowalm['a_direccion']))),0,2,'R');
-    //$this->Cell(70,4,utf8_decode(ucwords(strtolower($emp->colonia.' '.$emp->cp.' '.$emp->ciudad.' '.$emp->estado))),0,2,'R');
-    // Salto de línea
-    $this->Ln();
-}
+  function Header(){
+ 
+      $this->Image('../img/headerc.png', 0, 0, 220); // 210 mm es el ancho A4, ajusta si usas otra medida
+      $this->Ln(50); // Ajusta este valor a la altura real del headerc.jpg si es necesario
+  }
 
 // Pie de página
-function Footer()
+ function Footer()
 {
-  $empresa = busca($_GET['idcotiza'],'crm_cotizaciones INNER JOIN crm_tableros ON ct_id = cc_tablero','cc_id','ct_empresa');
+    // Posición a 260 mm del inicio (A4 es 297 mm de alto, así que 260 está cerca del fondo)
+    $this->SetY(-40); // Mueve 40 mm hacia arriba desde el final de la página, ajusta según altura del footer
 
-  include_once('../modulos/config.php');
-  $emp= new modelconfig();
-  $emp->select($empresa);
-
-  // Posición: a 1,5 cm del final
-  $this->SetY(-15);
-  $this->SetFont('kalinga','',11);
-/*
-  $this->Cell(0,5,utf8_decode('José Luis Reyes Benítez'),0,1,'C');
-  $this->Ln(2);
-  $this->Cell(0,5,'REBL8905188J8',0,1,'C');
-  $this->Ln();
-*/
-  $this->SetFont('kalinga','',11);
-//  $this->Cell(0,5,'___________________________________',0,1,'C');
-  //$this->Cell(0,5,utf8_decode($fila['c_id']),0,1,'C');
-  $this->Cell(0,5,utf8_decode($emp->web),0,1,'C');
-  // Arial italic 8
-  $this->SetFont('kalinga','',8);
-  // Número de página
-  $this->Cell(0,10,utf8_decode('Página ').$this->PageNo().'/{nb}',0,0,'R');
+    // Inserta la imagen del footer
+    $this->Image('../img/footerc.png', -5, 267, 220); 
 }
 function SetWidths($w)
 {
@@ -164,7 +90,7 @@ function RowMin($data,$bandera)
       //dibuja la tabla
     $this->Rect($x,$y,$w,$h,$rellenar);
     //solo imprime el texto
-    $this->SetFont('kalinga','',7);
+    $this->SetFont('Montserrat-Light','',7);
     $this->MultiCell($w,4.5,$data[$i],0,$a);
     //Put the position to the right of the cell
     $this->SetXY($x+$w,$y);
@@ -201,7 +127,7 @@ function RowMinImg($data,$bandera,$valida)
     //dibuja la tabla
     $this->Rect($x,$y,$w,$h,$rellenar);
     //solo imprime el texto
-    $this->SetFont('kalinga','',7);
+    $this->SetFont('Montserrat-Light','',7);
     $this->MultiCell($w,4.5,$data[$i],0,$a);
     //Put the position to the right of the cell
     $this->SetXY($x+$w,$y);
@@ -450,533 +376,181 @@ function WriteHTML($html)
         $this->SetStyle('U',false);
         $this->SetTextColor(0);
     }
+
+    function addClient($client)
+    {
+        $this->SetFont('Arial', 'B', 12);
+        $this->Cell(30, 10, 'CLIENTE', 0, 1);
+        
+        $this->SetTextColor(0, 102, 204); // Azul
+        $this->SetFont('Arial', '', 12);
+        $this->Cell(100, 6, $client, 0, 0);
+        
+        $this->SetTextColor(0); // Reset
+        $this->Ln(3);
+    }
+
+    function addDescription($origen, $destino, $peso)
+    {
+        $this->SetFillColor(20, 40, 80);
+        $this->SetTextColor(255);
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(190, 8, utf8_decode('DESCRIPCIÓN'), 0, 1, 'C', true);
+        
+        $this->SetTextColor(0);
+        $this->SetFont('Arial', '', 11);
+        $this->MultiCell(190, 6, "Origen: $origen", 0);
+        $this->MultiCell(190, 6, "Destino: $destino", 0);
+        $this->MultiCell(190, 6, "Peso y dimensiones:\n$peso", 0);
+        $this->Ln(3);
+    }
+
+    function addConceptTable($concepts)
+    {
+        $this->SetFillColor(20, 40, 80);
+        $this->SetTextColor(255);
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(130, 8, 'CONCEPTO', 0, 0, 'L', true);
+        $this->Cell(60, 8, 'PRECIO', 0, 1, 'L', true);
+
+        $this->SetTextColor(0);
+        $this->SetFont('kalingab', '', 13);
+        foreach ($concepts as $row) {
+            $this->Cell(130, 8, $row[0], 0);
+            $this->Cell(60, 8, $row[1], 0, 1);
+        }
+        $this->Ln(3);
+    }
+
+    function addTerms($terms)
+    {
+        $this->SetFillColor(20, 40, 80);
+        $this->SetTextColor(255);
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(190, 8, utf8_decode('TÉRMINOS Y CONDICIONES'), 0, 1, 'L', true);
+
+        $this->SetTextColor(0);
+        $this->SetFont('Arial', '', 10);
+        foreach ($terms as $term) {
+            $this->Cell(5);
+            $this->Cell(185, 6, utf8_decode("- $term"), 0, 1);
+        }
+    }
+
+    function addFooterInfo($name, $position, $email)
+    {
+        $this->SetFont('Arial', '', 10);
+        $this->ln();
+        $this->SetFont('kalingab', '', 10);
+        $this->SetTextColor(29,125,200); 
+        $this->Cell(190, 6, utf8_decode($name), 0, 1, 'R');
+        $this->SetFont('Arial', '', 10);
+        $this->SetTextColor(0); 
+        $this->Cell(190, 6, utf8_decode($position), 0, 1, 'R');
+        $this->Cell(190, 6, utf8_decode($email), 0, 1, 'R');
+    }
 }
 
   $pdf = new PDF("P","mm", "Letter");
-  $pdf->AliasNbPages();
+  $pdf = new PDF();
   $pdf->AddPage();
-  $pdf->SetAutoPageBreak(true,20);
-  $pdf->SetFont('Arial','',9);
-
-  $empresa = busca($_GET['idcotiza'],'crm_cotizaciones INNER JOIN crm_tableros ON ct_id = cc_tablero','cc_id','ct_empresa');
-  include_once('../modulos/config.php');
-  $emp= new modelconfig();
-  $emp->select($empresa);
-
-  include_once('../modulos/cotizaciones.php');
-  $cotiza= new modelcotizaciones();
-  $cotiza->select($_GET['idcotiza']);
-
-  $pdf->AddFont('kalinga','','kalinga.php');
+   $pdf->AddFont('kalinga','','kalinga.php');
   $pdf->AddFont('kalingab','','kalingab.php');
-  $pdf->SetFont('kalinga','',10);
-  $pdf->SetTextColor(0,0,0);
-
-//imprimir el numero de la cotizacion
-
-if(isset($_GET['L'])){
-  $folioremi = busca($cotiza->remision, 'remisiones', 'r_id', 'r_folio');
-  $pdf->Cell(23,8,utf8_decode('Remisión:'),0,0);
-  $pdf->Cell(0,8,utf8_decode($folioremi),0,1);
-} else{
-  $pdf->Cell(23,8,utf8_decode('Cotización:'),0,0);
-  $pdf->Cell(0,8,utf8_decode($cotiza->folio),0,1);
-}
-$meses = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
-$pdf->SetFont('kalingab','',10);
-$pdf->Cell(180,6,'Pachuca de Soto, Hgo. '.date('d').' de '.$meses[date('n')-1].' de '.date('Y').'',0,1,'R');
-
-$pdf->Cell(22,8,utf8_decode('Atención:'),0,0,'L');
-$pdf->SetFont('kalinga','',10);
-
-if(!empty($cotiza->remision)){
-  $remision = $cotiza->remision;
-  $cliente = busca($remision, 'remisiones', 'r_id', 'r_cliente');
-  $nmbcl = busca($cliente, 'crm_clientes', 'c_id', 'c_nmb').' '.busca($cliente, 'crm_clientes', 'c_id', 'c_apellidos');
-  if($_SESSION['uid'] == "LOGISTICA")
-  $nmbcl = base64_encode($nmbcl);
-  $pdf->Cell(0,8,utf8_decode($nmbcl),0,1,'L');
-} else{
-  $pdf->Cell(0,8,utf8_decode($cotiza->destino),0,1,'L');
-}
-
-if(isset($_GET['L'])){
-  $pdf->SetFont('kalingab','',10);
-  $pdf->Cell(23,8,utf8_decode('Dirección:'),0,0,'L');
-  $pdf->SetFont('kalinga','',10);
-  $direnvio = busca($cotiza->direnvio, 'crm_direcciones', 'cd_id', 'CONCAT(cd_calle," ",cd_nume," ",cd_numi," ",cd_colonia," ",cd_municipio," ",cd_cp)');
-  $pdf->Cell(0,8,utf8_decode($direnvio),0,1,'L');
-} else{
-  $texto=utf8_decode('En atención a su solicitud, me permito enviarle la siguiente propuesta correspondiente a los productos o servicios de su interés.');
-}
-$pdf->Cell(4);
-$pdf->MultiCell(180,5,$texto,0,'J');
- //$pdf->Ln(3);
-//tabla de los productos de la cotizacion
-  $pdf->Cell(4);
-  if($_GET['from'] == "guias"){
-    $remision = busca($cotiza->id, 'crm_cotizaciones', 'cc_id', 'cc_remision');
-    $sql = 'SELECT rd_id id, rd_iva iva, rd_cantidad cantidad, rd_precio precio, rd_articulo articulo, rd_modelo modelo, rd_nmbarticulo nmbarticulo FROM remisionesd WHERE rd_remision = "'.$remision.'"';
-  } else {
-    $sql='SELECT cdm_id id, cdm_iva iva, cdm_cantidad cantidad, cdm_precio precio, cdm_articulo articulo, cdm_modelo modelo, cdm_nmbarticulo nmbarticulo FROM crm_cotizacionesd 
-    WHERE cdm_cotizacion='.$cotiza->id.' ORDER BY cdm_id ASC';
-  }
   
-  $resultado=setq($sql) or die($sql);
-  $pdf->SetFillColor(91, 155, 213);//relleno del encabezado de una tabla
-  $pdf->SetDrawColor(132, 179, 223);//colorea las lineas de las celdas de la tabla
-  $pdf->SetFont('kalingab','',8);
-  $pdf->SetTextColor(255, 255, 255);
+  $pdf->SetY(35);
 
-//###definir el ancho de columna
-  $col1=33; $col2=15; $col3=94; $col4=25; $col5=23; $col6=24;
-  if($_GET['from'] != "guias"){
-    $col1=33; $col2=15; $col3=94; $col4=25; $col5=23; $col6=0;
-  } else {
-    $col1=33; $col2=15; $col3=79; $col4=20; $col5=23; $col6=20;
-  }
-  $pdf->Cell($col1,7,'Imagen',1,0,'C',true);
-  $pdf->Cell($col2,7,'Cantidad',1,0,'C',true);
-  $pdf->Cell($col3,7,utf8_decode('Descripción'),1,0,'C',true);
-  $pdf->Cell($col4,7,'Unitario',1,0,'C',true);
-  $pdf->Cell($col5,7,'Total',1,0,'C',true);
-  if($_GET['from'] == "guias") $pdf->Cell($col6,7,'Estatus',1,0,'C',true);
-  $pdf->Ln(7);
-  $pdf->SetTextColor(0, 0, 0);
-  $pdf->SetFont('kalinga','',8);
-  $bandera=true;
-  $pdf->SetFillColor(214, 230, 244);//relleno alternado de la tabla
-
-//impresion de una tabla multicell utilzando un script mc_table del archivo mc_table.php
- //##################################################################################
- //#######################################################################################
- //#################################################################################3
-//SetWidths(array(columna1,columna2,columna3,columna4,columna5,....,columnan))
-//columna es el numero de ancho de cada columna
-$pdf->SetWidths(array($col1,$col2,$col3,$col4,$col5, $col6));
-
-/* $pdf->SetWidths(array($col1,$col2,$col3,$col4,$col5)); */
-srand(microtime()*1000000);
-$bandera=true;
-$viva = busca(1,'configuracionesp','c_id','c_iva');
-$poriva = $viva/100;
-$ivat = 0;
-$totalf = 0;
-$impdesc = 0;
-$idremision = busca($cotiza->id, 'crm_cotizaciones', 'cc_id','cc_remision');
-while($row=$resultado->fetch_array()){
-  $iva=0;
-  switch ($cotiza->diva) {
-    //cuando se requiere desplegar el iva
-    case "1":
-      if($row['iva']=="1"){
-        $iva=0;
-        $iva=($row['cantidad']*$row['precio'])*$poriva;
-        $precioProducto=$row['precio'];
-      }
-      else{
-        $iva=0;
-        if($cotiza->mtotal == 1){
-          $importeind = $row['cantidad']*$row['precio'];
-          $iva=$importeind-(($row['cantidad']*$row['precio']/($viva + 100))*100);
-          $precioProducto=$row['precio']/(1+$poriva);
-          //echo '<br><br>'.$row['cd_precio'].'->'.$iva.'<<<'.$row['cd_nmbarticulo'];
-        }
-        else{
-          $iva=($row['cantidad']*$row['precio'])*$poriva;
-          $precioProducto=$row['precio'];
-        }
-      }
-      break;
-    //cuando no se requiere desplegar el iva
-    case "0":
-      /* if($row['cd_iva'] == "1"){
-        $iva=0;
-        $iva=($row['cdm_cantidad']*$row['cdm_precio'])*$poriva;
-        $precioProducto=$row['cdm_precio']*(1+$poriva);
-      }
-      else{ */
-        $iva=0;
-        $precioProducto=$row['precio'];
-      /* } */
-    break;
-    case "N":
-      $precioProducto=$row['precio'];
-    break;
-    default:
-    //echo "Your favorite color is neither red, blue, nor green!";
-  }
-  $montodes = busca($cotiza->id,'crm_cotizaciones','cc_id','cc_montodescuento');
-  if($montodes == 0) $pordes = busca($cotiza->id,'crm_cotizaciones','cc_id','cc_descuento');
-  else $pordes = 0;
-  $total=$precioProducto*$row['cantidad'];
-  $desc = busca($row['articulo'], 'articulos', 'a_id', 'a_descuento');
-  if($desc == "1"){
-    $descuni = $total*($pordes/100);
-    $impmd = $total-$descuni;
-    $subtotal=$impmd;
-    $impdesc+=$descuni;
-  } else {
-    $subtotal=$total;
-  }
-  $ivat+=$iva;
-  $totalf+=$total;
-  if(empty($row['modelo'])){
-    $query = 'SELECT CONCAT("../img/productos/",i_nmb, ".", i_ext) AS nombre_completo FROM imagenes WHERE i_idp = "'.$row['articulo'].'" ORDER BY i_idimg DESC LIMIT 1';
-  } else{
-    $query = 'SELECT CONCAT("../img/",ad_ruta) AS nombre_completo FROM articulos_descargas WHERE ad_articulo = "'.$row['articulo'].'" AND ad_modelo = "'.$row['modelo'].'" ORDER BY ad_id DESC LIMIT 1';
-  }  
-  $resultq = setq($query);
-  list($rutaimg) = $resultq->fetch_array();
-
-  // Agrega la imagen al PDF utilizando la función Image
-  $imageX = 18  ; // Ajusta la posición X de la imagen
-  $imageY = $pdf->GetY(); // Obtiene la posición Y actual del PDF
-  $imageWidth = 25; // Ajusta el ancho de la imagen
-  $imageHeight = 25; // El alto se ajustará automáticamente
-
-  // Continúa con el resto de la fila
-  $pdf->Cell(4);
-  $pdf->prod = $pdf->PageNo();
-  $pdf->SetFillColor(214, 230, 244); // Relleno alternado de la tabla
-  $pdf->SetAligns(array('C', 'C', 'J', 'R', 'R'));
-  $allowedExtensions = ['jpg', 'jpeg', 'png']; // Lista de extensiones permitidas
-  $imageExtension = strtolower(pathinfo($rutaimg, PATHINFO_EXTENSION));
-  $valida = false;
-  if (!in_array($imageExtension, $allowedExtensions)) {
-    // Agregar la imagen al PDF
-    $valida = true;
-  }
-
-  if(empty($rutaimg)){
-    $valida = true;
-  }
-  if($_GET['from'] == "guias") $from = '1';
-  else $from =0;
-
-
-  if($_GET['from'] == "guias"){
-    $count = busca($idremision, 'remisionesc', 'rc_articulo = "'.$row['articulo'].'" AND rc_modelo = "'.$row['modelo'].'" AND rc_estatus = "F" AND rc_remision', 'COUNT(*)');
-    if($count > 0) $text = '*** Enviado ***';
-    else $text = 'Por enviar';
-    $pdf->RowMinImg(array("", number_format($row['cantidad'], 2), $pdf->paquete($row['articulo'], utf8_decode($row['nmbarticulo']), $row['id'], $from), '$' . number_format($precioProducto, 2), '$' . number_format($total, 2), $text), false, $valida);
-  } else {
-    $pdf->RowMinImg(array("", number_format($row['cantidad'], 2), $pdf->paquete($row['articulo'], utf8_decode($row['nmbarticulo']), $row['id'], $from), '$' . number_format($precioProducto, 2), '$' . number_format($total, 2)), false, $valida);
-  }
+  // Datos
   
-  
-  if (in_array($imageExtension, $allowedExtensions)) {
-    // Agregar la imagen al PDF
-    if(!empty($rutaimg)){
-      $imageY += ($pdf->getAltura() + 2);
-      $pdf->Image($rutaimg, $imageX, $imageY, $imageWidth, $imageHeight);
-    }
-  }
-  
-  $bandera=!$bandera;
-}
-
-$vertotal = busca($_GET['idcotiza'],'crm_cotizaciones','cc_id','cc_mtotal');
-if($vertotal == 1){
-  //consulta base de datos
-     $pdf->Cell(5);
-      if($cotiza->diva == '0' && $cotiza->descuento == 0 && $cotiza->precioenvio == 0){
-        $pdf->Cell(16,6,' ','T',0,'C');
-        $pdf->Cell(15,6,' ','T',0,'C');
-        $pdf->Cell(110,6,' ','T',0,'L');
-        $pdf->Cell(25,6,'Total a Pagar',1,0,'L',$bandera);
-        $pdf->Cell(23,6,'$'.str_pad(number_format($cotiza->importe,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-        $pdf->Ln(6);
-      }
-      else{
-        $pdf->Cell(16,6,' ','T',0,'C');
-        $pdf->Cell(15,6,' ','T',0,'C');
-        $pdf->Cell(110,6,' ','T',0,'L');
-        $pdf->Cell(25,6,'Subtotal',1,0,'L',$bandera);
-        $pdf->Cell(23,6,'$'.str_pad(number_format($totalf,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-        $pdf->Ln(6);
-      }
-
-  if($cotiza->descuento>0){
-    //$impdesc = ($totalf*($cotiza->descuento/100));
-    $pdf->Cell(146);
-    $bandera = !$bandera;
-    $pdf->Cell(25,6,'Descuento '.number_format($cotiza->descuento,0).'%',1,0,'L',$bandera);
-    $pdf->Cell(23,6,'$'.str_pad(number_format(round($impdesc),2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-    $pdf->Ln(6);
-  }
-  if($cotiza->diva == '1'){
-    $pdf->Cell(146);  $bandera = !$bandera;
-    $pdf->Cell(25,6,'IVA',1,0,'L',$bandera);
-    $pdf->Cell(23,6,'$'.str_pad(number_format($cotiza->iva,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-    $pdf->Ln(6);
-  }
-  if($cotiza->precioenvio != 0){
-    
-    $pdf->Cell(146);  $bandera = !$bandera;
-    $pdf->Cell(25,6,'Costo de envio',1,0,'L',$bandera);
-    $pdf->Cell(23,6,'$'.str_pad(number_format($cotiza->precioenvio,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-    $pdf->Ln(6);
-    if($_SESSION['uid']== "ADMIN" && $cotiza->preciodolares > 0){
-      $pdf->Cell(146);  $bandera = !$bandera;
-      $pdf->Cell(25,6,'Costo de envio USD',1,0,'L',$bandera);
-      $usd = $cotiza->precioenvio/$cotiza->preciodolares;
-      $pdf->Cell(23,6,"$".str_pad(number_format($usd,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-      $pdf->Ln(6);
-    }
-  }
-  if($cotiza->descuento > 0 || $cotiza->diva == '1' || $cotiza->precioenvio > 0){
-      $totalf = $totalf + $cotiza->precioenvio - round($impdesc);
-      $pdf->Cell(146);
-      $bandera = !$bandera;
-      $pdf->Cell(25,6,'Total a Pagar',1,0,'L',$bandera);
-      $pdf->Cell(23,6,'$'.str_pad(number_format($totalf,2),"0"," ",STR_PAD_RIGHT),1,0,'R',$bandera);
-  }
-  //cierrra la tabla
-}
-
- //condiciones de servicio
-$pdf->SetFont('kalinga','',10);
-$pdf->Ln(5);
-$sql='SELECT * FROM crm_cotizaciones_condiciones
-      WHERE cf_estatus="A" AND cf_cotizacion = "'.$_GET['idcotiza'].'" AND cf_tipo = "C" ORDER BY cf_orden';
-$resultado=setq($sql) or die($sql);
-$resultadon=setq($sql) or die($sql);
-if($resultadon->num_rows > 0) $condiciones='Condiciones Comerciales'; else $condiciones = "";
-
-$pdf->SetTextColor(0, 0, 0);
-$pdf->Cell(0,5,$condiciones,0,1,'L');
-$pdf->SetFont('kalinga','',6);
-
-
-While($row=$resultado->fetch_array()){
-  $pdf->cell(10);
-     //convertir en minuscula el nombre
-    //$condicion = strtolower($row['cf_descripcion']);
-    //convertir en mayuscula la primera letra de cada palabra
-    //$condicion = ucwords($condicion);
-    $pdf->MultiCell(177,3,utf8_decode('- '.$row['cf_descripcion']),0,'J');
-}
-
- //Notas
- $pdf->SetFont('kalinga','',10);
- $pdf->Ln(5);
- $sql='SELECT * FROM crm_cotizaciones_condiciones
-       WHERE cf_estatus="A" AND cf_cotizacion = "'.$_GET['idcotiza'].'" AND cf_tipo = "N" ORDER BY cf_orden';
- $resultado=setq($sql) or die($sql);
- $resultadon=setq($sql) or die($sql);
- if($resultadon->num_rows > 0) $condiciones='Notas:'; else $condiciones = "";
- 
- $pdf->SetTextColor(0, 0, 0);
- $pdf->Cell(0,5,$condiciones,0,1,'L');
- $pdf->SetFont('kalinga','',6);
- 
- 
- While($row=$resultado->fetch_array()){
-   $pdf->cell(10);
-      //convertir en minuscula el nombre
-     //$condicion = strtolower($row['cf_descripcion']);
-     //convertir en mayuscula la primera letra de cada palabra
-     //$condicion = ucwords($condicion);
-     $pdf->MultiCell(177,3,utf8_decode('- '.strtoupper($row['cf_descripcion'])),0,'J');
- }
- $pdf->Ln(5);
-if($cotiza->msi == "1"){
-  $sqlt = 'SELECT * FROM tabuladormsi WHERE t_estatus = "A" ORDER BY t_nmb ASC';
-  $resultt = setq($sqlt) or die($sqlt);
-  if($resultt->num_rows > 0){
-    //$pdf->Cell(124);
-    $pdf->Cell(5);
-    $pdf->Cell(60,6,utf8_decode('Pagos con tarjetas de débito o crédito'),1,0,'C',true);
-    $pdf->Ln(6);
-    while($rwt = $resultt->fetch_array()){
-      $ttotal = $cotiza->importe * (1+($rwt['t_porcentaje']/100));
-      $pagot = $ttotal/$rwt['t_nmb'];
-      $pdf->Cell(5);
-      $pdf->Cell(30,6,$rwt['t_nmb'].' Pago(s) de',1,0,'L',false);
-      $pdf->Cell(30,6,'$ '.number_format($pagot,2),1,0,'R',false);
-      $pdf->Ln(6);
-    }
-    $pdf->Cell(5);
-    $pdf->Cell(60,6,utf8_decode('Tarjetas Participantes '),0,0,'L',false);
-    $pdf->Ln(6);
-    $pdf->Cell(5);
-    $pdf->Cell(60,6,$pdf->Image('../images/ttdc.jpg', $pdf->GetX(), $pdf->GetY(),30,'JPG'),0,0,'L',false);
-    $pdf->Ln(6);
-  }
-}
-
-$pdf->SetFont('kalinga','',7);
-$pdf->SetTextColor(0,0,0);
-$pdf->MultiCell(177,4,utf8_decode('Esperando que el contenido de la presente cubra sus expectativas me pongo a sus órdenes para cualquier duda o aclaración.'),0,'J');
-$pdf->Ln(1);
-$pdf->MultiCell(177,4,utf8_decode('Los precios pueden variar sin previo aviso o hasta agotar existencias'),0,'J');
-$pdf->MultiCell(177,4,utf8_decode('Se aplican restricciones'),0,'J');
-$pdf->Ln(1);
-$pdf->MultiCell(190,5,utf8_decode('Cotización válida hasta el '.date('d-m-Y',strtotime($cotiza->ffin))),0,'R');
-//impresion de los datos del usuario
-$sql='SELECT * FROM usuarios WHERE u_id="'.$cotiza->responsable.'"';
-$result=setq($sql) or die($sql);
-$fila=$result->fetch_array();
-$pdf->SetFont('kalinga','',9);
-$pdf->cell(160);
-//convertir en minuscula el nombre
-$nombre = mb_strtolower($fila['u_nmb'].' '.$fila['u_apellidos']);
-//convertir en mayuscula la primera letra de cada palabra
-$nombre = ucwords($nombre);
-$pdf->Cell(30,5,utf8_decode($nombre),0,1,'R');
-$pdf->cell(160);
-$pdf->Cell(30,5,$fila['u_mailcorp'],0,1,'R');
-$pdf->cell(160);
-$pdf->Cell(30,5,'Cel. '.$fila['u_telefono'],0,1,'R');
-
-$mayork = $pdf->GetY();
-//echo $x;
-if( $mayork > 245){
-  $pdf->addpage();
-}
-if($cotiza->direnvio != "0"){
-  $sqldir = 'SELECT p_nmb, cd_calle, cd_nume, cd_numi, cd_colonia, cd_municipio, cd_cp, cd_estado, cd_recibe, cd_observaciones FROM crm_direcciones INNER JOIN paises ON cd_pais = p_id WHERE cd_id = "'.$cotiza->direnvio.'"';
-  $result = setq($sqldir);
-  list($pais, $calle, $nume, $numi, $colonia, $municipio, $cp, $estado, $recibe, $observaciones) = $result -> fetch_array();
-  $estado = busca($estado, 'estado', 'e_id', 'e_nmb');
-  $direccion = $calle.' '.$nume.' '.$numi.' '.$colonia.' '.$municipio.' '.$estado.' '.$cp.' '.$pais;
-}
-$grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-if($grupo == "LOGISTIC" || $grupo == "GERENCIA" || $grupo == "ADMIN"){
-  $pdf->Ln(1);
-  if($cotiza->direnvio == "0"){
-    $direccion = 'Sin dirección registrada';
-  }
-  
-  
-  if(busca($idremision, 'remisiones', 'r_id', 'r_enviocliente') == "1") $envio = 'EL CLIENTE PAGA EL ENVÍO';
-  else $envio = 'LA EMPRESA PAGA EL ENVÍO';
-  $telefono = $cotiza->teldestino;
-  $folio = busca($idremision, 'remisiones', 'r_id', 'r_folio');
-  $pdf->MultiCell(190,5,utf8_decode('DIRECCIÓN DE ENTREGA: '.$direccion),0,'L');
-  if($observaciones)$pdf->MultiCell(190,5,utf8_decode('OBSERVACIONES DE LA DIRECCIÓN: '.$observaciones),0,'L');  
-  if($recibe ) $pdf->MultiCell(190,5,utf8_decode('RECIBE LA COMPRA: '.$recibe),0,'L');  
-  $pdf->MultiCell(190,5,utf8_decode('TELÉFONO DEL CLIENTE: '.$telefono),0,'L');
-  $pdf->MultiCell(190,5,utf8_decode('FOLIO DE LA REMISIÓN : '.$folio),0,'L');
-  $pdf->MultiCell(190,5,utf8_decode($envio),0,'L');
-  $pdf->MultiCell(190,5,utf8_decode('FORMAS DE ENVÍO: '),0,'L');
-  $tipos = array('O'=>'ENVÍO A OCURRE','P'=>'PENDIENTE POR DEFINIR','D'=>'ENVÍO A DOMICILIO','C'=>'RECOGE CLIENTE');
-
-  $sqlfe ='SELECT COUNT(*) AS cantidad, rc_tipoenvio FROM remisionesc WHERE rc_remision ="'.$idremision.'" AND rc_ligado IS NULL GROUP BY rc_tipoenvio';
-  $resultfe = setq($sqlfe); 
-  while($rowfe = $resultfe -> fetch_array()){
-    $pdf->MultiCell(190,5,utf8_decode(' * '.$rowfe['cantidad'].' artículo(s) - '.$tipos[$rowfe['rc_tipoenvio']]),0,'L');
-  }
-
-  $ruta = '../img/remisiones/';
-  $sqladj = 'SELECT * FROM remisiones_adjuntos WHERE ra_remision = "'.$idremision.'"';
-  $resultadj = setq($sqladj);
-  while($rowadj = $resultadj -> fetch_array()){
-    $rutaimg = $ruta.$rowadj['ra_nmb'].'.'.$rowadj['ra_ext'];
-    $mayork = $pdf->GetY();
-    if( $mayork+100 > 245){
-      $pdf->addpage();
-    }
-    $imageX = 10;
-    $imageY = $pdf->GetY();
-    $imageWidth = 100;
-    $imageHeight = 100;
-    $pdf->Image($rutaimg, $imageX, $imageY, $imageWidth, $imageHeight);
-    $pdf->setY($imageY+100);
-  }
-  
-} else if($grupo == "VENTAS" || $grupo == "ADMIN"){
-  $pdf->Ln(1);
-  
-  $idremision = busca($cotiza->id, 'crm_cotizaciones', 'cc_id','cc_remision');
-  $folio = busca($idremision, 'remisiones', 'r_id', 'r_folio');
-  $pdf->MultiCell(190,5,utf8_decode('DIRECCIÓN DE ENTREGA: '.$direccion),0,'L');
-  if($observaciones)$pdf->MultiCell(190,5,utf8_decode('OBSERVACIONES DE LA DIRECCIÓN: '.$observaciones),0,'L');  
-  if($recibe ) $pdf->MultiCell(190,5,utf8_decode('RECIBE LA COMPRA: '.$recibe),0,'L'); 
-  /* $tipos = array('O'=>'ENVÍO A OCURRE','P'=>'PENDIENTE POR DEFINIR','D'=>'ENVÍO A DOMICILIO','C'=>'RECOGE CLIENTE');
-  $sqlfe ='SELECT COUNT(*) AS cantidad, ccc_tipoenvio FROM crm_cotizacionesc WHERE ccc_cotizacion ="'.$cotiza->id.'" AND ccc_ligado IS NULL GROUP BY ccc_tipoenvio';
-  $resultfe = setq($sqlfe); 
-  while($rowfe = $resultfe -> fetch_array()){
-    $pdf->MultiCell(190,5,utf8_decode(' * '.$rowfe['cantidad'].' artículo(s) - '.$tipos[$rowfe['ccc_tipoenvio']]),0,'L');
-  } */
-}
-
-
-if(busca($_GET['idcotiza'],'crm_cotizaciones','cc_id','cc_cuentas') == "1"){
-  $sql = 'SELECT * FROM cuentas WHERE cu_enviacotiza = "1"
-          ORDER BY cu_orden ASC';
+  include_once('../modulos/cotizaciones.php');
+  $cotiza = new modelcotizaciones();
+  $cotizacion = $_GET['idcotiza'];
+  $cotiza->select($_GET['idcotiza']);
+  $cliente = busca($cotiza->tablero, 'crm_tableros', 'ct_id', 'ct_cliente');
+  $client = busca($cliente, 'crm_clientes', 'c_id', 'c_nmb').' '.busca($cliente, 'crm_clientes', 'c_id', 'c_apellidos');
+  $vendedor = busca($cotiza->responsable, 'usuarios', 'u_id' ,'CONCAT(u_nmb, " ", u_apellidos)');
+  $puestov = busca($cotiza->responsable, 'usuarios', 'u_id' ,'u_puesto');
+  $correov = busca($cotiza->responsable, 'usuarios', 'u_id' ,'u_correo');
+  $origen = "4 Mosey Drive Bloomfield CT 06002.";
+  $destino = busca($cotiza->direnvio, 'crm_direcciones', 'cd_id', 'CONCAT(cd_calle," ",cd_nume," ",cd_numi," ",cd_colonia," ",cd_municipio," ",cd_cp)');
+  $peso = "35 Kg aprox\n22\" Largo X 22\" Ancho X 14\" Alto.";
+  $sql = 'SELECT * FROM crm_cotizacionesd WHERE cdm_cotizacion = "'.$cotizacion.'"';
   $result = setq($sql);
-  $line = 0;
+  while($row = $result -> fetch_array()){
+    $descripcion = $row['cdm_nmbarticulo'];
+    $precio = $row['cdm_precio']; // Asegúrate que este campo exista
 
-  $pdf->SetFillColor(91, 155, 213);//relleno del encabezado de una tabla
-  $pdf->SetDrawColor(132, 179, 223);//colorea las lineas de las celdas de la tabla
-  $pdf->SetTextColor(255, 255, 255);
-  $pdf->SetFont('kalingab','',9);
+    // Si necesitas formatear el precio
+    $precio_formateado = "$ " . number_format($precio, 2); // ej: "$ 850.00"
 
-  $pdf->Cell(195,5,'NUESTRAS CUENTAS BANCARIAS',0,0,'C',true);
-  $pdf->SetTextColor(0, 0, 0);
-  $pdf->SetFillColor(214, 230, 244);//relleno alternado de la tabla
-
-  $pdf->Ln();
-  $yor = $pdf->GetY();
-  //echo $pdf->GetY();
-  $x = 10;
-  $y = $yor;
-  
-  while($row = $result->fetch_array()){
-    $line++;
-
-    $pdf->Rect($x,$y,65,20);
-    $pdf->SetXY($x,$y);
-    $pdf->SetFont('kalingab','',8);
-    $pdf->Cell(65,4,utf8_decode($row['cu_propietario']),1,1,'C',true);
-    $y+=4;
-    $pdf->SetXY($x,$y);
-
-    $pdf->Cell(15,4,'BANCO',0,0,'L');
-    $pdf->SetFont('kalinga','',8);
-    $pdf->Cell(50,4,utf8_decode($row['cu_banco']),0,1,'L');
-    $y+=4;
-    $pdf->SetXY($x,$y);
-
-    $pdf->SetFont('kalingab','',8);
-    $pdf->Cell(15,4,'CUENTA',0,0,'L');
-    $pdf->SetFont('kalinga','',8);
-    $pdf->Cell(50,4,$row['cu_cuenta'],0,1,'L');
-    $y+=4;
-    $pdf->SetXY($x,$y);
-
-    $pdf->SetFont('kalingab','',8);
-    $pdf->Cell(15,4,'CLABE',0,0,'L');
-    $pdf->SetFont('kalinga','',8);
-    $pdf->Cell(50,4,$row['cu_clabe'],0,1,'L');
-    $y+=4;
-    $pdf->SetXY($x,$y);
-
-    if($row['cu_numtarjeta'] && $row['cu_numtarjeta'] != "0"){
-      $pdf->SetFont('kalingab','',8);
-      $pdf->Cell(15,4,'TARJETA',0,0,'L');
-      $pdf->SetFont('kalinga','',8);
-      $pdf->Cell(50,4,$row['cu_numtarjeta'],0,1,'L');
-    }
-    $pdf->Ln(4);
-
-    $x=($line*65)+10;
-    if($line%3 == 0){
-      $line = 0;
-      $x = 5;
-    }
-    else{
-      $y=$yor;
-    }
-    $pdf->SetXY($x,$y);
+    // Agregar al arreglo
+    $concepts[] = [$descripcion, $precio_formateado];
   }
 
-}
+ /*  $concepts = [
+      ["FLETE AEREO INTERNACIONAL", "$ 850.00"],
+      ["DESCONSOLADACION AREA", "$ 3,500 MXP + IVA"],
+      ["FLETE NACIONAL", "$ 3,800 MXP + IVA - RET"]
+  ]; */
 
-if($cotiza->estatus == "A" || $cotiza->estatus == "E")
-  $pdf->Output(busca($_GET['idcotiza'],'crm_cotizaciones','cc_id','cc_nmb').'.pdf','I');
-else
-$pdf->Output();
+  $terms = [
+      "La mercancía viaja sin seguro.",
+      "Libre de maniobras.",
+      "Carga general.",
+      "Cotización expresada en MXP.",
+      "Sujeta a disponibilidad.",
+      "2 horas de carga y descarga.",
+      "Cotización expresada en USD y MXN.",
+      "Cotización basada en pesos y dimensiones proporcionados.",
+      "Cotización puerta a puerta.",
+      "Incluye impuestos de aduana.",
+      "Servicio consolidado."
+  ];
+  $pdf->SetTextColor(0);
+  $pdf->SetFont('Arial', '', 35);
+  $pdf->Cell(140, 8, utf8_decode("COTIZACIÓN"), 0);
+  $pdf->SetFont('Arial', '', 11);
+  $pdf->Cell(50, 8, "N. ". substr($cotiza->folio, -4), 0, 1, 'R');
+  $pdf->SetFont('kalingab', '', 15);
+  $pdf->Cell(140, 8, utf8_decode("CLIENTE"), 0);
+  $pdf->SetFont('Arial', '', 11);
+  $pdf->Cell(50, 8, fechaEnEspanol(date('Y-m-d')), 0, 1, 'R');
+  $pdf->SetFont('kalingab', '', 11);
+  $pdf->SetTextColor(29,125,200); 
+  $pdf->Cell(50, 8, utf8_decode($client), 0);
+  $pdf->SetTextColor(0);
+  $pdf->SetFont('Arial', '', 11);
+  $pdf->addFooterInfo($vendedor, $puestov,$correov);
+  $pdf->addDescription($origen, $destino, $peso);
+  $pdf->addConceptTable($concepts);
+  $pdf->addTerms($terms);
+  
+
+  if(isset($_GET['descarga'])){
+    $pdf->Output('cotizacion - '.$cotiza->folio.'.pdf', 'D');   
+  } else //if($cotiza->estatus == "A" || $cotiza->estatus == "E")
+    $pdf->Output(busca($_GET['idcotiza'],'crm_cotizaciones','cc_id','cc_nmb').'.pdf','I');
+
+function fechaEnEspanol($fechaISO) {
+    $meses = [
+        '01' => 'enero',
+        '02' => 'febrero',
+        '03' => 'marzo',
+        '04' => 'abril',
+        '05' => 'mayo',
+        '06' => 'junio',
+        '07' => 'julio',
+        '08' => 'agosto',
+        '09' => 'septiembre',
+        '10' => 'octubre',
+        '11' => 'noviembre',
+        '12' => 'diciembre'
+    ];
+
+    $fecha = new DateTime($fechaISO);
+    $dia = $fecha->format('d');
+    $mes = $fecha->format('m');
+    $anio = $fecha->format('Y');
+
+    return "$dia de " . $meses[$mes] . " de $anio";
+}
 ?>
