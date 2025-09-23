@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 class usuarios{ 
   var $model;
   var $view;
@@ -1210,7 +1210,7 @@ class viewusuarios{
 
 <script>
 (function(){
-  const uId = '<?php echo addslashes($this->model->id ?? ""); ?>';
+  const uId = '<?php echo addslashes($this->model->id);?>';
   if(!uId) return;
 
   const acc = document.getElementById('tplAccordion');

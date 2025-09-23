@@ -14,13 +14,13 @@
       if (!isset($_REQUEST['documento'])) $_REQUEST['documento'] = NULL;
 
       $grupo = busca($_SESSION['uid'],'usuarios','u_id','u_grupo');
-      if(!isset($_REQUEST['vendedor'])){ 
+      /* if(!isset($_REQUEST['vendedor'])){ 
         if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = NULL;
         else $vendedor = $_SESSION['uid'];
       }else {
         if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = $_REQUEST['vendedor'];
         else $vendedor = $_SESSION['uid'];
-      }
+      } */
 
       $this->model->result($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus'],$_REQUEST['documento'], $vendedor);
       $this->view = new viewremisiones($this->model);
@@ -2571,11 +2571,12 @@
             $etiqueta = '';
           /* } */
 
-          $pordefinir = '
+          /* $pordefinir = '
           <a href="?modulo=remisiones&accion=prodpordefinir&tipo=2">
             <button type="button" class="btn btn-sm btn-secondary mb-1 mr-1" data-toggle="tooltip" data-placement="top" title="servicios por definir forma de envío"><i class="fas fa-file-signature"></i> servicios por definir'.$etiqueta.'</button>
           </a>
-          ';
+          '; */
+          $pordefinir = '';
       
       toolbar($_GET['modulo'],"" ,$filtro, $pordefinir);
       ?>
@@ -3163,10 +3164,10 @@
             echo '<div class="col-12 alert alert-danger">Error de existencias '.busca($_GET['message'],'articulos','a_id','a_nmb').'</div>';
           } */
           if($tableroreg){
-            $botones .= '<a href="?modulo=tableros&accion=show&id='.$tableroreg.'" acceskey="">
+            /* $botones .= '<a href="?modulo=tableros&accion=show&id='.$tableroreg.'" acceskey="">
               <button type="button" class="btn btn-sm btn-warning"><i class="fa fa-arrow-left"></i> Tablero </button>
-            </a>
-            <a href="?modulo=remisiones&accion=index">
+            </a>'; */
+            $botones .= '<a href="?modulo=remisiones&accion=index">
               <button type="button" class="btn btn-info btn-sm text-white"><i class="fa fa-list"></i> Remisiones </button>
             </a>';
           }else {
@@ -3175,11 +3176,11 @@
                </button>
             </a>';
           }
-          if($_SESSION['uid'] == 'ADMIN')
+          /* if($_SESSION['uid'] == 'ADMIN')
           $botones .=   
           '<a data-fancybox data-type="ajax" data-src="popup/adjuntardocremision?id='.$this->model->id.'" href="javascript:;">
             <button type="button" class="btn btn-sm text-white" style="background: brown" data-toggle="tooltip" data-placement="top" title="Ver documentos adjuntos"><i class="fa fa-paperclip" style="color: #fff"></i>Adjuntar archivo</button>
-          </a>'; 
+          </a>';  */
           
           if($this->model->estatus == "N"){
             $botones .= '<a data-fancybox data-type="ajax" data-src="popup/setremision.php?idrem='.$this->model->id.'" href="javascript:;">
@@ -3313,7 +3314,7 @@
       
       $exisantm = "";
       $miva = "";
-      echo '
+      /* echo '
       <div class="col-12 mt-3" style="text-align: end;justify-content: end;display: flex;">
         <div class="col-12 col-md-4 alert alert-primary">
           <h3>Formas de envío seleccionadas</h3>';
@@ -3324,7 +3325,7 @@
             echo $rowfe['cantidad'].' artículo(s) - '.$tipos[$rowfe['rc_tipoenvio']].'<br>';
           }
         echo '</div>
-        </div>';
+        </div>'; */
       if($this->model->estatus == "N" || $this->model->estatus == "A" || $this->model->estatus == "D" || $this->model->estatus == "P"){
         if(!isset($_GET['idd'])){
           $this->model->selectd($this->model->id,NULL);
@@ -3344,12 +3345,12 @@
           echo '<div class="col-md-6 p-3  bg-light-dark alert alert-primary">
           '.$this->model->folio.' - '.$this->model->nmb.' - '.busca($this->model->cliente,'crm_clientes','c_id','CONCAT(c_nmb," ",c_apellidos)').'
         </div>
-        <div class="col-md-6 p-3 bg-light-dark alert alert-primary">Almacen: '.busca($this->model->almacen,'almacenes','a_id','a_nmb').'</div>';
+        <div class="col-md-6 p-3 bg-light-dark alert alert-primary" hidden>Almacen: '.busca($this->model->almacen,'almacenes','a_id','a_nmb').'</div>';
         if($this->model->estatus == "A"){
           //echo '<a href="imprimirmovimiento.php?movimiento='.$_GET['id'].'&tipo='.$_GET['tipo'].'" target="_BLANK" title="Reimprimir pedido" ><input type="button" value=" " id="imprimir" class="botonb"></a>';
         }
         
-        echo '
+       /*  echo '
           <div class="alert alert-primary col-md-12"><center><b>Captura de servicios</b></center></div>
           <form method="post" class="row" autocomplete="off" action="?modulo=remisiones&accion='.$action.'&id='.$this->model->id.'">
             <input type="hidden" name="idprod" value="'.$idprod.'" />
@@ -3383,7 +3384,7 @@
             </div>
           </form>
         </div>
-      </div>';
+      </div>'; */
         $disab  = "";
       }else{
         if($this->model->estatus == "C")
@@ -3406,11 +3407,12 @@
             <tr>
               <th>Modelo</th>
               <th>Artículo</th>
-              <th>Piezas Compradas</th>
-              <th>Precio unitario</th>
-              <th>+IVA</th>
-              <th>Importe total</th>
-              <!-- <th>'.$exisantm.'</th> -->
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+               <th></th>
+              <th></th>
             </tr>
           </thead>';
           $subtotal = 0;
@@ -3433,7 +3435,7 @@
               }
             </script>';
             echo '<form name="updatecantidad'.$row['rd_id'].'" method="post" action="?modulo=remisiones&accion=cambiarcantidad&id='.$row['rd_id'].'&remision='.$_GET['id'].'">
-              <input type="hidden" name="cantidad" id="newcant'.$row['rd_id'].'" />
+              <input type="hidden" name="cantidad" id="newcant'.$row['rd_id'].'"  />
             </form>';
             $precio = $row['rd_precio'];
             $importe = $precio*$row['rd_cantidad'];
@@ -3456,7 +3458,7 @@
               <!-- <form method="post" action="?modulo=remisiones&accion=updatedetalle&id='.$this->model->id.'&idprod='.$row['rd_id'].'"> -->
                 <td>'.$modelo.'</td>
                 <td>'.$row['rd_nmbarticulo']."<br>".$buttonact.'</td>
-                <td>
+                <td hidden>
                   <input id="rdcantidad'.$row['rd_id'].'" onchange="updatecant'.$row['rd_id'].'()" type="number" value="'.number_format($row['rd_cantidad'],2,'.','').'" min="0" '.$readon.' max="9999999" step="0.01" name="cantidad" placeholder="Cantidad" class="form-control number-align" required="required" onfocus="this.select();" '.$readon.' />
                   <script>
                     function cambiarcantidad(id,remision){
@@ -3467,14 +3469,14 @@
                 </td>
               <form method="post" action="?modulo=remisiones&accion=updatedetalle&id='.$this->model->id.'&idprod='.$row['rd_id'].'">
               <input type="number" value="'.number_format($row['rd_cantidad'],2,'.','').'" min="0" '.$readon.' max="9999999" step="0.01" name="cantidad" placeholder="Cantidad" class="form-control number-align" required="required" onfocus="this.select();" '.$readon.' hidden/>
-                <td>
+                <td hidden>
                   <input name="preciodb" value="'.$preciodb.'" hidden>
                   <input name="precioshow" value="'.$precio.'" hidden>
                   <input type="number" value="'.number_format($precio,2,'.','').'" min="0" '.$disab.' max="9999999" step="0.01" name="importe" placeholder="Monto unitario" class="form-control number-align" required="required" onfocus="this.select();" '.$readon.'/>
                 </td>';
-                if($this->model->diva == "1") echo'<td><input type="checkbox" name="iva" '.$chiva.' '.$readon.' onchange="submit();"  /></td>';
-                else echo '<td><input type="hidden" name="iva" value="'.$row['rd_iva'].'"/></td>';
-                echo'<td class="number-align ">
+                if($this->model->diva == "1") echo'<td><input type="checkbox" name="iva" '.$chiva.' '.$readon.' onchange="submit();"  hidden/></td>';
+                else echo '<td hidden><input type="hidden" name="iva" value="'.$row['rd_iva'].'"/></td>';
+                echo'<td class="number-align " hidden>
                   $ '.number_format($importe,2,'.',',').'
                 </td>
                 <td>
@@ -3486,7 +3488,7 @@
                         <a href="?modulo=remisiones&accion=show&id='.$this->model->id.'&idd='.$row['rd_id'].'">
                           <button type="button" class="btn btn-sm btn-info"><i class="fa fa-pen"></i> </button>
                         </a>-->
-                        <button type="button" class="btn btn-sm btn-danger" onclick="delprod('.$row['rd_id'].')"><i class="fa fa-trash"></i> </button>';
+                        <!-- <button type="button" class="btn btn-sm btn-danger" onclick="delprod('.$row['rd_id'].')"><i class="fa fa-trash"></i> </button> -->';
                       }
                       
                   echo '</center>
@@ -3530,8 +3532,8 @@
               </tr>';
               echo '<tr class="p-1 bg-grey bg-lighten-3">
                 <td colspan="3">&nbsp;</td>
-                <td colspan="2"class="number-align h4">Total</td>
-                <td  class="number-align h4">$'.number_format($this->model->total,2).'</td>
+                <td colspan="2"class="number-align h4"><h4>Total</h4></td>
+                <td  class="number-align h4"><h4>$'.number_format($this->model->total,2).'</h4></td>
               </tr>';
             }else{
               if($descuento > 0)
@@ -3547,9 +3549,9 @@
                   <td  class="number-align h4">$'.number_format($this->model->precioenvio,2).'</td>
                 </tr>';
                 echo '<tr class="p-1 bg-grey bg-lighten-2">
-                  <td colspan="3">&nbsp;</td>
-                  <td colspan="2"  class="number-align h4">Total</td>
-                  <td  class="number-align h4">$'.number_format($this->model->total,2).'</td>
+                  <td colspan="3" hidden>&nbsp;</td>
+                  <td colspan="2"  class="number-align h4"><h4>Total</h4></td>
+                  <td  class="number-align h4"><h4>$'.number_format($this->model->total,2).'</h4></td>
                 </tr>';
             }
           echo'</tfoot>';

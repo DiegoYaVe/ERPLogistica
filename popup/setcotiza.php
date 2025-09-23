@@ -51,6 +51,9 @@ $cltablero = busca($tablero,'crm_tableros','ct_id','ct_cliente');
 $clagente = busca($tablero,'crm_tableros','ct_id','ct_agente');
 if($mcotiza->id){
   $nmbcliente = $mcotiza->destino;
+  $nmbcl = busca($mcotiza->cliente,'crm_clientes','c_id','c_nmb');
+  $apcliente = busca($mcotiza->cliente,'crm_clientes','c_id','c_apellidos');
+  if($apcliente && !empty($apcliente)) $nmbcl .= ' '.$apcliente;
   $telcliente = $mcotiza->teldestino;
   $mailcliente = $mcotiza->maildestino;
   $ffin = $mcotiza->ffin;
@@ -65,6 +68,10 @@ if($mcotiza->id){
   $estatus = $mcotiza->estatus;
   if($mcotiza->diva == 0) $diva = '  ';
   else $diva='checked';
+
+  if($mcotiza->retencion == 0) $dret = '  ';
+  else $dret='checked';
+
   if($mcotiza->mtotal == 0) {
     $dtotal = '';
     $disablediva = 'disabled';
@@ -79,6 +86,7 @@ if($mcotiza->id){
   $nmbcliente = busca($cltablero,'crm_clientes','c_id','c_nmb');
   $apcliente = busca($cltablero,'crm_clientes','c_id','c_apellidos');
   if($apcliente && !empty($apcliente)) $nmbcliente .= ' '.$apcliente;
+  $nmbcl = $nmbcliente;
   $telcliente = busca($cltablero,'crm_clientes','c_id','c_telefono2');
   $mailcliente = busca($cltablero,'crm_clientes','c_id','c_correo1');
   $mcotiza->cliente = $cltablero;
@@ -101,14 +109,16 @@ if($mcotiza->id){
   $descuento = 0;
   $direccion = 'hidden';
 }
-$grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+/* $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
 if($grupo != "ADMIN") {
   $sel = 'style="display: none;"';
   $inp = 'style="display: block;"';
 }else {
   $sel = 'style="display: block;"';
   $inp = 'style="display: none;"';
-}
+} */
+
+$inp = 'style="display: none;"';
 if($estatus != "N" && $estatus != "D" && $estatus != "R" ) {$disall = "readonly"; $styledis = 'style="background: grey;"'; $discheck = "disabled";}
 else {$disall = ""; $styledis = ""; $discheck = "";}
 echo'
@@ -124,8 +134,16 @@ echo'
       <div class="col-12 col-md-12 alert alert-primary">'.$title.' cotización</div>
       <div class="btn-group" data-toggle="buttons"></div>
     </div>';
-    echo '<div class="row nowrap">
-      <div class="col-12 col-md-3 ">
+    echo '<div class="row nowrap">';
+    echo '
+      <div class="col-md-9">
+        <div class="mb-5">  
+          <label>Cliente: </label>
+          <input type="text" name="clientevar" onkeyup="actualizarcliente()" id="clientevar" value="'.$nmbcl.'" placeholder="Nombre o alias del cliente" class="search_query form-control" >';
+        echo '</div>
+        <div id="suggestions-block"></div>
+      </div>';
+      echo '<div class="col-12 col-md-3 ">
         <div class="mb-5">
           <label for"nmbac">Alias de tu cotización</label>
           <input type="text" name="nmbac" maxlength="50" value="'.$nmbact.'" id="nmbac" class="form-control" placeholder="Nombre de tu actividad" required="required" onfocus="this.select();"/>
@@ -152,8 +170,17 @@ echo'
             <input type="checkbox" id="iva" name="iva" '.$diva.' '.$disablediva.' '.$style.' class="flipswitch2"/>
           </div>  
         </div>
+      </div>
+      
+      <div class="col-12 col-md-2" >
+        <div class="mb-5">
+          <label for"fini">Retención</label>
+          <div class="">
+            <input type="checkbox" id="retencion" name="retencion" '.$dret.' '.$disabledret.' '.$style.' class="flipswitch2"/>
+          </div>  
+        </div>
       </div>';
-      if($estatus == "N" || $estatus == "R")
+      /* if($estatus == "N" || $estatus == "R")
       echo '<div class="col-12 col-md-2" >
         <div class="mb-5">
           <label >Venta rápida</label>
@@ -161,7 +188,7 @@ echo'
           <input type="checkbox" id="reccliente" name="reccliente" '.$reccliente.' class="flipswitch2"/>
           </div>
         </div>
-      </div>';
+      </div>'; */
       echo '<div class="col-6 col-md-2">
         <div class="mb-5">
           <label for"correo">Responsable</label>
@@ -176,12 +203,6 @@ echo'
             }
           echo '</select>
           <input name="responsable" class="form-control" type="text" value="'.$nmbresponsable.'" '.$inp.' disabled> 
-        </div>
-      </div>
-      <div class="col-6 col-md-3 mt-2">
-        <div class="mb-5">
-          <label for"fini">Almacen</label>
-          '.menu_select_db('almacenes','a_id','a_nmb',$almacen,'almacen','a_estatus = "A"',false,false,false,true,"SELECCIONA ALMACEN").'
         </div>
       </div>';
      /*  $gruposPermitidos = array("ADMIN", "GERENCIA", "SUBGERENCIA");
@@ -307,7 +328,7 @@ echo'
           <input id="setdir" name="setdir" type="checkbox" class="flipswitch2" style="height: 30px !important; font-size: 12px !important;"  onclick="setdireccion();" '.$setdireccion.' '.$disall.' '.$styledis.' >
         </div>
       </div>';
-        $dir = busca($cltablero, 'crm_direcciones', 'cd_cliente', 'COUNT(*)');
+        $dir = busca($mcotiza->cliente, 'crm_direcciones', 'cd_cliente', 'COUNT(*)');
         if($dir != 0){
           $seldir = '';
           $formdir = "hidden";
@@ -324,7 +345,7 @@ echo'
               <select id="direcciones" name="direcciones" onchange="cambiardir();" class="form-control"  '.$disall.' '.$discheck.'>
                 <option value="YYY" disabled> Seleccionar una dirección </option>';
                 $i = 0;
-                $sqldir = 'SELECT * FROM crm_direcciones WHERE cd_cliente = "'.$cltablero.'"';
+                $sqldir = 'SELECT * FROM crm_direcciones WHERE cd_cliente = "'.$mcotiza->cliente.'"';
                 $result = setq($sqldir);
                 while($row = $result -> fetch_array()){
                   $pais = busca($row['cd_pais'], 'paises', 'p_id', 'p_nmb');
@@ -378,7 +399,7 @@ echo'
           <div class="col-12 col-md-3">
             <div class="mb-5" >
               <label >Código postal</label>
-              <input type="text" value="'.$cp.'" class="form-control" onchange="colonia();" id="cp" name="cp"  '.$disall.'>
+              <input type="text" value="'.htmlspecialchars(str_pad(preg_replace("/\D/", "", (string)($cp ?? "")), 5, "0", STR_PAD_LEFT), ENT_QUOTES, "UTF-8").'" class="form-control" onchange="colonia();" id="cp" name="cp"  '.$disall.'>
               <div id="nameError" class="error-message"></div>
             </div>
           </div>
@@ -462,7 +483,43 @@ echo'
 </div>'; 
 ?>
 <script>
-function cambiardescuento(num){
+  function actualizarcliente() {
+      var key = document.getElementById("clientevar").value;
+      //console.log("cliente: "+key);
+      var dataString = 'cliente=' + key;
+      $.ajax({
+        type: "POST", 
+        url: "query/suggestclientes.php",
+        data: dataString,
+        success: function(data) {
+          $('#suggestions-block').fadeIn(1000).html(data);
+
+          $('.suggest-element').on('click', function() {
+            var id = $(this).attr('id');
+
+            $.ajax({
+              type: "POST",
+              url: "query/setnmbtablero.php",
+              data: {'idcl': id},
+              success: function(dataRTN) {
+                var datos = JSON.parse(dataRTN);
+                document.getElementById('nmbt').value = datos['nmbtablero'];
+                document.getElementById('nmbcl').value = datos['nmb'];
+                document.getElementById('telefonocl').value = datos['telefono'];
+                document.getElementById('idcliente').value = datos['id'];
+              }
+            });
+
+            $('#clientevar').val($('#' + id).attr('data'));
+            $('#suggestions-block').fadeOut(200);
+            document.getElementById('nmbt').focus();
+            return false;
+          });
+        }
+      });
+  };
+
+  function cambiardescuento(num){
   var pordiv = document.getElementById('porcentajediv');
   var montodiv = document.getElementById('montodiv');
   var btnporcentaje = document.getElementById('btnporcentaje');
@@ -484,7 +541,7 @@ function cambiardescuento(num){
     monto.value="0";
   }
 }
-function colonia(){
+  function colonia(){
   var selcol = document.getElementById("col");
   var coldesc = document.getElementById("coldesc").value;
   var estado = document.getElementById("estado");
@@ -667,4 +724,5 @@ function setpais(){
 }
 
 setdireccion();
+
 </script>

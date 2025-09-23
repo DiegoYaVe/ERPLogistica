@@ -1,14 +1,15 @@
 <?php
   session_start();
-  ini_set('display_errors', 0);
+  //ini_set('display_errors', 1);
   include('../funciones.php');
 
+  //foreachdie();
   $html = '';
   $key = strtoupper($_POST['cliente']);
 
-  $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+  /* $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
   if($grupo != "ADMIN" && $grupo != "GERENCIA") $sqladd = 'AND c_uregistro = "'.$_SESSION['uid'].'"';
-  else $sqladd = "";
+  else $sqladd = ""; */
   $sql = 'SELECT c_id,c_alias,c_nmb,c_apellidos FROM crm_clientes
           WHERE c_estatus = "A" '.$sqladd.' AND (c_alias LIKE "%'.strip_tags($key).'%"
           OR c_nmb LIKE "%'.strip_tags($key).'%" OR c_apellidos LIKE "%'.strip_tags($key).'%")';

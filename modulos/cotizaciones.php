@@ -1,10 +1,29 @@
 <?php
-  //ini_set('display_errors', 1);
+  ini_set('display_errors', 0);
   class cotizaciones{
     function __construct(){
       $this->model = new modelcotizaciones($obj);
     }
-    function index(){
+    function index() {
+      if (!isset($_REQUEST['fini'])) $_REQUEST['fini'] = date('Y-m-d',strtotime('-30 days'));
+      if (!isset($_REQUEST['ffin'])) $_REQUEST['ffin'] = date('Y-m-d'); 
+      if (!isset($_REQUEST['cliente'])) $_REQUEST['cliente'] = NULL;
+      if (!isset($_REQUEST['estatus'])) $_REQUEST['estatus'] = NULL;
+
+      /* $grupo = busca($_SESSION['uid'],'usuarios','u_id','u_grupo');
+      if(!isset($_REQUEST['vendedor'])){ 
+        if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = NULL;
+        else $vendedor = $_SESSION['uid'];
+      }else {
+        if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = $_REQUEST['vendedor'];
+        else $vendedor = $_SESSION['uid'];
+      } */
+
+      $this->model->result($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus']);
+      $this->view = new viewcotizaciones($this->model);
+      $this->view->browse($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus']);
+    } 
+    function show(){
       include('tableros.php');
       $tablero = new modeltableros();
 
@@ -12,7 +31,7 @@
       $tablero->select($this->model->id);
       $this->model->resultcd($_GET['id']);
       $this->view = new viewcotizaciones($this->model);
-      $this->view->index();
+      $this->view->show();
     }
     function insertcotiza(){
       $acronimo = busca(1,'empresas','e_id','e_siglas');
@@ -24,17 +43,18 @@
 
       $foliocot = 'CT'.$acronimo.str_pad($maxcot,6,"0",STR_PAD_LEFT);
       if(isset($_POST['iva'])) $iva = "1"; else $iva = "0";
+      if(isset($_POST['retencion'])) $retencion = "1"; else $retencion = "0";
       if(isset($_POST['total'])) $total = "1"; else $total = "0";
       if(isset($_POST['reccliente'])) $envio = "C"; else $envio = "P";
 
       $nmbagente = busca($_POST['responsable'],'usuarios','u_id','CONCAT(u_nmb," ",u_apellidos)');
       $puestoagente = busca($_POST['responsable'],'usuarios','u_id','u_puesto');
       $copiamail = busca($_POST['responsable'],'usuarios','u_id','u_mailcorp');
+      $cl = getIDcliente($_POST['clientevar']);
 
       if($_POST['direcciones'] == "XXX" && isset($_POST['setdir'])){
         $pais = $_POST['pais'];
-        $cl = busca($_GET['tablero'], 'crm_tableros', 'ct_id', 'ct_cliente');
-        
+        //$cl = busca($_GET['tablero'], 'crm_tableros', 'ct_id', 'ct_cliente');
         if($pais == "146"){
           $sql = 'INSERT INTO crm_direcciones SET
           cd_nmbdir = "Cotizacion '.$_POST['nmbac'].'",
@@ -95,11 +115,12 @@
           $sqlupd = 'UPDATE crm_cotizaciones SET cc_direnvio = "0" WHERE cc_id = "'.$_GET['idcotiza'].'"';
           setq($sqlupd);
           echo '<script> alert("Error al guardar la dirección, intentelo de nuevo.")</script>';
-          redirect('?modulo=cotizaciones&accion=index&id='.$this->model->idc);
+          redirect('?modulo=cotizaciones&accion=show&id='.$this->model->idc);
           die();
         }
       }
-      $this->model->SetData(NULL,$_GET['tablero'],$foliocot,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"N","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail, $direccion,$_POST['observadir'],$uuid,$_POST['almacen'], $envio);
+
+      $this->model->SetData(NULL,$cl,$foliocot,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"N","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail, $direccion,$_POST['observadir'],$uuid,$_POST['almacen'], $envio, $retencion);
       $this->model->insertcotiza();
 
       $sql = 'INSERT INTO crm_cotizaciones_historial SET cch_cotizacion = "'.$this->model->idc.'", cch_fecha = "'.date('Y-m-d H:i:s').'", cch_user = "'.$_SESSION['uid'].'", cch_descripcion = "CREACIÓN DE LA COTIZACIÓN"';
@@ -114,13 +135,14 @@
         $this->model->setDataCondicion($row['c_nmb']);
         $this->model->insertcondicion($row['c_id']);
       }
-      redirect('?modulo=cotizaciones&accion=index&id='.$this->model->idc);
+      redirect('?modulo=cotizaciones&accion=show&id='.$this->model->idc);
     }
     function updatecotiza(){
       //foreachdie();
       $this->model->select($_GET['idcotiza']);
       if($this->model->estatus == "N" || $this->model->estatus == "R" || $this->model->estatus == "D"){
         if(isset($_POST['iva'])) $iva = "1"; else $iva = "0";
+        if(isset($_POST['retencion'])) $retencion = "1"; else $retencion = "0";
         if(isset($_POST['total'])) $total = "1"; else $total = "0";
         if(isset($_POST['reccliente'])) $envio = "C"; else $envio = "P";
       } else {
@@ -163,14 +185,15 @@
           }
         }
       }
-      $cl = busca($_GET['tablero'], 'crm_tableros', 'ct_id', 'ct_cliente');
+      //$cl = getIDcliente($_POST['clientevar']);
+      $cl = busca($_GET['idcotiza'],'crm_cotizaciones','cc_id','cc_cliente');
 
       if($_POST['direcciones'] == "XXX" && isset($_POST['setdir'])){
         $pais = $_POST['pais'];
         
         if($pais == "146"){
           $sql = 'INSERT INTO crm_direcciones SET
-          cd_nmbdir = "Cotizacion '.$_POST['nmbac'].'",
+          cd_nmbdir = "Cotizacionaaaaa '.$_POST['nmbac'].'",
           cd_cliente = "'.$cl.'",
           cd_tipodir = "2",
           cd_calle = "'.$_POST['calle'].'",
@@ -245,16 +268,16 @@
           $sqlupd = 'UPDATE crm_cotizaciones SET cc_direnvio = "0" WHERE cc_id = "'.$_GET['idcotiza'].'"';
           setq($sqlupd);
           echo '<script> alert("Error al guardar la dirección, intentelo de nuevo.")</script>';
-          redirect('?modulo=cotizaciones&accion=index&id='.$this->model->id);
+          redirect('?modulo=cotizaciones&accion=show&id='.$this->model->id);
           die();
         }
       }
 
-      $this->model->SetData($_GET['idcotiza'],$_GET['tablero'],NULL,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio);
+      $this->model->SetData($_GET['idcotiza'],$cl,NULL,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio, $retencion);
       $this->model->updatecotiza();
 
       $this->model->calculaimporte($_GET['idcotiza']);
-      redirect('?modulo=cotizaciones&accion=index&id='.$this->model->id);
+      redirect('?modulo=cotizaciones&accion=show&id='.$this->model->id);
     }
     function insertprod(){
       
@@ -266,7 +289,7 @@
         if(!$idprod){
         echo '<script>
                 alert("Error: El servicio buscado no esta registrado en tu base de datos, verifica la información");
-                window.location.href="?modulo=cotizaciones&accion=index&id='.$_GET['id'].'";
+                window.location.href="?modulo=cotizaciones&accion=show&id='.$_GET['id'].'";
               </script>';
         die();
         }
@@ -339,7 +362,7 @@
           if($idprod){
             $sql='SELECT * FROM articulos_ligados WHERE al_articulo="'.$idprod.'"';
             $res=setq($sql);
-            if($res -> num_rows > 0) $this->model->setdescripcion($_GET['id'],$this->model->idcd,"COMPLEMENTOS DE CADA ARTÍCULO:");
+            if($res -> num_rows > 0) $this->model->setdescripcion($_GET['id'],$this->model->idcd,"COMPLEMENTOS DE CADA SERVICIO:");
             while($rw=$res->fetch_array()){
               if($rw['al_amodelo']) $nmb = busca($rw['al_aligado'], 'articulos_variantes', 'av_modelo = "'.$rw['al_amodelo'].'" AND av_articulo', 'av_nmb');
               else $nmb = busca($rw['al_aligado'], 'articulos', 'a_id', 'a_nmb');
@@ -415,7 +438,7 @@
         }else{
           echo '<script>
                 alert("El articulo no puede ser agregado por que esta en estatus inactivo o no esta inventariado.");
-                  window.location.href="?modulo=cotizaciones&accion=index&id='.$_GET['id'].'";
+                  window.location.href="?modulo=cotizaciones&accion=show&id='.$_GET['id'].'";
             </script>';
         }
       } else{
@@ -442,7 +465,7 @@
 
         $this->model->calculaimporte($_GET['id']);
       }
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['id']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['id']);
     }
     function delconcepto(){
       $this->model->delconcepto($_GET['cotizacion'],$_GET['iddesc']);
@@ -450,7 +473,7 @@
       setq($sql);
       $this->model->calculaimporte($_GET['cotizacion']);
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['cotizacion']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['cotizacion']);
     }
     function updateprod(){
       if(isset($_POST['miva']) && $_POST['miva'] == "on") $miva = 1; 
@@ -467,17 +490,17 @@
 
       $this->model->calculaimporte($_GET['cotizacion']);
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['cotizacion']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['cotizacion']);
     }
     function setdescripcion(){
       $this->model->setdescripcion($_GET['cotizacion'],$_POST['iddescripcion'],formmayus($_POST['valuedescripcion']));
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['cotizacion'].'&last='.$_POST['iddescripcion']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['cotizacion'].'&last='.$_POST['iddescripcion']);
     }
     function deldescripcion(){
       $this->model->deldescripcion($_GET['cotizacion'],$_GET['iddesc']);
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['cotizacion']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['cotizacion']);
 
     }
     function finalcaptura(){
@@ -578,7 +601,7 @@
             "cuentas": "'.$sendcuenta .'",
           },
         }).done(function(data){
-          window.location.href = "?modulo=cotizaciones&accion=index&id='.$_GET['idcotiza'].'";
+          window.location.href = "?modulo=cotizaciones&accion=show&id='.$_GET['idcotiza'].'";
         });          
         </script>
       ';
@@ -590,12 +613,12 @@
         /* else 
           echo '<script>
             alert("No es posible enviar la cotización al destinatario por correo, debido a que no esta configurado correctamente el correo empresarial.\nPor favor termina de capturar la infromación para poder enviar correctamente la cotización");
-            window.location.href="?modulo=cotizaciones&accion=index&id='.$_GET['idcotiza'].'";
+            window.location.href="?modulo=cotizaciones&accion=show&id='.$_GET['idcotiza'].'";
           </script>'; */
 
       }
       
-      if(!isset($_POST['checkmail']))redirect('?modulo=cotizaciones&accion=index&id='.$_GET['idcotiza']);
+      if(!isset($_POST['checkmail']))redirect('?modulo=cotizaciones&accion=show&id='.$_GET['idcotiza']);
     }
     function finarticuloscaptura(){
       $cotiza = $_GET['idcotiza'];
@@ -603,10 +626,10 @@
       $sql = 'UPDATE crm_cotizaciones SET cc_estatus = "D" WHERE cc_id = "'.$cotiza.'"';
       setq($sql);
 
-      $sqlhist = 'INSERT INTO crm_cotizaciones_historial SET cch_cotizacion = "'.$cotiza.'", cch_fecha = "'.date('Y-m-d H:i:s').'", cch_user = "'.$_SESSION['uid'].'", cch_descripcion = "FIN DE LA CAPTURA DE ARTÍCULOS"';
+      $sqlhist = 'INSERT INTO crm_cotizaciones_historial SET cch_cotizacion = "'.$cotiza.'", cch_fecha = "'.date('Y-m-d H:i:s').'", cch_user = "'.$_SESSION['uid'].'", cch_descripcion = "FIN DE LA CAPTURA DE SERVICIOS"';
         setq($sqlhist);
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_GET['idcotiza']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_GET['idcotiza']);
     }
     function setadjunto(){
       if($_POST['typedoc'.$_POST['sended']] == "D"){
@@ -622,20 +645,20 @@
             $document = $_FILES['fileadj']['name'];
         } else{
             echo alert_back("Error: El documento no pudo ser adjunto");
-             redirect("?modulo=cotizaciones&accion=index&id=".$_GET['id']); 
+             redirect("?modulo=cotizaciones&accion=show&id=".$_GET['id']); 
         }
       }
 
       $sql = 'UPDATE crm_cotizaciones SET cc_adjunto = "'.$document.'" WHERE cc_id = "'.$_GET['id'].'"';
       setq($sql);
 
-      redirect("?modulo=cotizaciones&accion=index&id=".$_GET['id']);
+      redirect("?modulo=cotizaciones&accion=show&id=".$_GET['id']);
     }
     function deladjunto(){
       $sql = 'UPDATE crm_cotizaciones SET cc_adjunto = NULL WHERE cc_id = "'.$_GET['id'].'"';
       setq($sql);
 
-      redirect("?modulo=cotizaciones&accion=index&id=".$_GET['id']);
+      redirect("?modulo=cotizaciones&accion=show&id=".$_GET['id']);
     }
     function sendmailcotiza(){
       /* foreachdie(); */
@@ -654,12 +677,12 @@
           },
         }).done(function(datax){
           console.log(datax);
-          window.location.href = "?modulo=cotizaciones&accion=index&id='.$_GET['id'].'";
+          window.location.href = "?modulo=cotizaciones&accion=show&id='.$_GET['id'].'";
         });          
         </script>
       ';
     /* $this->model->sendmailcotiza($_GET['id']); */
-    /* redirect("?modulo=cotizaciones&accion=index&id=".$_GET['id']); */
+    /* redirect("?modulo=cotizaciones&accion=show&id=".$_GET['id']); */
     }
     function clonar(){
       $this->model->select($_GET['idcotiza']);
@@ -771,7 +794,7 @@
 
       
 
-      redirect("?modulo=cotizaciones&accion=index&id=".$this->model->idcotizacion);
+      redirect("?modulo=cotizaciones&accion=show&id=".$this->model->idcotizacion);
     }
     function cancelar(){
       $tablero = busca($_GET['id'],'crm_cotizaciones','cc_id','cc_tablero');
@@ -994,7 +1017,7 @@
 
       $this->model->updateconc($_POST['cotizacion'],$_POST['idc'], clearvmayus($_POST['nmbp']));
 
-      redirect('?modulo=cotizaciones&accion=index&id='.$_POST['cotizacion']);
+      redirect('?modulo=cotizaciones&accion=show&id='.$_POST['cotizacion']);
     }
     function cambiarcantidad(){
       if(isset($_REQUEST['cantidad']) && isset($_REQUEST['id']) && isset($_REQUEST['cotizacion'])){
@@ -1007,7 +1030,7 @@
         
       } 
 
-      redirect("?modulo=cotizaciones&accion=index&id=".$_REQUEST['cotizacion']);
+      redirect("?modulo=cotizaciones&accion=show&id=".$_REQUEST['cotizacion']);
     }
     function cambiarln(){
       if(isset($_REQUEST['linean'])){
@@ -1016,7 +1039,7 @@
                 WHERE cdm_id = "'.$_GET['id'].'"';
         setq($sql);
       } 
-      redirect("?modulo=cotizaciones&accion=index&id=".$_GET['cotizacion']);
+      redirect("?modulo=cotizaciones&accion=show&id=".$_GET['cotizacion']);
     }
     function seleccionarenvio(){
       //foreachdie();
@@ -1280,7 +1303,7 @@
       }
       if($n == 0){
         $estatus = "P";
-        $url= '?modulo=cotizaciones&accion=index&id='.$_GET['idcotiza'];
+        $url= '?modulo=cotizaciones&accion=show&id='.$_GET['idcotiza'];
       }
       else {
         $estatus = "L";
@@ -1587,15 +1610,97 @@
 
       redirect("?modulo=remisiones&accion=show&id=".$idrem);
     }
+
+    function updateextra(){
+      //foreachdie();
+      $cotiza = $_GET['id'];
+
+      $qCh = 'SELECT u_id
+       FROM usuarios INNER JOIN usuarios_rol ON ur_usuario = u_id WHERE u_estatus="A" AND ur_rol="CHOFER"';
+      $rsCh = setq($qCh);
+      while($rowch = $rsCh->fetch_array()){
+        echo $_POST['chf_chofer'.$rowch['u_id']];
+        if(isset($_POST['chf_chofer'.$rowch['u_id']])){
+          $sqlins= 'INSERT INTO crm_cotizaciones_chofer SET cch_cotizacion = "'.$cotiza.'", cch_chofer = "'.$rowch['u_id'].'"';
+          setq($sqlins);
+        } else {
+          $sqldel= 'DELETE FROM crm_cotizaciones_chofer WHERE cch_cotizacion = "'.$cotiza.'" AND cch_chofer = "'.$rowch['u_id'].'"';
+          setq($sqldel);
+        }
+      }
+
+      $sqlupd = 'UPDATE crm_cotizaciones SET cc_tarifario = "'.$_POST['chf_tarifario'].'",
+                                              cc_tanques = "'.$_POST['chf_tanques'].'",
+                                              cc_combustible = "'.$_POST['chf_combustible'].'",
+                                              cc_casetas = "'.$_POST['chf_casetas'].'",
+                                              cc_desgaste = "'.$_POST['chf_desgaste'].'",
+                                              cc_operador = "'.$_POST['chf_operador'].'",
+                                              cc_porcentaje = "'.$_POST['chf_porcentaje'].'",
+                                              cc_km_total = "'.$_POST['chf_km_total'].'",
+                                              cc_tarifario_id = "'.$_POST['chf_tarifario_id'].'",
+                                              cc_subtotal ="'.$_POST['chf_costo_total'].'",
+                                              cc_km = "'.$_POST['chf_km'].'",
+                                              cc_mtotal = "'.$_POST['chf_costo_venta'].'" WHERE cc_id = "'.$cotiza.'"';
+      
+      setq($sqlupd);                                        
+
+      redirect("?modulo=cotizaciones&accion=show&id=".$cotiza);
+
+
+    }
   }
 
   class modelcotizaciones{
+    function result($fini, $ffin, $proveedor, $estatus) {
+    $bloque = 50;
+    $prov = clearvmayus($proveedor);
+    $sqlf = '';
+
+    // Base de la consulta
+    $sql = 'SELECT * FROM crm_cotizaciones WHERE 1 = 1 ' . $sqlf . '
+            AND DATE(cc_fini) BETWEEN "' . addslashes($fini) . '" AND "' . addslashes($ffin) . '" ';
+
+    // Filtro por almacen del usuario
+    $almacen = busca(isset($_SESSION['uid']) ? $_SESSION['uid'] : '', 'usuarios', 'u_id', 'u_almacen');
+
+    // Filtro por documento (folio)
+    /* if ($documento) {
+        $sql .= ' AND cc_folio LIKE "%' . $doc . '%" ';
+    } */
+
+    // Filtro por proveedor (cliente), buscando por nombre o apellidos o alias
+    if ($proveedor) {
+        $sql .= ' AND cc_cliente IN (
+                    SELECT c_id FROM crm_clientes 
+                    WHERE c_nmb LIKE "%' . $prov . '%" 
+                       OR c_apellidos LIKE "%' . $prov . '%" 
+                       OR c_alias LIKE "%' . $prov . '%"
+                 )';
+    }
+
+    // Filtro por estatus
+    if ($estatus) {
+        if ($estatus == "A") {
+            $sql .= ' AND cc_estatus IN ("A", "V")';
+        } else {
+            $sql .= ' AND cc_estatus = "' . addslashes($estatus) . '"';
+        }
+    }
+
+    // Orden final
+    $sql .= ' ORDER BY cc_id DESC ';
+
+    // Ejecutar la consulta
+    $this->resultrc = setq($sql);
+    $this->resultt = setq($sql);
+}
     function select($id){
       $sql = 'SELECT * FROM crm_cotizaciones WHERE cc_id = "'.$id.'" ';
       $result = setq($sql);
       $row = $result->fetch_array();
       $this->id = $row['cc_id'];
       $this->tablero = $row['cc_tablero'];
+      $this->cliente = $row['cc_cliente'];
       $this->folio = $row['cc_folio'];
       $this->nmb = $row['cc_nmb'];
       $this->fini = $row['cc_fini'];
@@ -1631,10 +1736,11 @@
       $this->envio = $row['cc_envio'];
       $this->motivo = $row['cc_motivo'];
       $this->preciodolars = $row['cc_preciodolares'];
+      $this->retencion = $row['cc_retencion'];
     }
-    function SetData($id,$tablero,$foliocot,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
+    function SetData($id,$cliente,$foliocot,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$retencion,$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
       $this->id = clearvmayus($id);
-      $this->tablero = clearvmayus($tablero);
+      $this->cliente = clearvmayus($cliente);
       $this->foliocot = clearvmayus($foliocot);
       $this->nmbac = clearvmayus($nmbac);
       $this->ffin = clearvmayus($ffin);
@@ -1661,6 +1767,7 @@
       $this->uuid = $uuid;
       $this->almacen = $almacen;
       $this->envio = $envio; 
+      $this->retencion = $retencion; 
     }
 
     function insertcotiza(){
@@ -1671,7 +1778,7 @@
       ";
 
       $sql = 'INSERT INTO crm_cotizaciones SET
-              cc_tablero = "'.$this->tablero.'",
+              cc_cliente = "'.$this->cliente.'",
               cc_folio = "'.$this->foliocot.'",
               cc_nmb = "'.$this->nmbac.'",
               cc_ffin = "'.$this->ffin.'",
@@ -1682,6 +1789,7 @@
               cc_teldestino = "'.$this->telefono.'",
               cc_agente = "'.$this->responsable.'",
               cc_diva = "'.$this->diva.'",
+              cc_retencion = "'.$this->retencion.'",
               cc_mtotal = "'.$this->mtotal.'",
               cc_descuento= "'.$this->descuento.'",
               cc_montodescuento= "'.$this->montodescuento.'",
@@ -1711,6 +1819,7 @@
               cc_teldestino = "'.$this->telefono.'",
               cc_agente = "'.$this->responsable.'",
               cc_diva = "'.$this->diva.'",
+              cc_retencion = "'.$this->retencion.'",
               cc_mtotal = "'.$this->mtotal.'",
               cc_descuento= "'.$this->descuento.'",
               cc_montodescuento= "'.$this->montodescuento.'",
@@ -2456,7 +2565,7 @@
                 document.getElementById("formenvios").submit();
               } 
             }else {
-                alert("Algunos artículos estan sin sucursal de entrega");
+                alert("Algunos servicios estan sin sucursal de entrega");
             }
           /* } else {
             alert("Configure la dirección de envío para poder continuar.");
@@ -2479,7 +2588,7 @@
         function existencias(texto, remision){
           Swal.fire({
           icon: 'error',
-          title: 'No es posible completar la venta ya que los siguientes artículos se encuentran sin existencia.',
+          title: 'No es posible completar la venta ya que los siguientes servicios se encuentran sin existencia.',
           html: texto,
           //showDenyButton: true,
           confirmButtonText: '<i class="fas fa-check" style="color:#ffffff"></i> Entendido',
@@ -2492,13 +2601,273 @@
       </script>
       <?php
     }
-    function index(){
+    function browse($fini,$ffin,$proveedor,$estatus) {
+
+      ?>
+      <script language="JavaScript">
+        
+
+        function checkSubmitmovimiento() {
+          document.getElementById("guardar").value = "JD";
+          document.getElementById("guardar").disabled = true;
+          return true;
+        }
+        $("body").on("keydown", function(e) { 
+          if (e.altKey && e.which === 78) {
+            var btn = document.getElementById("nuevo");
+            btn.click();
+            e.preventDefault();
+          }
+        });
+    
+        $("body").on("keydown", function(e) { 
+          if (e.altKey && e.which === 76) {
+            var btn = document.getElementById("filtrar");
+            btn.click();
+            $("#cliente").focus();
+            e.preventDefault();
+          }
+        });
+    
+        $("body").on("keydown", function(e) { 
+          if (e.altKey && e.which === 82) {
+            window.location.reload();
+          }
+        });
+      </script>
+      <?php
+      $this->model->aestatus = array("A" => "Esperando respuesta","D" => "Por aprobar en caja","P" => "Esperando respuesta","N" => "En Captura","C" => "Cancelado", "V" => "Vendida");
+      $this->model->nestatus = array("A" => 'class="alert" style="background: #B0FFE7"',"D" => 'class="alert" style="background: #B7DAFF"',"P" => 'class="alert" style="background: #B7DAFF"',"N"=>'class="alert" style="background: #FFEAAB"',"C" => 'class="alert" style="background: #FFCBD0"', "V" => 'class="alert text-white" style="background: #20c997"', "FE" => 'class="alert text-white" style="background: #0C00FF"');
+ 
+      $accion = 'insert';
+      if (isset($this->model->id)) {
+        $accion = 'update';
+      }
+      //Sección: E1 Encabezado - Botones de acción
+      echo '';
+        //Sección: E2 Encabezado - Filtros
+        $selt = '';
+        $sela = '';
+        $seln = '';
+        $selp = '';
+        $selc = '';
+        if($estatus == "A") $sela = "selected";
+        if($estatus == "N") $seln = "selected";
+        if($estatus == "P") $selp = "selected";
+        if($estatus == "C") $selc = "selected";
+        else $selt = 'selected';
+        //VERIFICACIÖN DE LICENCIA REMISION
+        $licenciarem = busca($_SESSION['emp'],'empresa_licencia','el_empresa','el_ventas');
+        $sqltotrem = 'SELECT COUNT(*) FROM remisiones WHERE r_empresa = "'.$_SESSION['emp'].'"';
+        $resultrem = setq($sqltotrem);
+        $rowrem = $resultrem->fetch_array();
+
+        $accionbtn = 'href="?modulo=remisiones&accion=edit"';
+
+        $varbtn = '<a id="nuevo" '.$accionbtn.'>
+          <button type="button" class="btn btn-primary">
+            <span class="glyphicon glyphicon-cog"></span><i class="fa fa-plus"></i> Nuevo
+          </button>
+        </a>';
+        /* echo '<script>
+          function alertarem(){
+            alert("La cantidad de ventas en tu licencia ha sido superado. No puedes agregar nuevas ventas. Contacta a tu agente de JD CEO.");
+          }
+        </script>';
+        echo '<div class="mb-5">
+          '.$varbtn.'
+          <button id="filtrar" type="button" class="btn btn-info"  data-toggle="collapse" data-target="#filter-panel">
+            <span class="glyphicon glyphicon-cog"></span><i class="fa fa-search5"></i> Filtrar
+          </button>
+        </div>'; */
+        
+        $botones = '';
+        $botones .= '
+          <a id="nuevo" '.$accionbtn.'>
+            <button type="button" class="btn btn-primary btn-sm">
+              <span class="glyphicon glyphicon-cog"></span><i class="fa fa-plus"></i> Nuevo
+            </button>
+          </a>
+        ';
+
+        $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+
+
+        $filtro = '
+          <form class="" role="form" method="post" action="?modulo=remisiones&accion=index" id="filtro">
+            <div class="mb-5">
+              <label for="">Cliente</label>
+              <input type="text" name="cliente" id="cliente" placeholder="Nombre del cliente" class="form-control" value="'.$proveedor.'" />
+            </div>';
+            $filtro .='<div class="mb-5">
+                <label for="tipom">Asesor</label>';
+            if($grupo == "GERENCIA" || $grupo == "ADMIN" || $grupo == "FINANZAS"){
+              $sqlvd = 'SELECT * FROM usuarios WHERE u_grupo = "GERENCIA" OR u_grupo = "VENTAS"';
+              $resultvd = setq($sqlvd);
+              $filtro .= '<select id="vendedor" name="vendedor" class="form-control">
+              <option value="" selected>TODOS</option>';
+              while($rowvd = $resultvd -> fetch_array()){
+                if($rowvd['u_id'] == $vendedor) $sel = 'selected';  
+                else $sel = '';
+                $filtro.='<option value="'.$rowvd['u_id'].'" '.$sel.'>'.$rowvd['u_nmb'].' '.$rowvd['u_apellidos'].'</option>';
+              }
+              $filtro .= '</select>';
+            } else {
+              $nmb = busca($_SESSION['uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+              $filtro .= '<input type="text" name="vendedor" id="vendedor" class="form-control" value="'.$nmb.'" readonly/>';
+            }
+            $filtro .= '</div>';
+            $filtro .='<div class="mb-5">
+              <label for="tipom">Desde</label>
+              <input type="date" name="fini" id="fini" class="form-control" value="'.$fini.'" />
+            </div>
+            <div class="mb-5">
+              <label for="tipom">Hasta</label>
+              <input type="date" name="ffin" id="ffin" class="form-control" value="'.$ffin.'" />
+            </div>
+            <div class="mb-5">
+              <label for="tipom">Estatus</label>
+              <select class="form-control" name="estatus" id="estatus" >
+                <option value="" '.$selt.'>Todos</option>
+                <option value="N" '.$seln.'>En captura</option>
+                <option value="A" '.$sela.'>Vendidas</option>
+                <option value="C" '.$selc.'>Cancelados</option>
+              </select>
+            </div><!-- form group [search] -->
+            <div class="mb-5">
+              <label for="">Acciones</label> <br>
+              <button type="button" onclick="mandar(0);" class="btn btn-info">
+                <span class="glyphicon glyphicon-record"></span> <i class="fas fa-filter"></i> Filtrar
+              </button>
+              <a href="?modulo=remisiones&accion=index"><button type="button" class="btn btn-warning">
+                <span class="glyphicon glyphicon-record"></span> <i class="fas fa-times-circle"></i> Limpiar
+              </button></a>
+            </div>
+          </form>';
+          $grupouser = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+          $nproductos = 0;
+         /*  $sqlq = 'SELECT r_id FROM remisiones WHERE r_estatus = "F"';
+          // $sqlq = 'SELECT r_id, rc_remision FROM remisiones INNER JOIN remisionc ON r_id = rc_remision WHERE r_estatus = "F"';
+          if($grupouser != "ADMIN"){
+            if($grupouser != "GERENCIA"){
+              $sqlq.= ' AND r_encargado LIKE "%'.$_SESSION['uid'].'%"';
+            }
+          }
+          $sqlq.=' ORDER BY r_id DESC';
+          $resultq = setq($sqlq);
+          while($rowq = $resultq->fetch_array()){  
+          $remision = $rowq ['r_id'];
+          $articulosc = intval(busca($remision, 'remisionesc', 'rc_tipoenvio IN ("P") AND rc_remision', 'COUNT(*)'));
+          if($articulosc > 0){
+            $nproductos++;
+          }
+          }
+
+          if($nproductos > 0){
+            $etiqueta = '&nbsp;<span class="badge bg-danger">'.$nproductos.'</span>';
+          } else{ */
+            $etiqueta = '';
+          /* } */
+
+          /* $pordefinir = '
+          <a href="?modulo=remisiones&accion=prodpordefinir&tipo=2">
+            <button type="button" class="btn btn-sm btn-secondary mb-1 mr-1" data-toggle="tooltip" data-placement="top" title="servicios por definir forma de envío"><i class="fas fa-file-signature"></i> servicios por definir'.$etiqueta.'</button>
+          </a>
+          '; */
+          $pordefinir = '';
+          $nuevo = '<a id="fancyins" data-fancybox="" data-type="ajax" data-src="popup/setcotiza.php" href="javascript:;">
+            <button type="button" id="inscotiza" class="btn btn-primary " data-toggle="tooltip" data-placement="top" title="Agregar cotización"><i class="fa fa-pen"></i>Agregar</button>
+          </a>';
+      
+      toolbar($_GET['modulo'],"" ,$filtro, $nuevo);
+      ?>
+      <div class="card mt-3">
+        <div class="card-body row">
+        <div class="col-md-12 col-12 col-sm-12">
+          <?php
+          echo '<div class="table table-responsive text-medium">
+          <center>
+            <table class="table" id="myTable">
+              <thead class="thead bg-blue bg-darken-3 pt-1 pb-1">
+                <tr>
+                  <th>Folio</th>
+                  <th>Cliente</th>
+                  <th>Descripcion</th>
+                  <th>Vendedor</th>
+                  <th>Estatus</th>
+                  <th>Importe</th>
+                  <th></th>
+                </tr>
+              </thead>';
+              while($row = $this->model->resultrc->fetch_array()){
+                $lastm = $row['cc_nmbagente'];
+                $nmb = busca($row['cc_cliente'],'crm_clientes','c_id','c_nmb');
+                $apellidos = busca($row['cc_cliente'],'crm_clientes','c_id','c_apellidos');
+                $nmbcl = $nmb.' '.$apellidos;
+                echo '<tr>
+                  <th>'.$row['cc_folio'].'</th>
+                  <td>'.$nmbcl.'</td>
+                  <td>'.$row['cc_nmb'].'</td>
+                  <td>'.$lastm.'</td>
+                  <td '.$this->model->nestatus[$row['cc_estatus']].'>'.$this->model->aestatus[$row['cc_estatus']].'</td>
+                  <td class="number-align">$'.number_format($row['cc_mtotal'],2).'</td>
+                  <td>
+                    <a href="?modulo=cotizaciones&accion=show&id='.$row['cc_id'].'">
+                      <button type="button" class="btn-sm btn-info btn" title="Detalles"><i class="fa fa-eye"></i> </button>
+                    </a>';
+                    if($row['cc_estatus'] == "F"){
+                      echo '<a target="_BLANK" href="?modulo=remisiones&accion=show&id='.$row['cc_remision'].'">
+                        <button type="button" class="btn-sm btn-secondary btn" title="Ver remision"><i class="fas fa-money-bill"></i>Ver remisión</i></button>
+                      </a>';
+                     echo '</a>';
+                    }
+                  echo '</td>
+                </tr>';
+              }
+            echo '</table>
+            <center>
+            </div>
+          </div>';
+
+          echo '
+          <script>
+            function mandar(id){
+
+              document.getElementById("filtro").submit();
+            }
+          </script>
+          <script>
+          $(document).ready(function () {
+            var windowHeight = $(window).height();
+            $("#myTable").DataTable( {
+                paging: true,
+                //"order": [[3, "desc"]],
+                ordering: false,
+                scrollY: windowHeight * 0.5,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+                },
+                responsivePriority: 1,
+                pageLength:50,
+            });
+          });
+          </script>
+          ';
+
+          
+          
+          
+
+        echo'</div>
+      </div>';
+    }
+    function show(){
       $comp = $this->model->compruebaactivo($this->model->id);
       $permi = ['A', 'V', 'C'];
       if($comp != "OK" && !in_array($this->model->estatus, $permi)){
         $nmb = busca($comp, 'articulos', 'a_id','a_nmb');
         echo '<script>
-          alert("El artículo '.$nmb.' se encuentra inactivo.");
+          alert("El servicio '.$nmb.' se encuentra inactivo.");
         </script>';
         $inactivo = "1";
         $this->model->estatus = "C";
@@ -2507,8 +2876,8 @@
       }
       $izquierda = '';
       $izquierda .= '
-      <a href="?modulo=tableros&accion=show&id='.$this->model->tablero.'">
-      <button type="button" class=" btn btn-warning"><i class="fa fa-arrow-left"></i>Tablero</button>
+      <a href="?modulo=cotizaciones&accion=index">
+      <button type="button" class=" btn btn-warning"><i class="fa fa-arrow-left"></i>Atrás</button>
       </a>';  
 
       if($this->model->envio == "C"){
@@ -2545,13 +2914,13 @@
 
         if($this->model->cotizacompleta($this->model->id) == "OK" && $this->model->compruebacmb($this->model->id) == "OK" && ($this->model->estatus == "N" || $this->model->estatus == "R"))
           if($this->model->envio == "P")  
-            $izquierda .= '
-              <button type="button" class="btn  text-white" style="background: rebeccapurple;" onclick="finarticulos('.$this->model->id.');" data-toggle="tooltip" data-placement="top" title="Finalizar captura de artículos"><i class="fas fa-truck-loading" style="color: #ffffff"></i>Finalizar captura</button>';
+            $derecha .= '
+              <button type="button" class="btn  text-white" style="background: rebeccapurple;" onclick="finarticulos('.$this->model->id.');" data-toggle="tooltip" data-placement="top" title="Finalizar captura de servicios"><i class="fas fa-truck-loading" style="color: #ffffff"></i>Finalizar captura</button>';
           else {
             $datos = $this->model->checardisponibles($this->model->id, $this->model->almacen);
             if($datos['error'] == 0){
               $izquierda .= '<a data-fancybox data-type="ajax" data-src="popup/cerrarcotiza.php?tablero='.$this->model->tablero.'&idcotiza='.$this->model->id.'" href="javascript:;">
-              <button type="button" class="btn btn-success text-white" data-toggle="tooltip" data-placement="top" title="Finalizar la captura  de artículos y vender"><i class="fas fa-hand-holding-usd" style="color: #ffffff"></i>Enviar y vender</button>
+              <button type="button" class="btn btn-success text-white" data-toggle="tooltip" data-placement="top" title="Finalizar la captura  de servicios y vender"><i class="fas fa-hand-holding-usd" style="color: #ffffff"></i>Enviar y vender</button>
               </a>';
             } else {
               $texto = "";
@@ -2563,14 +2932,14 @@
           }
         else if($this->model->cotizacompleta($this->model->id) != "OK")
         $izquierda .= '
-          <button type="button" class="btn  btn-danger text-white" data-toggle="tooltip" data-placement="top" title="Aún no se ha capturado ningun artículo"><i class="'.$icon.'" style="color: #ffffff"></i>'.$text.'</button>';
+          <button type="button" class="btn  btn-danger text-white" data-toggle="tooltip" data-placement="top" title="Aún no se ha capturado ningun servicio"><i class="'.$icon.'" style="color: #ffffff"></i>'.$text.'</button>';
         else if ($this->model->compruebacmb($this->model->id) != "OK")
         $izquierda .= '
           <button type="button" class="btn  btn-danger text-white" data-toggle="tooltip" data-placement="top" title="Configure los paquetes para continuar"><i class="'.$icon.'" style="color: #ffffff"></i>'.$text.'</button>';
-        $izquierda .=   
+        /* $izquierda .=   
         '<a data-fancybox data-type="ajax" data-src="popup/adjuntardoccotiza?id='.$this->model->id.'" href="javascript:;">
           <button type="button" class="btn btn-info " data-toggle="tooltip" data-placement="top" title="Ver documentos adjuntos"><i class="fa fa-paperclip"></i>Adjuntar</button>
-        </a>';
+        </a>'; */
         /* $izquierda .= '<button type="button" class="btn btn bg-danger text-white " onclick="confirmacancela('.$this->model->id.');" data-toggle="tooltip" data-placement="top" title="Cancelar cotización"><i class="fas fa-times" style="color: #ffffff;"></i>Cancelar</button>'; */
         
       }
@@ -2590,29 +2959,30 @@
         $izquierda .= '<a data-fancybox data-type="ajax" data-src="popup/sendwhats?id='.$this->model->id.'&rand='.rand().'" href="javascript:;">
           <button type="button" class="btn  text-white" data-toggle="tooltip" data-placement="top" title="Enviar mensaje al cliente por whatsapp" style="background: #25D366;"><i class="fab fa-whatsapp" style="color: #ffffff;"></i> WhatsApp</button>
         </a>';
-        if($this->model->estatus == "A"){
-          $izquierda .=   
-          '<button type="button" class="btn btn-success " data-toggle="tooltip" data-placement="top" title="Finalizar la cotización y venderla" onclick="finalizarcotiza('.$this->model->id.')"><i class="fa fa-check"></i>Vender</button>';
-        }
+        
+      }
+      if($this->model->estatus == "N"){
+        $izquierda .=   
+        '<button type="button" class="btn btn-success " data-toggle="tooltip" data-placement="top" title="Finalizar la cotización y venderla" onclick="finalizarcotiza('.$this->model->id.')"><i class="fa fa-check"></i>Vender</button>';
       }
       if($this->model->estatus == "P"){
         $izquierda .= 
         '<a href="formats/pdfcotizacion.php?idcotiza='.$this->model->id.'" target="_BLANK">
           <button type="button" class="btn btn-danger  text-white" data-toggle="tooltip" data-placement="top" title="Vista previa de la cotiazación"><i class="fa fa-file-pdf"></i>PDF</button>
         </a>';
-        if($this->model->enviodescuento($this->model->id) == "OK")
+        /* if($this->model->enviodescuento($this->model->id) == "OK")
           $izquierda .= '<a data-fancybox data-type="ajax" data-src="popup/cerrarcotiza.php?tablero='.$this->model->tablero.'&idcotiza='.$this->model->id.'" href="javascript:;">
                           <button type="button" class="btn btn-success " data-toggle="tooltip" data-placement="top" title="Finalizar captura de cotización"><i class="fa fa-check"></i>Enviar a cliente</button>
                         </a>';
         else
           $izquierda .= '<button type="button" class="btn btn-danger " title="Error: No se puede finalizar la cotización, en envío por definir no se puede aplicar descuento" >
-                          <i class="fa fa-check"></i>Enviar a cliente</button>';
+                          <i class="fa fa-check"></i>Enviar a cliente</button>'; */
       }
       if($this->model->estatus == "V"){
         
-        $izquierda .= '<a data-fancybox data-type="ajax" data-src="popup/clonecotiza.php?tablero='.$this->model->tablero.'&idcotiza='.$this->model->id.'" href="javascript:;">
+        /* $izquierda .= '<a data-fancybox data-type="ajax" data-src="popup/clonecotiza.php?tablero='.$this->model->tablero.'&idcotiza='.$this->model->id.'" href="javascript:;">
           <button type="button" class="btn bg-teal bg-darken-3  text-white" data-toggle="tooltip" data-placement="top" title="Copiar cotización" style="background:teal;"><i class="far fa-clone" style="color: #ffffff;"></i>Clonar</button>
-        </a>';
+        </a>'; */
         $izquierda .= '<a href="?modulo=remisiones&accion=show&id='.$this->model->remision.'" target="_BLANK">
           <button type="button" class="btn btn-success  text-white" data-toggle="tooltip" data-placement="top" title="Vista previa de la cotización"><i class="fab fa-wpforms" style="color: #ffffff;"></i>Ver remisión</button>
         </a>';
@@ -2751,7 +3121,7 @@ function setdireccion(){
           <div class="card mt-3">
             <div class="card-body">
             <div class="card-header">
-              <h4 class="" >';
+              <h4> Listado de servicios </h4>';
             echo '</div>
           <form method="post" action="?modulo=cotizaciones&accion=insertprod&id='.$this->model->id.'" autocomplete="off" class="mt-2 container">
             <div class="row">
@@ -2770,14 +3140,14 @@ function setdireccion(){
                 <label for="agregar" class">Cantidad</label>
                 <input type="number" min="1" max="99999" step="1" value="1" name="cantidadorig" id="cantidadorig" placeholder="Cantidad" class="form-control" required tabindex="2">
               </div>';
-              $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+              /* $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
               if($grupo == "ADMIN" || $grupo == "GERENCIA") $read = '';
               else $read = 'readonly';
               echo  '<div class="col-8 col-md-3">
                 <label for="precio" class">Precio unitario</label>
                 <input type="number" min="0.01" max="9999999" step="0.01" name="impunitario" id="impunitario" placeholder="Importe del concepto" class="form-control" required  tabindex="3" '.$read.'>
-              </div>
-              <div class="col-auto">
+              </div>'; */
+              echo '<div class="col-auto">
                 <label >Enviar</label><br>
                 <button tabindex="3" type="submit" id="submitfcotiza" class="btn btn-success"><i class="fa fa-paper-plane"></i> Enviar</button>
               </div>
@@ -2786,7 +3156,7 @@ function setdireccion(){
         $readonestatus = "";
       }else $readonestatus = ' disabled ';
 
-      if($this->model-> estatus != "D"){
+      //if($this->model-> estatus != "D"){
         
         echo '<div class="row">
         <div class="card-body">
@@ -2795,10 +3165,10 @@ function setdireccion(){
               <thead class="thead-active bg-primary text-white">
                 <tr>
                   <th width="35%">Servicio</th>
-                  <!-- <th width="10%">Cantidad</th> -->
+                  <!-- <th width="10%">Cantidad</th>
                   <th width="17%">Precio</th>
                   <th width="15%">+ IVA</th>
-                  <th width="18%">Importe</th>
+                  <th width="18%">Importe</th>  -->
                   <th width="15%"></th>
                 </tr>
               </thead>';
@@ -2940,7 +3310,7 @@ function setdireccion(){
                   //if($numvar != 0){
                     $buttonact ='
                       <a href="popup/elijevariantes-cotizacion?cotizacion='.$this->model->id.'&cotizaciond='.$row['cdm_id'].'" onclick="window.open(this.href,\'cotizaciones\',\'width=890, height=800\');return false">
-                        <button type="button" class="btn text-white mt-1" style="background: teal;" data-toggle="tooltip" data-placement="top" title="Seleccione las variantes para este producto"><i class="fas fa-tools" style="color: #ffffff;"></i> Configuración de artículos para '.busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_nmb').'
+                        <button type="button" class="btn text-white mt-1" style="background: teal;" data-toggle="tooltip" data-placement="top" title="Seleccione las variantes para este producto"><i class="fas fa-tools" style="color: #ffffff;"></i> Configuración de servicios para '.busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_nmb').'
                         </button>
                       </a>';
                   //}
@@ -3152,25 +3522,25 @@ function setdireccion(){
                     else $min = $row['cdm_precio'];
                     echo '<form method="post" action="?modulo=cotizaciones&accion=updateprod&cotizacion='.$this->model->id.'&id='.$row['cdm_id'].'" name="update'.$row['cdm_id'].'">
                     <input type="number" class="form-control number-align" min="0" max="9999" name="cantidad" id="cantidad'.$row['cdm_id'].'" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" hidden/> -->
-                    <td><input type="number" class="form-control number-align" min="'.$min.'" max="999999" name="precio" id="precio'.$row['cdm_id'].'" '.$toltdes.' step="0.01" value="'.number_format($precio,2,'.','').'"  '.$readonestatus.' '.$readpre.' onfocus="this.select()"  /></td>';
-                    if($this->model->diva == "1") echo'<td><input type="checkbox"  class="text-center" name="miva" '.$chiva.' '.$readonestatus.' onchange="submit();" /></td>';
-                    else echo '<td><input type="hidden" name="miva" value="'.$row['cdm_iva'].'"/></td>';
-                    echo'<td class="number-align">'.number_format($importe,2,'.',',').'</td>
+                    <td hidden><input type="number" hidden class="form-control number-align" min="'.$min.'" max="999999" name="precio" id="precio'.$row['cdm_id'].'" '.$toltdes.' step="0.01" value="'.number_format($precio,2,'.','').'"  '.$readonestatus.' '.$readpre.' onfocus="this.select()"  /></td>';
+                    //if($this->model->diva == "1") echo'<td><input type="checkbox"  class="text-center" name="miva" '.$chiva.' '.$readonestatus.' onchange="submit();" /></td>';
+                    //else echo '<td hidden><input type="hidden" name="miva" value="'.$row['cdm_iva'].'"/></td>';
+                    echo'<td class="number-align" hidden>'.number_format($importe,2,'.',',').'</td>
                     <td>';
                       if($this->model->estatus == "N" || $this->model->estatus == "R")
                         echo '<div class="mb-5">
                           <button type="button"  class="btn  btn-danger" onclick="deletecpt('.$row['cdm_id'].', '.$this->model->descuento.')"><i class="fa fa-trash"></i>Borrar</button>
                         </div>';
                         
-                        if($this->model->estatus != "P" && $this->model->estatus != "A" && $this->model->estatus != "V")
+                        /* if($this->model->estatus != "P" && $this->model->estatus != "A" && $this->model->estatus != "V")
                         echo '<div class="mb-5">
                           <button class="btn btn-info " id="update'.$row['cdm_id'].'"><i class="fa fa-redo"></i> Actualizar</button> 
-                        </div>';
-                        echo '<div class="mb-5">
+                        </div>'; */
+                        /* echo '<div class="mb-5">
                           <a data-fancybox data-type="ajax" data-src="popup/fichaproducto.php?articulo='.$row['cdm_articulo'].'&modelo='.$row['cdm_modelo'].'&rand='.rand().'" href="javascript:;">
                             <button type="button" class="btn btn-success"><i class="fas fa-clipboard-list"></i> Ficha del servicio</button>
                           </a>
-                        </div>';
+                        </div>'; */
                     echo '</td>
                   </form>
                 </tr>';
@@ -3204,7 +3574,7 @@ function setdireccion(){
                 } 
                 $total = $this->model->importe + $this->model->precioenvio;
                 echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                  <td colspan="3">&nbsp;</td><td colspan="1">Total</td>
+                  <td colspan="1">&nbsp;</td><td colspan="1">Total</td>
                   <td class="number-align">$ '.number_format($total,2).'</td>
                 </tr>';
               }else{
@@ -3223,8 +3593,8 @@ function setdireccion(){
                     } 
                     $total = $this->model->importe + $this->model->precioenvio;
                     echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                      <td colspan="3">&nbsp;</td><td colspan="1">Total</td>
-                      <td class="number-align">$ '.number_format($total,2).'</td>
+                      <td colspan="1" hidden>&nbsp;</td><td colspan="1" hidden>Total</td>
+                      <td class="number-align" hidden>$ '.number_format($total,2).'</td>
                     </tr>';
                 }
               }
@@ -3235,28 +3605,32 @@ function setdireccion(){
             echo '</table>
           </div>
         </div>';
-      } else {
+      //} else {
 /* ======== BLOQUE NUEVO: CHOFERES + KM + TARIFARIO ======== */
 
 /* 1) Precio de combustible activo */
 $precioCombustible = 0.0;
-$r = setq('SELECT cc_precio FROM config_combustible WHERE cc_activo="S" ORDER BY cc_vigente_desde DESC, cc_id DESC LIMIT 1');
-if ($r && $row = $r->fetch_array()) $precioCombustible = floatval($row[0]);
+if(floatval($row['cc_combustible']) > 0){
+  $precioCombustible = $row['cc_combustible'];
+} else {
+  $r = setq('SELECT cc_precio FROM config_combustible WHERE cc_activo="S" ORDER BY cc_vigente_desde DESC, cc_id DESC LIMIT 1');
+  if ($r && $row = $r->fetch_array()) $precioCombustible = floatval($row[0]);
+}
+
 
 /* 2) Choferes activos */
 $choferes = [];
 $qCh = 'SELECT u_id, CONCAT(u_nmb, " ", u_apellidos) AS nombre
-       FROM usuarios WHERE u_estatus="A" AND u_grupo="CHOFER" ORDER BY nombre ASC';
+       FROM usuarios INNER JOIN usuarios_rol ON ur_usuario = u_id WHERE u_estatus="A" AND ur_rol="CHOFER" ORDER BY nombre ASC';
 $rsCh = setq($qCh);
-while($rsCh && $rowCh = $rsCh->fetch_assoc()){
-  $choferes[] = $rowCh;
-}
+
 
 /* 3) Tarifario (insumos base; los km se aplican aquí en cotización) */
 $tarifario = [];
 $qTf = 'SELECT tc_id, tc_unidad, tc_rendimiento, tc_capacidad_tanque, tc_casetas, tc_var_desgaste
         FROM tarifario_costos WHERE tc_estatus="A" ORDER BY tc_unidad ASC';
 $rsTf = setq($qTf);
+$rsTF2 = setq($qTf);
 while($rsTf && $rowTf = $rsTf->fetch_assoc()){
   // normaliza a float
   $rowTf['tc_rendimiento']      = floatval($rowTf['tc_rendimiento']);
@@ -3265,6 +3639,8 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
   $rowTf['tc_var_desgaste']     = floatval($rowTf['tc_var_desgaste']);
   $tarifario[] = $rowTf;
 }
+
+if($this->model->estatus != "N") $readonly = "readonly";
 ?>
 
 <!-- ======== UI: Choferes + KM + Tarifario ======== -->
@@ -3272,123 +3648,154 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
   <div class="card-header">
     <b>Asignación de chofer(es) y kilómetros (manual/automático)</b>
   </div>
-  <div class="card-body">
-    <div class="row g-3">
+  <form method="post" action="?modulo=cotizaciones&accion=updateextra&id=<?php echo $this->model->id; ?>" autocomplete="off" class="mt-2 container">
+    <div class="card-body">
+      <div class="row g-3">
 
-      <!-- Choferes (multi) -->
-      <div class="col-12">
-        <label class="form-label"><b>Chofer(es)</b></label>
-        <select name="choferes[]" id="chf_choferes" class="form-control" multiple size="6">
-          <?php foreach($choferes as $ch): ?>
-            <option value="<?= htmlspecialchars($ch['u_id']) ?>"><?= htmlspecialchars($ch['nombre']) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <small class="text-muted">Usa Ctrl/Cmd para seleccionar varios.</small>
-      </div>
+        <!-- Choferes (multi) -->
+        <div class="row mb-4">
+          <label class="form-label"><b>Chofer(es)</b></label>
+          <?php
+          while($rsCh && $rowCh = $rsCh->fetch_assoc()){
+            $val = busca($this->model->id, 'crm_cotizaciones_chofer', 'cch_chofer = "'.$rowCh['u_id'].'" AND cch_cotizacion', 'COUNT(*)');
+            if($val != "0") $checked = 'checked';
+            else $checked = '';
+            echo '<div class="col-md-4"><label class="form-label">'.$rowCh['nombre'].'</label> <input type="checkbox" id="chf_chofer'.$rowCh['u_id'].'" name="chf_chofer'.$rowCh['u_id'].'" '.$checked.'></div>';
+          }
 
-      <!-- Modo KM -->
-      <div class="col-md-6">
-        <label class="form-label"><b>Modo de kilómetros</b></label>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" checked>
-          <label class="form-check-label" for="chf_km_manual">Manual</label>
+          $sql = 'SELECT * FROM crm_cotizaciones WHERE cc_id = "'.$this->model->id.'"';
+          $result = setq($sql);
+          $row = $result->fetch_array();
+          ?>
         </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="km_mode" id="chf_km_auto" value="auto">
-          <label class="form-check-label" for="chf_km_auto">Automático (Google Maps)</label>
+
+        
+        <!-- Modo KM -->
+        <div class="col-md-6">
+          <label class="form-label"><b>Modo de kilómetros</b></label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" checked <?php echo $readonly; ?>>
+            <label class="form-check-label" for="chf_km_manual">Manual</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_auto" value="auto" <?php echo $readonly; ?>>
+            <label class="form-check-label" for="chf_km_auto">Automático (Google Maps)</label>
+          </div>
+        </div>
+
+        <!-- KM manual -->
+        <div class="col-md-6" id="chf_kmManualBox">
+          <label class="form-label"><b>Kilómetros (manual)</b></label>
+          <input type="number" step="0.01" min="1" onchange="recalc();" class="form-control" id="chf_km" name="chf_km" value="<?php echo $row['cc_km']; ?>" <?php echo $readonly; ?>>
+        </div>
+
+      </div>
+
+      <!-- KM automático -->
+      <div id="chf_kmAutoBox" class="mt-3" style="display:none;">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Origen</label>
+            <input type="text" id="chf_gm_origen" class="form-control" placeholder="Ingresa origen">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Destino</label>
+            <input type="text" id="chf_gm_destino" class="form-control" placeholder="Ingresa destino">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Paradas intermedias</label>
+            <div id="chf_gm_paradas_wrap"></div>
+            <button type="button" class="btn btn-sm btn-secondary mt-2" id="chf_btnAddParada">
+              <i class="fas fa-plus"></i> Agregar parada
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button type="button" class="btn btn-info mt-2" id="chf_btnCalcularRuta">
+              <i class="fas fa-route"></i> Calcular ruta
+            </button>
+            <small class="text-muted ms-2">Se calcularán los KM y se aplicará el tarifario.</small>
+          </div>
+          <div class="col-12">
+            <div id="chf_gm_mapa" style="width:100%; height:280px; border:1px solid #e1e1e1; border-radius:6px;"></div>
+          </div>
         </div>
       </div>
 
-      <!-- KM manual -->
-      <div class="col-md-6" id="chf_kmManualBox">
-        <label class="form-label"><b>Kilómetros (manual)</b></label>
-        <input type="number" step="0.01" min="1" class="form-control" id="chf_km" value="1">
-      </div>
+      <hr/>
 
-    </div>
-
-    <!-- KM automático -->
-    <div id="chf_kmAutoBox" class="mt-3" style="display:none;">
+      <!-- Selección de unidad del tarifario -->
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Origen</label>
-          <input type="text" id="chf_gm_origen" class="form-control" placeholder="Ingresa origen">
+          <label class="form-label"><b>Unidad (tarifario)</b></label>
+          <select id="chf_tarifario" name="chf_tarifario" onchange="recalc();" class="form-control" <?php echo $readonly; ?>>
+            <option value="">-- Selecciona una unidad --</option>
+            <?php
+            $check = busca($this->model->id, 'crm_cotizaciones', 'cc_id', 'cc_tarifario');           
+
+            while($t = $rsTF2->fetch_assoc()){
+              if($check == $t['tc_id']) $sel = 'selected';
+              else $sel = '';?>
+              <option value="<?= (int)$t['tc_id'] ?>" <?php echo $sel; ?>>
+                <?= htmlspecialchars($t['tc_unidad']) ?>
+                (rend: <?= number_format($t['tc_rendimiento'],4) ?> km/l)
+              </option>
+            <?php } ?>
+          </select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Destino</label>
-          <input type="text" id="chf_gm_destino" class="form-control" placeholder="Ingresa destino">
+
+        <div class="col-md-3">
+          <label class="form-label">Precio combustible (global)</label>
+          <input type="text" id="chf_precio" class="form-control" value="<?= number_format($precioCombustible,4,'.','') ?>" readonly>
         </div>
-        <div class="col-12">
-          <label class="form-label">Paradas intermedias</label>
-          <div id="chf_gm_paradas_wrap"></div>
-          <button type="button" class="btn btn-sm btn-secondary mt-2" id="chf_btnAddParada">
-            <i class="fas fa-plus"></i> Agregar parada
-          </button>
-        </div>
-        <div class="col-md-6">
-          <button type="button" class="btn btn-info mt-2" id="chf_btnCalcularRuta">
-            <i class="fas fa-route"></i> Calcular ruta
-          </button>
-          <small class="text-muted ms-2">Se calcularán los KM y se aplicará el tarifario.</small>
-        </div>
-        <div class="col-12">
-          <div id="chf_gm_mapa" style="width:100%; height:280px; border:1px solid #e1e1e1; border-radius:6px;"></div>
+
+        <div class="col-md-3">
+          <label class="form-label">KM usados</label>
+          <input type="text" id="chf_km_mostrado" class="form-control" value="<?php echo $row['cc_km']; ?>" readonly>
         </div>
       </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-2"><label class="form-label">TANQUES</label> <input type="text" id="chf_tanques" name="chf_tanques" class="form-control" value="<?php echo $row['cc_tanques']; ?>" readonly></div>
+        <div class="col-md-2"><label class="form-label">COMBUSTIBLE ($)</label> <input type="text" id="chf_combustible" name="chf_combustible" value="<?php echo $row['cc_combustible']; ?>" class="form-control" readonly></div>
+        <div class="col-md-2"><label class="form-label">CASETAS ($)</label> <input type="number" onchange="recalc();" id="chf_casetas" name="chf_casetas" value="<?php echo $row['cc_casetas']; ?>" class="form-control" value="0" <?php echo $readonly; ?>></div>
+        <div class="col-md-2"><label class="form-label">DESGASTE ($)</label> <input type="text" id="chf_desgaste" name="chf_desgaste" class="form-control" value="<?php echo $row['cc_desgaste']; ?>" readonly></div>
+        <div class="col-md-2"><label class="form-label">OPERADOR ($)</label> <input type="text" id="chf_operador" name="chf_operador" class="form-control" value="<?php echo $row['cc_operador']; ?>" readonly></div>
+        <div class="col-md-2"><label class="form-label">SUBTOTAL ($)</label> <input type="text" id="chf_total" name="chf_total" class="form-control" value="<?php echo $row['cc_subtotal']; ?>" readonly></div>
+        <div class="col-md-2"><label class="form-label">EXTRA (%)</label> <input type="number" onchange="recalc();" id="chf_porcentaje" name="chf_porcentaje" class="form-control" value="<?php echo $row['cc_porcentaje']; ?>" step="1" min="0"<?php echo $readonly; ?>></div>
+        <div class="col-md-2 mt-2"><label class="form-label">VENTA DVL ($)</label> <input type="text" id="chf_venta" class="form-control" value ="<?php echo $row['cc_mtotal']; ?>" readonly></div>
+      </div>
+
+      <!-- Hidden para enviar con el form existente -->
+      <input type="hidden" name="chf_km_mode" id="chf_km_mode" value="manual">
+      <input type="hidden" name="chf_km_total" id="chf_km_total" value="1">
+      <input type="hidden" name="chf_tarifario_id" id="chf_tarifario_id" value="">
+      <input type="hidden" name="chf_costo_total" id="chf_costo_total" value="">
+      <input type="hidden" name="chf_costo_venta" id="chf_costo_venta" value="">
+      <input type="hidden" name="chf_ruta_origen" id="chf_ruta_origen" value="">
+      <input type="hidden" name="chf_ruta_destino" id="chf_ruta_destino" value="">
+      <input type="hidden" name="chf_ruta_paradas" id="chf_ruta_paradas" value="[]">
+
     </div>
-
-    <hr/>
-
-    <!-- Selección de unidad del tarifario -->
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label"><b>Unidad (tarifario)</b></label>
-        <select id="chf_tarifario" class="form-control">
-          <option value="">-- Selecciona una unidad --</option>
-          <?php foreach($tarifario as $t): ?>
-            <option value="<?= (int)$t['tc_id'] ?>">
-              <?= htmlspecialchars($t['tc_unidad']) ?>
-              (rend: <?= number_format($t['tc_rendimiento'],4) ?> km/l)
-            </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-
-      <div class="col-md-3">
-        <label class="form-label">Precio combustible (global)</label>
-        <input type="text" id="chf_precio" class="form-control" value="<?= number_format($precioCombustible,4,'.','') ?>" readonly>
-      </div>
-
-      <div class="col-md-3">
-        <label class="form-label">KM usados</label>
-        <input type="text" id="chf_km_mostrado" class="form-control" readonly>
-      </div>
-    </div>
-
-    <div class="row g-3 mt-1">
-      <div class="col-md-2"><label class="form-label">TANQUES</label> <input type="text" id="chf_tanques" class="form-control" readonly></div>
-      <div class="col-md-2"><label class="form-label">COMBUSTIBLE ($)</label> <input type="text" id="chf_combustible" class="form-control" readonly></div>
-      <div class="col-md-2"><label class="form-label">CASETAS ($)</label> <input type="text" id="chf_casetas" class="form-control" readonly></div>
-      <div class="col-md-2"><label class="form-label">DESGASTE ($)</label> <input type="text" id="chf_desgaste" class="form-control" readonly></div>
-      <div class="col-md-2"><label class="form-label">OPERADOR ($)</label> <input type="text" id="chf_operador" class="form-control" readonly></div>
-      <div class="col-md-2"><label class="form-label">TOTAL ($)</label> <input type="text" id="chf_total" class="form-control" readonly></div>
-      <div class="col-md-2 mt-2"><label class="form-label">VENTA DVL ($)</label> <input type="text" id="chf_venta" class="form-control" readonly></div>
-    </div>
-
-    <!-- Hidden para enviar con el form existente -->
-    <input type="hidden" name="chf_km_mode" id="chf_km_mode" value="manual">
-    <input type="hidden" name="chf_km_total" id="chf_km_total" value="1">
-    <input type="hidden" name="chf_tarifario_id" id="chf_tarifario_id" value="">
-    <input type="hidden" name="chf_costo_total" id="chf_costo_total" value="">
-    <input type="hidden" name="chf_costo_venta" id="chf_costo_venta" value="">
-    <input type="hidden" name="chf_ruta_origen" id="chf_ruta_origen" value="">
-    <input type="hidden" name="chf_ruta_destino" id="chf_ruta_destino" value="">
-    <input type="hidden" name="chf_ruta_paradas" id="chf_ruta_paradas" value="[]">
-
-  </div>
+    <?php
+      if($this->model->estatus == "N"){
+        ?>
+          <div class="col-md-12"><center><button class="btn btn-primary" onclick="recalc();" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
+        <?php
+      }
+      
+    ?>  
+  </form>
 </div>
 <script>
-(function(){
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('formCotizacion');
+
+    form.addEventListener('submit', () => {
+      recalc(); // calcula y actualiza los campos antes del envío
+      // el submit continúa automáticamente
+    });
+  });
   // ---------- Datos del servidor ----------
   const TARIFARIO = <?php echo json_encode($tarifario, JSON_NUMERIC_CHECK); ?>;
   const PRECIO    = parseFloat(document.getElementById('chf_precio').value) || 0;
@@ -3448,48 +3855,49 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
   }
 
   // ---------- Re-cálculo costos ----------
-  function recalc(){
-    const tarId = parseInt(selTarifario.value||0);
+  function recalc() {
+    const tarId = parseInt(selTarifario.value || 0);
     const t = getTarifarioById(tarId);
-    const km = toNum(kmManual.checked ? kmInput.value : hKm.value);
-    kmMostrado.value = numFmt2(km);
 
-    // refleja hidden
-    hKm.value   = km;
+    // Convertir entradas a decimales
+    const km = parseFloat(kmManual.checked ? kmInput.value : hKm.value) || 0;
+    const porc = parseFloat(document.getElementById("chf_porcentaje").value) || 0;
+    const outCas = parseFloat(document.getElementById("chf_casetas").value) || 0;
+
+    console.log("casetas: ", outCas);
+
+    kmMostrado.value = numFmt2(km);
+    hKm.value = km;
     hTarId.value = tarId || '';
 
-    if(!t || km <= 0){
-      outTanques.value = outComb.value = outCas.value = outDesg.value = outOper.value = outTotal.value = outVenta.value = '';
-      hTot.value = hVen.value = '';
-      return;
-    }
+    // Convertir también los valores del tarifario a número decimal
+    const rend = parseFloat(t.tc_rendimiento) || 0;
+    const cap  = parseFloat(t.tc_capacidad_tanque) || 0;
+    const vdes = parseFloat(t.tc_var_desgaste) || 0;
+    const prec = parseFloat(PRECIO) || 0;
 
-    const rend = toNum(t.tc_rendimiento);
-    const cap  = toNum(t.tc_capacidad_tanque);
-    const cas  = toNum(t.tc_casetas);
-    const vdes = toNum(t.tc_var_desgaste);
-    const prec = PRECIO;
-
-    const tanq = (rend > 0 ? (km / rend) : 0);
+    // Cálculos asegurando decimales
+    const tanq = rend > 0 ? (km / rend) : 0;
     const comb = prec * cap * tanq;
-    const desg = km * (vdes * 10);  // tu ajuste
-    const oper = km * (vdes * 10);  // tu ajuste
-    const total = comb + cas + desg + oper;
-    const venta = total * 1.5;
+    const desg = km * (vdes * 10);
+    const oper = km * (vdes * 10);
+    const total = comb + outCas + desg + oper;
+    const venta = total * (1 + (porc / 100));
 
+    // Mostrar resultados formateados
     outTanques.value = numFmt4(tanq);
     outComb.value    = numFmt2(comb);
-    outCas.value     = numFmt2(cas);
     outDesg.value    = numFmt2(desg);
     outOper.value    = numFmt2(oper);
     outTotal.value   = numFmt2(total);
     outVenta.value   = numFmt2(venta);
 
+    // Guardar en inputs ocultos
     hTot.value = total;
     hVen.value = venta;
   }
 
-  // eventos
+
   ['input','change'].forEach(ev => {
     kmInput.addEventListener(ev, recalc);
     selTarifario.addEventListener(ev, recalc);
@@ -3578,11 +3986,11 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
 
   // inicial
   recalc();
-})();
+
 </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script>
 <?php       
-}
+//}
         //Condiciones comerciales ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if( $this->model->estatus == "A"){
           $sqlf='SELECT * FROM  crm_cotizaciones_condiciones WHERE cf_cotizacion = "'.$this->model->id.'" order by cf_orden';
