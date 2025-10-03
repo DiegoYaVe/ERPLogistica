@@ -1,4 +1,5 @@
 <?php
+  ini_set('display_errors', 0);
 session_start();
 include_once('../funciones.php');
 
@@ -61,6 +62,7 @@ if($result -> num_rows > 0){
         <th class="">Nombre</th>
         <th class="">Fecha</th>
         <th class="">Estatus</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -120,7 +122,7 @@ if($result -> num_rows > 0){
       $estatus = array("N"=>"En construcción","V"=>"Enviada","L"=>"En logística","A"=>"Aplicada","C"=>"Cancelada","P"=>"Pendiente de envío","R"=>"Replicada","D"=>"Definición de envíos");
       $estatusbg = array("N"=>'class="alert no-border" style="background: #ffc107"',"V"=>'class="alert no-border text-white" style="background: #007bff"',"L"=>'class="alert no-border text-white" style="background: #6c757d"',"A"=>'class="alert no-border text-white" style="background: #20c997"',"C"=>'class="alert no-border text-white" style="background: #dc3545"',"P"=>'class="alert no-border" style="background: #fd7e14"',"R"=>'class="alert no-border" style="background: #fd7e14"',"D"=>'class="alert no-border text-white" style="background: #17a2b8"');
       $modulo = 'cotizaciones';
-      $accion = 'index';
+      $accion = 'show';
     }
     
 
@@ -130,9 +132,9 @@ if($result -> num_rows > 0){
         <td>'.$row['nmb'].'</td>
         <td>'.$row['fecha'].'</td>
         <td '.$estatusbg[$row['estatus']].'>'.$estatus[$row['estatus']].'</td>
-        
+        <td><a class="btn btn-info btn-sm" href="?modulo='.$modulo.'&accion='.$accion.'&id='.$row['id'].'"><i class="fas fa-eye"></i></a></td>
       </tr>
-    '; //<td><a class="btn btn-info btn-sm" href="?modulo='.$modulo.'&accion='.$accion.'&id='.$row['id'].'"><i class="fas fa-eye"></i></a></td>
+    '; 
   }
   $html .= '
     </tbody>

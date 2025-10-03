@@ -3,7 +3,8 @@
   date_default_timezone_set("America/Mexico_City");
   include_once('../funciones.php');
   include_once('../modulos/remisiones.php');
-  /* ini_set('display_errors', 1); */
+  ini_set('display_errors', 0);
+
   $mremision = new modelremisiones();
   $mremision->select($_GET['id']);
   $accion = "aplicar";
@@ -290,7 +291,7 @@
         list($numco) = $resultco -> fetch_array(); 
         $numdom = busca($mremision->id, 'remisionesc' ,'rc_ligado IS NULL AND rc_tipoenvio = "D" AND rc_remision' ,'COUNT(*)');
         echo 'numdom: '.$numdom;
-        if($numdom > 0){
+       /*  if($numdom > 0){
           $hid = "hidden";
         } else if($numco <= 0){
           $hid = "";
@@ -298,7 +299,8 @@
           if($mremision->descuento > 0) $hid = 'hidden';
           else if($mremision->precioenvio > 0) $hid = "";
           else $hid = "hidden";
-        }
+        } */
+       $hid = 'hidden';
         echo '<div class="col-lg-3 col-sm-4" '.$hid.'>
           <div class="mb-5">
             <label for"">Costo de envío al cliente</label>
@@ -311,7 +313,7 @@
           <input type="checkbox" name="absorber" id="absorber" onchange="absorberenvio();" class="form-control flipswitch2" />
         </div>
       </div>';
-        echo '<div class="col-lg-3 col-sm-4">
+        echo '<div class="col-lg-3 col-sm-4" '.$hid.'>
           <div class="mb-5">
             <label for"">Costo de envío total</label>
             <input type="number" name="enviototal" id="enviototal" step="0.01" min="0" max="'.$mremision->precioenvio.'" value="'.$mremision->precioenvio.'" class="form-control" placeholder="costo del envío total" readonly/>
@@ -336,7 +338,7 @@
         </div>';
         if($hid == "hidden") $checkce = 'checked';
         else $checkce = '';
-        echo '<div class="col-lg-3 col-sm-4">
+        echo '<div class="col-lg-3 col-sm-4" '.$hid.'>
           <div class="mb-5">
             <label for"">El cliente paga envío</label>
             <input type="checkbox" name="clienteenvio" id="clienteenvio" class="form-control flipswitch2" '.$checkce.'/>

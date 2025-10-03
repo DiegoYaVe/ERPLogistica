@@ -1,5 +1,6 @@
 <?php
-  //ini_set('display_errors', 1);
+  ini_set('display_errors', 0);
+
   class remisiones {
     var $model;
     var $view;
@@ -3214,9 +3215,9 @@
             }
             
           }else if($this->model->estatus != "N" && $this->model->estatus != "D" && $this->model->estatus != "C"){
-            $botones .= '<a data-fancybox data-type="ajax" data-src="popup/entregaparcial.php?remision='.$this->model->id.'&rand='.rand(1,999).'" href="javascript:;">
+            /* $botones .= '<a data-fancybox data-type="ajax" data-src="popup/entregaparcial.php?remision='.$this->model->id.'&rand='.rand(1,999).'" href="javascript:;">
               <button class="btn  btn-sm text-white btn-primary"><i class="fas fa-suitcase-rolling" style="color: #ffffff"></i> Entrega parcial</button>
-            </a>';
+            </a>'; */
             $botones .= '<a target="_BLANK" href="formats/notadeventa.php?id='.$this->model->id.'">
               <button type="button" class="btn btn-secondary btn-sm"><i class="fa fa-print"></i> Imprimir</button>
             </a>
@@ -3233,18 +3234,18 @@
             $factconceptos = 0;
             $factcantidad = 0;
             $total = busca($this->model->id, 'cxcobrar', 'cx_referencia', 'cx_importe');
-            $factabono = busca($this->model->id, 'factura_abonos', 'fa_remision','SUM(fa_monto)');
+            /* $factabono = busca($this->model->id, 'factura_abonos', 'fa_remision','SUM(fa_monto)');
             if(($this->model->estatus == "F" && ($total > $factabono)) || $factabono == 0 )
               $botones .= '<a data-fancybox data-type="ajax" data-src="popup/facturarabono.php?or=1&remision='.$this->model->id.'&rand='.rand(1,999).'" href="javascript:;">
                 <button class="btn  btn-sm text-white" style="background: grey"><i class="far fa-file-code" style="color: #ffffff"></i> Facturar</button>
               </a>';
             else $botones .= '<a data-fancybox data-type="ajax" data-src="popup/facturarabono.php?or=1&remision='.$this->model->id.'&rand='.rand(1,999).'" href="javascript:;">
               <button class="btn btn-success btn-sm text-white"><i class="far fa-file-code" style="color: #ffffff;"></i> Facturada</button>
-            </a>';
+            </a>'; */
 
-            $botones .= '<a target="_BLANK" href="formats/poliza-garantia.php?id='.$this->model->id.'">
+            /* $botones .= '<a target="_BLANK" href="formats/poliza-garantia.php?id='.$this->model->id.'">
                           <button class="mr-1 btn btn-danger btn-sm" data-toggle="tooltip" data-placement="top" title="Poliza de garantia"><i class="fas fa-tools"></i> Poliza de garantia</button>
-                        </a>';
+                        </a>'; */
             
 
             /* elseif($factrem > 0){

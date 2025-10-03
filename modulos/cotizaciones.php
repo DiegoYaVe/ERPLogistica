@@ -1,5 +1,5 @@
 <?php
-  ini_set('display_errors', 0);
+  //ini_set('display_errors', 1);
   class cotizaciones{
     function __construct(){
       $this->model = new modelcotizaciones($obj);
@@ -273,7 +273,7 @@
         }
       }
 
-      $this->model->SetData($_GET['idcotiza'],$cl,NULL,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio, $retencion);
+      $this->model->SetData($_GET['idcotiza'],$cl,NULL,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio, $retencion, $_POST['moneda'], $_POST['preciodolares']);
       $this->model->updatecotiza();
 
       $this->model->calculaimporte($_GET['idcotiza']);
@@ -903,9 +903,10 @@
               }
         }
 
-       
+       $sqlupd = 'UPDATE remisiones SET r_subtotal = "'.$this->model->subtotal.'", r_total = "'.$this->model->mtotal.'"';
+       setq($sqlupd);
 
-        $remis->calculaimporte($remis->id);
+        //$remis->calculaimporte($remis->id);
 
         $redirect = "?modulo=remisiones&accion=show&id=".$remis->id;
       
@@ -1615,7 +1616,7 @@
       //foreachdie();
       $cotiza = $_GET['id'];
 
-      $qCh = 'SELECT u_id
+      /* $qCh = 'SELECT u_id
        FROM usuarios INNER JOIN usuarios_rol ON ur_usuario = u_id WHERE u_estatus="A" AND ur_rol="CHOFER"';
       $rsCh = setq($qCh);
       while($rowch = $rsCh->fetch_array()){
@@ -1627,7 +1628,7 @@
           $sqldel= 'DELETE FROM crm_cotizaciones_chofer WHERE cch_cotizacion = "'.$cotiza.'" AND cch_chofer = "'.$rowch['u_id'].'"';
           setq($sqldel);
         }
-      }
+      } */
 
       $sqlupd = 'UPDATE crm_cotizaciones SET cc_tarifario = "'.$_POST['chf_tarifario'].'",
                                               cc_tanques = "'.$_POST['chf_tanques'].'",
@@ -1640,13 +1641,108 @@
                                               cc_tarifario_id = "'.$_POST['chf_tarifario_id'].'",
                                               cc_subtotal ="'.$_POST['chf_costo_total'].'",
                                               cc_km = "'.$_POST['chf_km'].'",
-                                              cc_mtotal = "'.$_POST['chf_costo_venta'].'" WHERE cc_id = "'.$cotiza.'"';
+                                              cc_tipokm = "'.$_POST['km_mode'].'",
+                                              cc_mtotal = "'.$_POST['chf_costo_venta'].'" WHERE cc_id = "'.$cotiza.'"
+                                              ';
       
       setq($sqlupd);                                        
 
       redirect("?modulo=cotizaciones&accion=show&id=".$cotiza);
 
 
+    }
+
+    function updatedimensiones(){
+      $cotiza = $_GET['id'];
+      $sqlupd = 'UPDATE crm_cotizaciones SET cc_unidades = "'.$_POST['unidad'].'",
+                                              cc_peso = "'.$_POST['peso'].'",
+                                              cc_largo = "'.$_POST['largo'].'",
+                                              cc_ancho = "'.$_POST['ancho'].'",
+                                              cc_alto = "'.$_POST['alto'].'",
+                                              cc_descmercancia = "'.$_POST['descripcion'].'"
+                                               WHERE cc_id = "'.$cotiza.'"';
+      
+      setq($sqlupd);                                        
+
+      redirect("?modulo=cotizaciones&accion=show&id=".$cotiza);
+    }
+
+    function insertproveedor(){
+      //foreachdie();
+      $id = $_GET['cotizacion'];
+
+      if($_FILES['archivo']['name']){
+        $max = intval(busca($id, 'crm_cotizaciones_proveedor', 'cp_cotizacion', 'COUNT(*)'))+1;
+        $nuevoid= $id.'-'.$max;
+        $img = $_FILES['archivo']['name'];
+        $extension = pathinfo($img, PATHINFO_EXTENSION);
+        $nuevo_nombre = 'documento'.$nuevoid.'.'.$extension;
+        if (isset($img) && $img != "") {
+          $temp = $_FILES['archivo']['tmp_name'];
+          if (move_uploaded_file($temp, 'docs/cotizaciones/'.$nuevo_nombre)) {
+            chmod('docs/cotizaciones/'.$nuevo_nombre, 0777);
+            $sqlupd = 'UPDATE crm_cotizaciones SET cc_tipokm = "proveedor" WHERE cc_id = "'.$id.'"';
+            setq($sqlupd);
+
+            $sql = 'INSERT INTO crm_cotizaciones_proveedor SET cp_cotizacion = "'.$id.'",
+                                                  cp_proveedor = "'.$_POST['proveedor'].'",
+                                                  cp_costo = "'.$_POST['costo'].'",
+                                                  cp_extra = "'.$_POST['extra'].'",
+                                                  cp_archivo = "'.$nuevo_nombre.'",
+                                                  cp_tipounidad = "'.$_POST['tipounidad'].'",
+                                                  cp_concepto = "'.$_POST['concepto'].'"';
+            
+            setq($sql);
+
+            $total = busca($id, 'crm_cotizaciones_proveedor', 'cp_cotizacion', 'SUM(cp_costo+cp_extra)');
+            $sqlupd = 'UPDATE crm_cotizaciones SET cc_mtotal = "'.$total.'" WHERE cc_id = "'.$id.'"';
+            setq($sqlupd);
+
+          }
+          else {
+            die('<div><b>Ocurrió algún error al subir el fichero. No pudo guardarse.</b></div>');
+          }
+          
+        }
+      } else {
+        echo alert_back('Error al recibir la información');
+      }
+
+      redirect("?modulo=cotizaciones&accion=show&id=".$id);
+    }
+
+    function eliminarproveedor(){
+      $id = $_GET['id'];
+      $cotizacion = $_GET['cotizacion']; 
+
+      $sql = 'DELETE FROM crm_cotizaciones_proveedor WHERE cp_id = "'.$id.'"';
+      setq($sql);
+
+      $total = busca($id, 'crm_cotizaciones_proveedor', 'cp_cotizacion', 'SUM(cp_costo+cp_extra)');
+      $sqlupd = 'UPDATE crm_cotizaciones SET cc_mtotal = "'.$total.'" WHERE cc_id = "'.$id.'"';
+      setq($sqlupd);
+
+      redirect("?modulo=cotizaciones&accion=show&id=".$cotizacion);
+    }
+    
+    function updateruta(){
+      $id = $_GET['id'];  
+
+      $sql = 'UPDATE crm_cotizaciones SET cc_motivo = "'.$_POST['origen'].'", cc_dirdestino = "'.$_POST['destino'].'" WHERE cc_id = "'.$id.'"';
+      setq($sql);
+
+      $detalle = busca($id, 'crm_cotizacionesd', 'cdm_cotizacion', 'cdm_id');
+      $origennmb = busca($_POST['origen'], 'ruta_origen', 'ro_id', 'ro_nombre');
+      $destinonmb = busca($_POST['destino'], 'ruta_destino', 'rd_id', 'rd_nombre');
+      if($detalle){
+        $sqlupd = 'UPDATE crm_cotizacionesd SET cdm_nmbarticulo = "Envio '.$origennmb.' - '.$destinonmb.'" WHERE cdm_id = "'.$detalle.'"';
+        setq($sqlupd);
+      } else {
+        $sqlins = 'INSERT INTO crm_cotizacionesd SET cdm_nmbarticulo = "Envio '.$origennmb.' - '.$destinonmb.'", cdm_cotizacion = "'.$id.'",cdm_cantidad = "0.00"';
+        setq($sqlins);
+      }
+
+      redirect("?modulo=cotizaciones&accion=show&id=".$id);
     }
   }
 
@@ -1735,10 +1831,19 @@
       $this->precioenvio = $row['cc_precioenvio'];
       $this->envio = $row['cc_envio'];
       $this->motivo = $row['cc_motivo'];
-      $this->preciodolars = $row['cc_preciodolares'];
+      $this->moneda = $row['cc_moneda'];
+      $this->preciodolares = $row['cc_preciodolares'];
       $this->retencion = $row['cc_retencion'];
+      $this->unidadmercancia= $row['cc_unidades'];
+      $this->pesomercancia = $row['cc_peso'];
+      $this->largomercancia = $row['cc_largo'];
+      $this->anchomercancia = $row['cc_ancho'];
+      $this->altomercancia = $row['cc_alto'];
+      $this->descmercancia = $row['cc_descmercancia'];
+      $this->tipokm = $row['cc_tipokm'];
+      $this->dirdestino = $row['cc_dirdestino'];
     }
-    function SetData($id,$cliente,$foliocot,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$retencion,$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
+    function SetData($id,$cliente,$foliocot,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$retencion, $moneda = 'MXN', $preciodolares = '1',$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
       $this->id = clearvmayus($id);
       $this->cliente = clearvmayus($cliente);
       $this->foliocot = clearvmayus($foliocot);
@@ -1768,6 +1873,8 @@
       $this->almacen = $almacen;
       $this->envio = $envio; 
       $this->retencion = $retencion; 
+      $this->moneda = $moneda; 
+      $this->preciodolares = $preciodolares; 
     }
 
     function insertcotiza(){
@@ -1804,6 +1911,8 @@
               cc_uuid = "'.$this->uuid.'",
               cc_almacen = "'.$this->almacen.'",
               cc_envio = "'.$this->envio.'",
+              cc_moneda = "'.$this->moneda.'",
+              cc_preciodolares = "'.$this->preciodolares.'",
               cc_probabilidad = "'.$this->probabilidad.'"';
       setq($sql);
 
@@ -1821,18 +1930,21 @@
               cc_diva = "'.$this->diva.'",
               cc_retencion = "'.$this->retencion.'",
               cc_mtotal = "'.$this->mtotal.'",
-              cc_descuento= "'.$this->descuento.'",
-              cc_montodescuento= "'.$this->montodescuento.'",
+              cc_descuento = "'.$this->descuento.'",
+              cc_montodescuento = "'.$this->montodescuento.'",
               cc_estatus = "'.$this->estatus.'",
               cc_direnvio = "'.$this->direnvio.'",
               cc_observadir = "'.$this->observadir.'",
-              cc_msi= "'.$this->msi.'",
+              cc_msi = "'.$this->msi.'",
               cc_almacen = "'.$this->almacen.'",
               cc_envio = "'.$this->envio.'",
-              cc_probabilidad = "'.$this->probabilidad.'"
-              WHERE cc_id = "'.$this->id.'"';
+              cc_probabilidad = "'.$this->probabilidad.'",
+              cc_moneda = "'.$this->moneda.'",
+              cc_preciodolares = "'.$this->preciodolares.'"
+            WHERE cc_id = "'.$this->id.'"';
       setq($sql);
     }
+
     function resultcd($id){
       $sql = 'SELECT * FROM crm_cotizacionesd
               WHERE cdm_cotizacion = "'.$id.'" ORDER BY cdm_id ASC';
@@ -2794,12 +2906,23 @@
                   <th>Cliente</th>
                   <th>Descripcion</th>
                   <th>Vendedor</th>
+                  <th>Proveedor</th>
                   <th>Estatus</th>
                   <th>Importe</th>
                   <th></th>
                 </tr>
               </thead>';
               while($row = $this->model->resultrc->fetch_array()){
+                if($row['cc_tipokm'] == "proveedor"){
+                  $sqlprov= 'SELECT  * FROM crm_cotizaciones_proveedor INNER JOIN proveedores ON p_id = cp_proveedor WHERE cp_cotizacion = "'.$row['cc_id'].'"';
+                  $resultprov = setq($sqlprov);
+                  $proveedor ='';
+                  while($rowprov = $resultprov -> fetch_array()){
+                    $proveedor.= ('- '.$rowprov['p_nmb'].'<br>');
+                  }
+                } else{
+                  $proveedor = 'Sin proveedor externo';
+                }
                 $lastm = $row['cc_nmbagente'];
                 $nmb = busca($row['cc_cliente'],'crm_clientes','c_id','c_nmb');
                 $apellidos = busca($row['cc_cliente'],'crm_clientes','c_id','c_apellidos');
@@ -2809,6 +2932,7 @@
                   <td>'.$nmbcl.'</td>
                   <td>'.$row['cc_nmb'].'</td>
                   <td>'.$lastm.'</td>
+                  <td>'.$proveedor.'</td>
                   <td '.$this->model->nestatus[$row['cc_estatus']].'>'.$this->model->aestatus[$row['cc_estatus']].'</td>
                   <td class="number-align">$'.number_format($row['cc_mtotal'],2).'</td>
                   <td>
@@ -2906,11 +3030,10 @@
       $izquierda .= '<a id="fancyupd" data-fancybox data-type="ajax" data-src="popup/setcotiza.php?tablero='.$this->model->tablero.'&idcotiza='.$this->model->id.'&rand="'.rand().'"" href="javascript:;">
           <button type="button" id="updcotiza" class="btn btn-primary " data-toggle="tooltip" data-placement="top" title="Modificar información de la cotización" '.$stylebtn.'><i class="fa fa-pen"></i>Modificar</button>
         </a>';
-      if($this->model->estatus == "N" || $this->model->estatus == "R"){
-        
-          $izquierda .= '<a href="formats/pdfcotizacion.php?idcotiza='.$this->model->id.'" target="_BLANK">
+        $izquierda .= '<a href="formats/pdfcotizacion.php?idcotiza='.$this->model->id.'" target="_BLANK">
           <button type="button" class="btn btn-danger  text-white" data-toggle="tooltip" data-placement="top" title="Vista previa de la cotización"><i class="fa fa-file-pdf"></i>PDF</button>
         </a>';
+      if($this->model->estatus == "N" || $this->model->estatus == "R"){
 
         if($this->model->cotizacompleta($this->model->id) == "OK" && $this->model->compruebacmb($this->model->id) == "OK" && ($this->model->estatus == "N" || $this->model->estatus == "R"))
           if($this->model->envio == "P")  
@@ -3110,7 +3233,7 @@ function setdireccion(){
 
       </script>
       <?php
-      if($this->model->estatus == "N"  || $this->model->estatus == "R"){
+      /* if($this->model->estatus == "N"  || $this->model->estatus == "R"){
         if(isset($_GET['last'])) $focus = '';
         else $focus = 'autofocus';
         $cliente = busca($this->model->tablero,'crm_tableros','ct_id','ct_cliente');
@@ -3140,13 +3263,13 @@ function setdireccion(){
                 <label for="agregar" class">Cantidad</label>
                 <input type="number" min="1" max="99999" step="1" value="1" name="cantidadorig" id="cantidadorig" placeholder="Cantidad" class="form-control" required tabindex="2">
               </div>';
-              /* $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-              if($grupo == "ADMIN" || $grupo == "GERENCIA") $read = '';
-              else $read = 'readonly';
-              echo  '<div class="col-8 col-md-3">
-                <label for="precio" class">Precio unitario</label>
-                <input type="number" min="0.01" max="9999999" step="0.01" name="impunitario" id="impunitario" placeholder="Importe del concepto" class="form-control" required  tabindex="3" '.$read.'>
-              </div>'; */
+              //$grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+              //if($grupo == "ADMIN" || $grupo == "GERENCIA") $read = '';
+              //else $read = 'readonly';
+              //echo  '<div class="col-8 col-md-3">
+              // <label for="precio" class">Precio unitario</label>            
+              //<input type="number" min="0.01" max="9999999" step="0.01" name="impunitario" id="impunitario" placeholder="Importe del concepto" class="form-control" required  tabindex="3" '.$read.'>
+              //</div>';
               echo '<div class="col-auto">
                 <label >Enviar</label><br>
                 <button tabindex="3" type="submit" id="submitfcotiza" class="btn btn-success"><i class="fa fa-paper-plane"></i> Enviar</button>
@@ -3154,11 +3277,11 @@ function setdireccion(){
             </div>
           </form>';
         $readonestatus = "";
-      }else $readonestatus = ' disabled ';
+      }else $readonestatus = ' disabled '; */
 
       //if($this->model-> estatus != "D"){
         
-        echo '<div class="row">
+        /* echo '<div class="row">
         <div class="card-body">
           <div class="table-responsive">
             <table class="table">
@@ -3171,440 +3294,11 @@ function setdireccion(){
                   <th width="18%">Importe</th>  -->
                   <th width="15%"></th>
                 </tr>
-              </thead>';
-              ?>
-              <script>
-                function buscaprod(){
-                  /* var modelo = document.getElementById("producto").value;
-                  var esquema = $('#esquema').attr('value');
-                  $.ajax({
-                    url: 'query/buscarmodelo.php',
-                    method: 'POST',
-                    data: {'modelo': modelo,
-                            'esquema': esquema},
-                  }).done(function(data){
-                    if(data == undefined || data == "") console.log("");
-                    else document.getElementById("impunitario").value = data;
-                  }); */
-                }
-                function enviardescripcion(idprod){
-                  document.getElementById("iddescripcion").value = idprod;
-                  document.getElementById("valuedescripcion").value = document.getElementById("descripcion" + idprod).value;
-                  document.senddescripcion.submit();
-                }
-                function updatecpt(idcd){
-                  document.getElementById("update" + idcd).disabled = true;
-                  document.update+idcd.submit();
-                }
-                function deletecpt(idcd, descuento){
-                  console.log("descuento: "+descuento);
-                  var idcotiza = document.getElementById("idocotizacion").value;
-                  if(descuento > 0){
-                    var conf = confirm("¿Eliminar el concepto de la cotización? Al eliminarlo, se quitará el descuento de la cotización");
-                  } else {
-                    var conf = confirm("¿Eliminar el concepto de la cotización?");
-                  }
-                  if(conf == true){
-                    document.location.href="?modulo=cotizaciones&accion=delconcepto&cotizacion=" + idcotiza + "&iddesc=" + idcd;
-                  }
-                }
-                function updatedesc(id){
-                  $("#btnsendc"+id).click();
-                }
-                function seteditacotiza(cotiza,idcon){
-                  document.getElementById("nmbprod" + idcon).style.display = "none";
-                  document.getElementById("btnedit" + idcon).style.display = "none";
-                  document.getElementById("nmbconcepto" + idcon).style.display = "";
-                  var concepto = document.getElementById("nmbprod" + idcon).innerHTML;
-
-                  document.getElementById("nmbconcepto" + idcon).focus();
-                  nmbconcepto = concepto.trim();
-                  document.getElementById("nmbconcepto" + idcon).value = nmbconcepto;
-                  document.getElementById("btnsendc" + idcon).style.display = "";
-                  document.getElementById("descripcion" + idcon).style.display = "none";
-                }
-                function refreshconc(idcotiza,idcon){
-                  var nmbprod = document.getElementById("nmbconcepto" + idcon).value;
-                  var idcotizacion = idcotiza;
-                  var idconcepto = idcon;
-
-                  document.getElementById("idcotizacion").value = idcotizacion;
-                  document.getElementById("idconc").value = idconcepto;
-                  document.getElementById("nmbprod").value = nmbprod;
-                  if(nmbprod != "" && nmbprod != undefined){
-                    document.updateconcentp.submit();
-                  }
-                  else{
-                    alert("Se requiere un valor para la descripcion");
-                  }
-
-                }
-              </script>
-              <?php
-              $totiva = 0;
-              $subtotal = 0;
-              $descuento = 0;
-              $iva = 0;
-              $viva = busca(1,'configuracionesp','c_id','c_iva')/100;
-              $articulo = "";
-              echo '<form name="updateconcentp" method="post" action="?modulo=cotizaciones&accion=updateconc">
-                <input type="hidden" name="cotizacion" id="idcotizacion" />
-                <input type="hidden" name="idc" id="idconc" />
-                <input type="hidden" name="nmbp" id="nmbprod" />
-              </form>';
-              //die($this->model->diva);
-              while($row = $this->model->resultcd->fetch_array()){
-                echo'<script>
-                  function updatecant'.$row['cdm_id'].'(){
-                    var cantidad = document.getElementById("cantidad'.$row['cdm_id'].'").value;
-                    document.getElementById("newcant'.$row['cdm_id'].'").value = cantidad;
-                    var form = document.getElementById("updatecantidad'.$row['cdm_id'].'");
-                    document.updatecantidad'.$row['cdm_id'].'.submit();
-                  }
-                  function updateln'.$row['cdm_id'].'(){
-                    var linean = document.getElementById("lineaneg'.$row['cdm_id'].'").value;
-                    document.getElementById("newln'.$row['cdm_id'].'").value = linean;
-                    document.updatelineaneg'.$row['cdm_id'].'.submit();
-                  }
-                </script>';
-                echo '<form name="updatecantidad'.$row['cdm_id'].'" method="post" action="?modulo=cotizaciones&accion=cambiarcantidad&id='.$row['cdm_id'].'&cotizacion='.$_GET['id'].'">
-                  <input type="hidden" name="cantidad" id="newcant'.$row['cdm_id'].'" />
-                </form>';
-                echo '<form name="updatelineaneg'.$row['cdm_id'].'" method="post" action="?modulo=cotizaciones&accion=cambiarln&id='.$row['cdm_id'].'&cotizacion='.$_GET['id'].'">
-                  <input type="hidden" name="linean" id="newln'.$row['cdm_id'].'" />
-                </form>';
-                $desc = busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_descuento');
-                $preciodb = $row['cdm_precio'];
-                if($row['cdm_iva'] == "1"){
-                  $chiva = "checked";
-                  $precio = $row['cdm_precio'];
-                  $importe = $row['cdm_precio']*$row['cdm_cantidad'];
-                  if($desc){
-                    $descuento += $importe*($this->model->descuento/100);
-                  }
-                  $iva += $importe * ($viva);
-                }else{
-                  $precio = $row['cdm_precio'];
-                  $chiva = "";
-                  $importe = $row['cdm_precio']*$row['cdm_cantidad'];
-                  if($desc){
-                    $descuento += $importe*($this->model->descuento/100);
-                  }
-                  $iva += 0;
-                }
-                $subtotal+= $importe;
-
-                $buttonact = "";
-                $numvar = 0;
-                $tipoprod = busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_tipoprod');
-                $inventariado = busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_inventariado');
-
-                if($tipoprod == "M"){
-                  $sqlcmb = 'SELECT * FROM articulos_combos WHERE ac_articulo = "'.$row['cdm_articulo'].'"';
-                  $resultcmb = setq($sqlcmb);
-                  while($rowcmb = $resultcmb -> fetch_array()){
-                    $numvar .= busca($rowcmb['ac_ahijo'], 'articulos_variantes', 'av_articulo', 'COUNT(*)');
-                    //$cant = busca($rowcmb['ac_ahijo'], 'remision_variantes', 'rv_remision = "'.$this->model->id.'" AND rv_remisiond = "'.$row['cdm_id'].'" AND rv_articulo', 'SUM(rv_cantidad)');
-                    if(!$cant) $cant = "0";
-                  }
-                  //if($numvar != 0){
-                    $buttonact ='
-                      <a href="popup/elijevariantes-cotizacion?cotizacion='.$this->model->id.'&cotizaciond='.$row['cdm_id'].'" onclick="window.open(this.href,\'cotizaciones\',\'width=890, height=800\');return false">
-                        <button type="button" class="btn text-white mt-1" style="background: teal;" data-toggle="tooltip" data-placement="top" title="Seleccione las variantes para este producto"><i class="fas fa-tools" style="color: #ffffff;"></i> Configuración de servicios para '.busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_nmb').'
-                        </button>
-                      </a>';
-                  //}
-                }
-                if($tipoprod != "M"){
-                  if($inventariado =="1"){
-                    $articulo = busca($row['cdm_articulo'], 'articulos', 'a_id', 'a_nmb');
-                    if($row['cdm_modelo'] == "")
-                      $exist = existencia($row['cdm_articulo'], $this->model->almacen);
-                    else{
-                      $exist = existenciaModelo($row['cdm_articulo'], $this->model->almacen, $row['cdm_modelo']);
-                      $articulo .= ' '.busca($row['cdm_articulo'], 'articulos_variantes', 'av_modelo = "'.$row['cdm_modelo'].'" AND av_articulo', 'av_nmb');
-                    }
-                  } else {
-                    $exist = $row['cdm_cantidad'] + 1;
-                      $articulo = "";
-                  }
-                  $sqlal = 'SELECT * FROM articulos_ligados INNER JOIN articulos ON a_id = al_aligado WHERE al_articulo = "'.$row['cdm_articulo'].'"';
-                  $resultal = setq($sqlal);
-                  while($rowal = $resultal -> fetch_array()){
-                    if($rowal['a_inventariado'] == "1"){
-                      if($rowal['al_amodelo'] != "") $exist = existenciaModelo($rowal['al_aligado'], $this->model->almacen, $rowal['al_amodelo']);
-                      else $exist = existencia($rowal['al_aligado'], $this->model->almacen);
-                      if($exist < $row['cdm_cantidad']*$rowal['al_cantidad']) {
-                        $exist = $row['cdm_cantidad'] - 1;
-                        $articulo = busca($rowal['al_aligado'], 'articulos', 'a_id', 'a_nmb');
-                        if($rowal['al_amodelo'] != "") $articulo .= ' '.busca($rowal['al_amodelo'], 'articulos_variantes', 'av_articulo = "'.$rowal['al_aligado'].'" AND av_modelo', 'av_nmb');
-                        break;
-                      }
-                    } else {
-                      $exist = $row['cdm_cantidad'] + 1;
-                      $articulo = "";
-                    }
-                  }
-                } else {
-                  $break = false;
-                  $completo = busca($this->model->id, 'crm_cotizacionesd', 'cdm_id = "'.$row['cdm_id'].'" AND cdm_cotizacion', 'cdm_completo');
-                  if($completo != "0"){
-                    $sqlvar = 'SELECT * FROM crm_cotizacion_variantes WHERE ccv_cotizacion = "'.$this->model->id.'" AND ccv_cotizaciond = "'.$row['cdm_id'].'"';
-                    $resultvar = setq($sqlvar);
-                    while($rowvar = $resultvar -> fetch_array()){
-                      if($break) break;
-                      if($rowvar['ccv_modelo'] != "") $exist = existenciaModelo($rowvar['ccv_articulo'],$this->model->almacen , $rowvar['ccv_modelo']);
-                      else $exist = existencia($rowvar['ccv_articulo'], $this->model->almacen);
-                      //echo 'exist: '.$exist.' utilizo: '.$row['cdm_cantidad']*$rowvar['ccv_cantidad']. ' <br>';
-                      if($exist < $row['cdm_cantidad']*$rowvar['ccv_cantidad']) {
-                        $exist = $row['cdm_cantidad'] - 1;
-                        $articulo = busca($rowvar['ccv_articulo'], 'articulos', 'a_id', 'a_nmb');
-                        if($rowvar['ccv_modelo'] != "") $articulo .= ' '.busca($rowvar['ccv_modelo'], 'articulos_variantes', 'av_articulo = "'.$rowvar['ccv_articulo'].'" AND av_modelo', 'av_nmb');
-                        if($_SESSION['uid'] == "ADMIN") echo 'Articulo'. $rowvar['ccv_articulo'];
-                        break;
-                      } else {
-                        $sqlal = 'SELECT * FROM articulos_ligados INNER JOIN articulos ON a_id = al_aligado WHERE al_articulo = "'.$rowvar['ccv_articulo'].'"';
-                        $resultal = setq($sqlal);
-                        while($rowal = $resultal -> fetch_array()){
-                          if($rowal['a_inventariado'] == "1"){
-                            if($rowal['al_amodelo'] != "") $exist = existenciaModelo($rowal['al_aligado'], $this->model->almacen, $rowal['al_amodelo']);
-                            else $exist = existencia($rowal['al_aligado'], $this->model->almacen);
-                            //echo 'exist: '.$exist.' utilizo: '. $row['cdm_cantidad']*$rowvar['ccv_cantidad']*$rowal['al_cantidad']. ' <br>';
-                            if($exist < $row['cdm_cantidad']*$rowvar['ccv_cantidad']*$rowal['al_cantidad']) {
-                              //echo 'ENTRO!';
-                              $exist = $row['cdm_cantidad'] - 1;
-                              $articulo = busca($rowal['al_aligado'], 'articulos', 'a_id', 'a_nmb');
-                              if($rowal['al_amodelo'] != "") $articulo .= ' '.busca($rowal['al_amodelo'], 'articulos_variantes', 'av_articulo = "'.$rowal['al_aligado'].'" AND av_modelo', 'av_nmb');
-                              $break = true;
-                              if($_SESSION['uid'] == "ADMIN") echo 'Articulo'. $rowal['al_aligado'];
-                              break;
-                            }
-                          } else {
-                            $exist = $row['cdm_cantidad'] + 1;
-                          }
-                        }
-                      }
-                    }
-                  } else {
-                    $exist = $row['cdm_cantidad'];
-                  }
-                } 
-                
-                //echo 'exist final: '.$exist. ' cantidad'. $row['cdm_cantidad'].' tipoprod: '.$tipoprod.'<br>';
-                if(($exist < $row['cdm_cantidad']) && $tipoprod !== "M") {
-                  //echo "Entro primer if".'<br>';
-                  $back = 'style="background: #FF7B7B"  data-bs-toggle="tooltip" data-bs-placement="top" title="El articulo '.$articulo.' no tiene existencia suficiente dentro del almacén"';
-                }
-                else if(($exist < $row['cdm_cantidad']) && $tipoprod == "M"){
-                  //echo "Entro segundo if".'<br>';
-                  $back = 'style="background: #FF7B7B"  data-bs-toggle="tooltip" data-bs-placement="top" title="El articulo '.$articulo.' no tiene existencia suficiente dentro del almacén"';
-                }
-                else {
-                  //echo 'entro al else'.'<br>';
-                  $back = "";
-                }
-                //echo $back;
-                echo '<tr '.$back.'>
-                  <form method="post" action="?modulo=cotizaciones&accion=updateprod&cotizacion='.$this->model->id.'&id='.$row['cdm_id'].'" name="update'.$row['cdm_id'].'"> 
-                    ';
-                    echo '<td>';
-                      if($this->model->estatus == "N" || $this->model->estatus == "R"){
-                        echo'<script>
-                          $(document).ready(function(){
-                            $("#nmbconcepto'.$row['cdm_id'].'").keypress(function(e) {
-                              var code = (e.keyCode ? e.keyCode : e.which);
-                              if(code==13){
-                                $("#btnsendc'.$row['cdm_id'].'").click();
-                              }
-                            });
-                          });
-                        </script>';
-                        echo '<input type="text" class="form-control border-blue-grey border-darken-2" name="nmbconcepto'.$row['cdm_id'].'" id="nmbconcepto'.$row['cdm_id'].'" autocomplete="off" style="display:none" onchange="updatedesc('.$row['cdm_id'].');" />';
-                       
-                        echo '<button type="button" id="btnsendc'.$row['cdm_id'].'" onclick="refreshconc('.$this->model->id.','.$row['cdm_id'].');" class=" btn-xs btn-primary mb-2 text-white" style="display:none;"><i class="fa fa-redo" style="color: #ffffff;"></i> Actualizar</button>';
-                        /* echo '<button type="button" class="btn btn-link btn-icon-primary rounded " id="btnedit'.$row['cdm_id'].'" onclick="seteditacotiza('.$this->model->id.','.$row['cdm_id'].');">
-                          <i class="fa fa-pen"></i>
-                        </button>'; */
-                      }
-                      
-                      echo '<span class="font-small-3" id="nmbprod'.$row['cdm_id'].'">
-                        '.$row['cdm_nmbarticulo'].'
-                      </span><br>';
-                      echo $buttonact."<br>";
-                      if(isset($_GET['last']) && $_GET['last'] == $row['cdm_id']) $autofuc = 'autofocus="autofocus"; '; else $autofuc = "";
-                      if($this->model->estatus == "N"  || $this->model->estatus == "R")
-                        echo '<br><input type="text" class="form-control border-blue-grey border-darken-2  mt-1 mb-1" name="descripcion'.$row['cdm_id'].'" id="descripcion'.$row['cdm_id'].'" onchange="enviardescripcion('.$row['cdm_id'].');" placeholder="Agregar una descripción" autocomplete="off" '.$autofuc.' />';
-                      $sqldd = 'SELECT cdd_id,cdd_nmb FROM crm_cotizacionesdd WHERE cdd_cotizacion = "'.$this->model->id.'"
-                                AND cdd_idd = "'.$row['cdm_id'].'" ORDER BY cdd_id ASC';
-                      $resultdd = setq($sqldd);
-                      /*while($rowdd = $resultdd->fetch_array()){
-                        echo '<p class="p-1" style="font-size: x-small;">';
-                        if($this->model->estatus == "N")
-                          echo '<a href="?modulo=cotizaciones&accion=deldescripcion&cotizacion='.$this->model->id.'&iddesc='.$rowdd['cdd_id'].'">
-                                  <button type="button" class="btn-xs btn-danger rounded"><i class="fa fa-trash"></i></button> ';
-
-                        echo '</a>'.$rowdd['cdd_nmb'].'</p>';
-                      } */
-                      while($rowdd = $resultdd->fetch_array()){
-                        if($this->model->estatus == "N"  || $this->model->estatus == "R"){
-                          $displayflex = 'col-md-2';
-                          $displayflex2 = 'display: flex;';
-                        }else{
-                          $displayflex = 'col-md-12';
-                          $displayflex2 = 'display:';
-                        }
-                        echo '<div style="'.$displayflex2.'">
-                          <div class="'.$displayflex.'" style="font-size: x-small; margin-bottom: 5px;">';
-                            if($this->model->estatus == "N"  || $this->model->estatus == "R")
-                                echo '<a href="?modulo=cotizaciones&accion=deldescripcion&cotizacion='.$this->model->id.'&iddesc='.$rowdd['cdd_id'].'">
-                                  <button style="padding: 5px;" type="button" class="btn  btn-link btn-icon-danger"><i class="fa fa-trash"></i></button>
-                                </a>
-                              </div>';
-                          echo '<div class="col-md-10" style="    flex-wrap: wrap;
-                          font-size: x-small;
-                          align-content: center;
-                          display: flex;;">'.$rowdd['cdd_nmb'].'</div> 
-                        </div>';
-                      }
-                      if($desimp > 0){
-                        if($row['cdm_iva'] == "1") $preciomiva = $precio-$desimp;
-                        else $preciomiva = $precio-(($this->model->descuento/100)*$precio);
-                        $toltdes = 'data-toggle="tooltip" data-placement="top" title="Precio con descuento '.number_format($preciomiva,2).'"';
-                      }else $toltdes = "";
-                      //poner dos input que se llame preciodb con valor precio en db y uno precioshow con valor precio en pantalla
-                      echo '<input name="preciodb" value="'.$preciodb.'" hidden>
-                      <input name="precioshow" value="'.$precio.'" hidden>'; 
-                      /*  
-                        echo '</td>
-                        <td><input type="number" class="form-control number-align" min="0" max="9999" name="cantidad" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" onchange="submit();" /></td>
-                        <td><input type="number" class="form-control number-align" min="0" max="999999" name="precio" '.$toltdes.' step="0.01" value="'.number_format($precio,2,'.','').'"  '.$readonestatus.' onfocus="this.select()" onchange="submit();" /></td>
-                        <td><input type="checkbox"  class="text-center" name="miva" '.$chiva.' '.$readonestatus.' onchange="submit();" /></td>
-                        <td class="number-align">'.number_format($importe,2,'.',',').'</td>
-                        <td>';
-                      */
-                      echo'<script>
-                        $(document).ready(function(){
-                          $("#cantidad'.$row['cdm_id'].'").keypress(function(e) {
-                            var code = (e.keyCode ? e.keyCode : e.which);
-                            if(code==13){
-                              var cantidad = document.getElementById("cantidad'.$row['cdm_id'].'").value;
-                              document.getElementById("newcant'.$row['cdm_id'].'").value = cantidad;
-                              var form = document.getElementById("updatecantidad'.$row['cdm_id'].'");
-                              document.updatecantidad'.$row['cdm_id'].'.submit();
-                            }
-                          });
-                          $("#precio'.$row['cdm_id'].'").keypress(function(e) {
-                            var code = (e.keyCode ? e.keyCode : e.which);
-                            if(code==13){
-                              $("#update'.$row['cdm_id'].'").click();
-                            }
-                          });
-                        });
-                      </script>';
-                    echo '</td>
-                    <!-- <td><input type="number"  hidden onchange="updatecant'.$row['cdm_id'].'()" class="form-control number-align" min="0" max="9999" name="cantidad" id="cantidad'.$row['cdm_id'].'" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" /></td> -->
-                    <script>
-                      function cambiarcantidad(id,cotizacion){
-                        var cant = document.getElementById("rdcantidad").value;
-                        $("#cantidad'.$row['cdm_id'].'").keypress(function(e) {
-                          var code = (e.keyCode ? e.keyCode : e.which);
-                          if(code==13){
-                            $("#update'.$row['cdm_id'].'").click();
-                          }
-                        });
-                        //window.location.href="?modulo=cotizaciones&accion=cambiarcantidad&id="+id+"&cantidad="+cant+"&cotizacion="+cotizacion;
-                      }
-                    </script>
-                    <!-- ';
-                    $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id','u_grupo');
-
-                    if($grupo == "ADMIN" || $grupo == "GERENCIA") $min = 0;
-                    else $min = $row['cdm_precio'];
-                    echo '<form method="post" action="?modulo=cotizaciones&accion=updateprod&cotizacion='.$this->model->id.'&id='.$row['cdm_id'].'" name="update'.$row['cdm_id'].'">
-                    <input type="number" class="form-control number-align" min="0" max="9999" name="cantidad" id="cantidad'.$row['cdm_id'].'" step="0.01" value="'.number_format($row['cdm_cantidad'],2,'.','').'" '.$readonestatus.' onfocus="this.select()" hidden/> -->
-                    <td hidden><input type="number" hidden class="form-control number-align" min="'.$min.'" max="999999" name="precio" id="precio'.$row['cdm_id'].'" '.$toltdes.' step="0.01" value="'.number_format($precio,2,'.','').'"  '.$readonestatus.' '.$readpre.' onfocus="this.select()"  /></td>';
-                    //if($this->model->diva == "1") echo'<td><input type="checkbox"  class="text-center" name="miva" '.$chiva.' '.$readonestatus.' onchange="submit();" /></td>';
-                    //else echo '<td hidden><input type="hidden" name="miva" value="'.$row['cdm_iva'].'"/></td>';
-                    echo'<td class="number-align" hidden>'.number_format($importe,2,'.',',').'</td>
-                    <td>';
-                      if($this->model->estatus == "N" || $this->model->estatus == "R")
-                        echo '<div class="mb-5">
-                          <button type="button"  class="btn  btn-danger" onclick="deletecpt('.$row['cdm_id'].', '.$this->model->descuento.')"><i class="fa fa-trash"></i>Borrar</button>
-                        </div>';
-                        
-                        /* if($this->model->estatus != "P" && $this->model->estatus != "A" && $this->model->estatus != "V")
-                        echo '<div class="mb-5">
-                          <button class="btn btn-info " id="update'.$row['cdm_id'].'"><i class="fa fa-redo"></i> Actualizar</button> 
-                        </div>'; */
-                        /* echo '<div class="mb-5">
-                          <a data-fancybox data-type="ajax" data-src="popup/fichaproducto.php?articulo='.$row['cdm_articulo'].'&modelo='.$row['cdm_modelo'].'&rand='.rand().'" href="javascript:;">
-                            <button type="button" class="btn btn-success"><i class="fas fa-clipboard-list"></i> Ficha del servicio</button>
-                          </a>
-                        </div>'; */
-                    echo '</td>
-                  </form>
-                </tr>';
-              }
-              if($this->model->resultcd->num_rows > 0){
-                $descuento += $this->model->montodescuento;
-              }
-              if($this->model->diva == "1" || $descuento > 0 || $this->model->precioenvio > 0){
-                echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                  <td colspan="3">&nbsp;</td><td colspan="1">Subtotal</td>
-                  <td class="number-align">$ '.number_format(($this->model->subtotal),2).'</td>
-                </tr>';
-              }
-              if($this->model->diva == "1"){
-                $total = $subtotal+$totiva;
-                if($descuento > 0){
-                  echo '<tr class="p-1 bg-grey bg-lighten-3 h4">
-                    <td colspan="3">&nbsp;</td><td colspan="1">Descuento</td>
-                    <td class="number-align">$ '.number_format(round($descuento),2).'</td>
-                  </tr>';
-                }
-                echo '<tr class="p-1 bg-grey bg-lighten-4 h4">
-                  <td colspan="3">&nbsp;</td><td colspan="1">IVA</td>
-                  <td class="number-align">$ '.number_format($this->model->iva,2).'</td>
-                </tr>';
-                if($this->model->precioenvio != 0){
-                  echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                  <td colspan="3">&nbsp;</td><td colspan="1">Costo de envío</td>
-                  <td class="number-align">$ '.number_format($this->model->precioenvio,2).'</td>
-                 </tr>';
-                } 
-                $total = $this->model->importe + $this->model->precioenvio;
-                echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                  <td colspan="1">&nbsp;</td><td colspan="1">Total</td>
-                  <td class="number-align">$ '.number_format($total,2).'</td>
-                </tr>';
-              }else{
-                if($this->model->mtotal == "1"){
-                  if($descuento > 0)
-                    echo '
-                    <tr class="p-1 bg-grey bg-lighten-3 h4">
-                      <td colspan="3">&nbsp;</td><td colspan="1">Descuento</td>
-                      <td class="number-align">$ '.number_format(round($descuento),2).'</td>
-                    </tr>';
-                    if($this->model->precioenvio != 0){
-                      echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                      <td colspan="3">&nbsp;</td><td colspan="1">Costo de envío</td>
-                      <td class="number-align">$ '.number_format($this->model->precioenvio,2).'</td>
-                     </tr>';
-                    } 
-                    $total = $this->model->importe + $this->model->precioenvio;
-                    echo '<tr class="p-1 bg-grey bg-lighten-1 h4">
-                      <td colspan="1" hidden>&nbsp;</td><td colspan="1" hidden>Total</td>
-                      <td class="number-align" hidden>$ '.number_format($total,2).'</td>
-                    </tr>';
-                }
-              }
-              echo '<form method="post" name="senddescripcion" action="?modulo=cotizaciones&accion=setdescripcion&cotizacion='.$this->model->id.'">
-                <input type="hidden" id="iddescripcion" name="iddescripcion" />
-                <input type="hidden" id="valuedescripcion" name="valuedescripcion" />
-              </form>';
-            echo '</table>
-          </div>
-        </div>';
+              </thead>'; */
+              
+              
+             
+              
       //} else {
 /* ======== BLOQUE NUEVO: CHOFERES + KM + TARIFARIO ======== */
 
@@ -3642,18 +3336,116 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
 
 if($this->model->estatus != "N") $readonly = "readonly";
 ?>
+<div class="card mt-6" style="text-align: right;">
+  <h1 class="mt-3 me-3">Total de la cotización: $<?php echo number_format($this->model->mtotal, 2); ?></h1>
+</div>  
+<div class="card mt-3">
+  <div class="card-header mt-10" >
+  <b>Configuración de dimensiones</b>
+</div>
+  <form method="post" action="?modulo=cotizaciones&accion=updatedimensiones&id=<?php echo $this->model->id; ?>" autocomplete="off" class="mt-2 container">
+  <div class="card-body row">
+    <div class="col-md-4">
+      <label class="form-label">Unidades</label>
+      <input type="number" id="unidad" name="unidad" min="0" step="0.01" class="form-control" placeholder="Número de unidades" value="<?php echo $this->model->unidadmercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Peso</label>
+      <input type="number" id="peso" name="peso" min="0" step="0.01" class="form-control" placeholder="Peso por unidad" value="<?php echo $this->model->pesomercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Largo</label>
+      <input type="number" id="largodim" name="largo" min="0" step="0.01" class="form-control" onchange="calcdim();" placeholder="Largo total" value="<?php echo $this->model->largomercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Ancho</label>
+      <input type="number" id="anchodim" name="ancho" min="0" step="0.01" class="form-control" onchange="calcdim();" placeholder="Ancho total" value="<?php echo $this->model->anchomercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Alto</label>
+      <input type="number" id="altodim" name="alto" min="0" step="0.01" class="form-control" onchange="calcdim();" placeholder="Alto total" value="<?php echo $this->model->altomercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Volumen</label>
+      <input type="number" id="volumendim" name="volumen" min="0" step="0.01" class="form-control" placeholder="Volumen total" value="" readonly>
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Descripción</label>
+      <input type="text" id="descripcion" name="descripcion" class="form-control" placeholder="Describe la mercancía" value="<?php echo $this->model->descmercancia;?>" <?php echo $readonly;?>>
+    </div>
+    <?php
+      if($this->model->estatus == "N"){
+        ?>
+          <div class="col-md-12 mt-4"><center><button class="btn btn-primary" id="guardar"><i class="fa fa-save"></i> Guardar</button></center></div>
+        <?php
+      }
+      
+    ?>  
+    </div>
+  </form>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header mt-10">
+    <b>Asignación de ruta</b>
+  </div>
+  <div class="card-body row">
+    <form method="post" action="?modulo=cotizaciones&accion=updateruta&id=<?php echo $this->model->id; ?>" autocomplete="off" class="mt-2 container row">
+      <div class="col-md-6">
+        <label class="form-label">Origen</label>
+        <select class="form-control" id="origen" name="origen" onchange="checkdestino()" required>
+          <?php 
+            $sqlprov = 'SELECT * FROM ruta_origen WHERE ro_estatus = "A"';
+            $resultprov = setq($sqlprov);
+            while($rowprov = $resultprov -> fetch_array()){
+              if($this->model->motivo == $rowprov['ro_id']) $sel = 'selected';
+              else $sel = '';
+              ?>
+                <option value="<?php echo $rowprov['ro_id']; ?>" <?php echo $sel; ?>><?php echo $rowprov['ro_nombre']; ?></option>
+              <?php
+            }
+          ?>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Destino</label>
+        <select class="form-control" id="destino" name="destino" required>
+          <?php 
+            $sqlprov = 'SELECT * FROM ruta_destino WHERE rd_estatus = "A"';
+            $resultprov = setq($sqlprov);
+            while($rowprov = $resultprov -> fetch_array()){
+              if($this->model->dirdestino == $rowprov['rd_id']) $seld = 'selected';
+              else $seld = '';
+              ?>
+                <option value="<?php echo $rowprov['rd_id']; ?>" <?php echo $seld; ?>><?php echo $rowprov['rd_nombre']; ?></option>
+              <?php
+            }
+          ?>
+        </select>
+      </div>
+      <?php
+          if($this->model->estatus == "N"){
+            ?>
+              <div class="col-md-12 mt-6"><center><button class="btn btn-primary" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
+            <?php
+          }  
+        ?>
+  </form>
+  </div>
+</div>
 
 <!-- ======== UI: Choferes + KM + Tarifario ======== -->
 <div class="card mt-3">
-  <div class="card-header">
-    <b>Asignación de chofer(es) y kilómetros (manual/automático)</b>
+  <div class="card-header mt-10">
+    <b>Asignación de kilómetros (manual/automático)</b>
   </div>
+
   <form method="post" action="?modulo=cotizaciones&accion=updateextra&id=<?php echo $this->model->id; ?>" autocomplete="off" class="mt-2 container">
     <div class="card-body">
       <div class="row g-3">
 
         <!-- Choferes (multi) -->
-        <div class="row mb-4">
+        <!-- <div class="row mb-4">
           <label class="form-label"><b>Chofer(es)</b></label>
           <?php
           while($rsCh && $rowCh = $rsCh->fetch_assoc()){
@@ -3666,42 +3458,54 @@ if($this->model->estatus != "N") $readonly = "readonly";
           $sql = 'SELECT * FROM crm_cotizaciones WHERE cc_id = "'.$this->model->id.'"';
           $result = setq($sql);
           $row = $result->fetch_array();
-          ?>
-        </div>
 
-        
+          $checkman='';
+          $checkauto='';
+          $checkprov='';
+          $checktar='';
+          if($this->model->tipokm == "auto"){
+            $checkauto = 'checked';
+          } else if($this->model->tipokm == "proveedor"){
+            $checkprov = 'checked';
+          } else if($this->model->tipokm == "tarifario"){
+            $checktar = 'checked';
+          } else {  
+            $checkman = 'checked';
+          }
+          ?>
+        </div> -->
         <!-- Modo KM -->
         <div class="col-md-6">
           <label class="form-label"><b>Modo de kilómetros</b></label>
           <div class="form-check">
-            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" checked <?php echo $readonly; ?>>
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" <?php echo $checkman; ?> <?php echo $readonly; ?>>
             <label class="form-check-label" for="chf_km_manual">Manual</label>
           </div>
           <div class="form-check">
-            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_auto" value="auto" <?php echo $readonly; ?>>
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_auto" value="auto" <?php echo $checkauto; ?> <?php echo $readonly; ?>>
             <label class="form-check-label" for="chf_km_auto">Automático (Google Maps)</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_proveedor" value="proveedor" <?php echo $checkprov; ?> <?php echo $readonly; ?>>
+            <label class="form-check-label" for="chf_km_proveedor">Proveedor</label>
+          </div>
+          <div class="form-check" onclick="traerdatos();">
+            <input class="form-check-input" type="radio" name="km_mode" id="chf_km_tarifario" value="tarifario" <?php echo $checktar; ?> <?php echo $readonly; ?>>
+            <label class="form-check-label" for="chf_km_tarifario">Tarifario</label>
           </div>
         </div>
 
         <!-- KM manual -->
         <div class="col-md-6" id="chf_kmManualBox">
-          <label class="form-label"><b>Kilómetros (manual)</b></label>
+          <label class="form-label"><b>Kilómetros</b></label>
           <input type="number" step="0.01" min="1" onchange="recalc();" class="form-control" id="chf_km" name="chf_km" value="<?php echo $row['cc_km']; ?>" <?php echo $readonly; ?>>
         </div>
-
       </div>
 
       <!-- KM automático -->
       <div id="chf_kmAutoBox" class="mt-3" style="display:none;">
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Origen</label>
-            <input type="text" id="chf_gm_origen" class="form-control" placeholder="Ingresa origen">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Destino</label>
-            <input type="text" id="chf_gm_destino" class="form-control" placeholder="Ingresa destino">
-          </div>
+          
           <div class="col-12">
             <label class="form-label">Paradas intermedias</label>
             <div id="chf_gm_paradas_wrap"></div>
@@ -3724,7 +3528,7 @@ if($this->model->estatus != "N") $readonly = "readonly";
       <hr/>
 
       <!-- Selección de unidad del tarifario -->
-      <div class="row g-3">
+      <div class="row g-3" id="unidadtarifa">
         <div class="col-md-6">
           <label class="form-label"><b>Unidad (tarifario)</b></label>
           <select id="chf_tarifario" name="chf_tarifario" onchange="recalc();" class="form-control" <?php echo $readonly; ?>>
@@ -3754,15 +3558,23 @@ if($this->model->estatus != "N") $readonly = "readonly";
         </div>
       </div>
 
-      <div class="row g-3 mt-1">
+      <div class="row g-3 mt-1" id="tablatarifa">
         <div class="col-md-2"><label class="form-label">TANQUES</label> <input type="text" id="chf_tanques" name="chf_tanques" class="form-control" value="<?php echo $row['cc_tanques']; ?>" readonly></div>
         <div class="col-md-2"><label class="form-label">COMBUSTIBLE ($)</label> <input type="text" id="chf_combustible" name="chf_combustible" value="<?php echo $row['cc_combustible']; ?>" class="form-control" readonly></div>
         <div class="col-md-2"><label class="form-label">CASETAS ($)</label> <input type="number" onchange="recalc();" id="chf_casetas" name="chf_casetas" value="<?php echo $row['cc_casetas']; ?>" class="form-control" value="0" <?php echo $readonly; ?>></div>
         <div class="col-md-2"><label class="form-label">DESGASTE ($)</label> <input type="text" id="chf_desgaste" name="chf_desgaste" class="form-control" value="<?php echo $row['cc_desgaste']; ?>" readonly></div>
         <div class="col-md-2"><label class="form-label">OPERADOR ($)</label> <input type="text" id="chf_operador" name="chf_operador" class="form-control" value="<?php echo $row['cc_operador']; ?>" readonly></div>
         <div class="col-md-2"><label class="form-label">SUBTOTAL ($)</label> <input type="text" id="chf_total" name="chf_total" class="form-control" value="<?php echo $row['cc_subtotal']; ?>" readonly></div>
-        <div class="col-md-2"><label class="form-label">EXTRA (%)</label> <input type="number" onchange="recalc();" id="chf_porcentaje" name="chf_porcentaje" class="form-control" value="<?php echo $row['cc_porcentaje']; ?>" step="1" min="0"<?php echo $readonly; ?>></div>
+        <div class="col-md-2" id="idextra"><label class="form-label">EXTRA (%)</label> <input type="number" onchange="recalc();" id="chf_porcentaje" name="chf_porcentaje" class="form-control" value="<?php echo $row['cc_porcentaje']; ?>" step="1" min="0"<?php echo $readonly; ?>></div>
         <div class="col-md-2 mt-2"><label class="form-label">VENTA DVL ($)</label> <input type="text" id="chf_venta" class="form-control" value ="<?php echo $row['cc_mtotal']; ?>" readonly></div>
+
+        <?php
+          if($this->model->estatus == "N"){
+            ?>
+              <div class="col-md-12"><center><button class="btn btn-primary" onclick="recalc();" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
+            <?php
+          }  
+        ?>
       </div>
 
       <!-- Hidden para enviar con el form existente -->
@@ -3775,21 +3587,207 @@ if($this->model->estatus != "N") $readonly = "readonly";
       <input type="hidden" name="chf_ruta_destino" id="chf_ruta_destino" value="">
       <input type="hidden" name="chf_ruta_paradas" id="chf_ruta_paradas" value="[]">
 
-    </div>
-    <?php
-      if($this->model->estatus == "N"){
-        ?>
-          <div class="col-md-12"><center><button class="btn btn-primary" onclick="recalc();" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
-        <?php
-      }
       
-    ?>  
+    </div>
+      
   </form>
+
+  <!-- KM proveedor -->
+      <div id="chf_kmProvBox" class="mt-3 card-body" style="display:none;">
+        <div class="row g-3">
+         <?php
+          if($this->model->estatus == "N"){
+            ?> 
+            <div class="col-12">
+              <label class="form-label">Añadir Proveedor</label>
+              <form action="?modulo=cotizaciones&accion=insertproveedor&cotizacion=<?php echo $this->model->id; ?>" method="post" enctype="multipart/form-data">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label for="descripcion" class="form-label">Proveedor:</label>
+                    <select class="form-control" id="proveedor" name="proveedor" required>
+                      <?php 
+                        $sqlprov = 'SELECT * FROM proveedores WHERE p_estatus = "A"';
+                        $resultprov = setq($sqlprov);
+                        while($rowprov = $resultprov -> fetch_array()){
+                          ?>
+                            <option value="<?php echo $rowprov['p_id']; ?>"><?php echo $rowprov['p_nmb']; ?></option>
+                          <?php
+                        }
+                      ?>
+                    </select>
+                  </div>
+                  <div class="col-md-3" >
+                    <label class="form-label"><b>Costo</b></label>
+                    <input type="number" step="0.01" min="1" class="form-control" id="costo" name="costo" value="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label"><b>Extra</b></label>
+                    <input type="number" step="0.01" min="1" class="form-control" id="extra" name="extra" value="0">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label"><b>Tipo de unidad</b></label>
+                    <input type="text" class="form-control" id="tipounidad" name="tipounidad" placeholder="Tipo de unidad" value="">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="archivo" class="form-label">Documento:</label>
+                    <input type="file" class="form-control" id="archivo" name="archivo" required>
+                  </div>
+
+                  <div class="col-md-10">
+                    <label for="archivo" class="form-label">Descripción:</label>
+                    <input type="text" class="form-control" id="concepto" name="concepto" placeholder="Concepto" value="">
+                  </div>
+
+                  <div class="col-md-1 mt-11">
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+
+          <?php
+          }
+
+          $sqlprov = 'SELECT * FROM crm_cotizaciones_proveedor INNER JOIN proveedores ON p_id = cp_proveedor WHERE cp_cotizacion = "'.$this->model->id.'"';
+          $resultprov = setq($sqlprov);
+
+          if($resultprov -> num_rows > 0){
+            echo '<table class="table">                    
+              <thead class="bg-primary text-white">
+                <tr>
+                  <th>Proveedor</th>
+                  <th>Costo</th>
+                  <th>Extra</th>  
+                  <th>Tipo de unidad</th>   
+                  <th>Concepto</th>          
+                  <th>Archivo</th>
+                  <th>Eliminar</th>
+                </tr>
+                <tbody>';
+                  while($row = $resultprov -> fetch_array()){
+                    echo '<tr>
+                      <td>'.$row['p_nmb'].' </td>
+                      <td>$'.number_format($row['cp_costo'], 2).'</td>
+                      <td>$'.number_format($row['cp_extra'], 2).'</td>
+                      <td>'.$row['cp_tipounidad'].'</td>
+                      <td>'.$row['cp_concepto'].'</td>
+                      <td><a target="_BLANK" href="docs/cotizaciones/'.$row['cp_archivo'].'" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></a> </td>';
+                      if($this->model->estatus == "N")
+                        echo '<td><button class="mr-1 btn btn-danger btn-sm" onclick="eliminarprov('.$row['cp_id'].', '.$row['cp_cotizacion'].');" data-toggle="tooltip" data-placement="top" title="Eliminar registro"><i class="fa fa-times"></i> Eliminar</button></td>';
+                      else 
+                        echo '<td></td>';
+                    echo '</tr>';
+                  }
+                
+                echo '</tbody>                  
+              </thead>
+            </table>';
+          }
+          
+          
+          ?>
+
+        </div>
+      </div>
 </div>
 <script>
+  function traerdatos(){
+    const kmTarifario  = document.getElementById('chf_km_tarifario');
+  
+    if(kmTarifario.checked){  
+      var datax = {
+        origen: document.getElementById("origen").value,
+        destino: document.getElementById("destino").value,
+      };
+      $.ajax({
+        url: 'query/datostarifario.php',
+        method: 'POST',
+        dataType: 'json',
+        data: datax, // Los datos que quieres enviar
+        success: function (data) {
+          console.log("Datos recibidos:", data);
+          console.log(data.rt_km);
+          let datos = data[0]; // ← accede al primer objeto del array
 
+          // Asignar valores a los campos rt_precio chf_precio
+          
+          $('#chf_km').val(datos.rt_km || '');
+          $('#chf_km_mostrado').val(datos.rt_km || '');
+          $('#chf_precio').val(datos.rt_precio || '');
+          $('#chf_tanques').val(datos.rt_tanques || '');
+          $('#chf_combustible').val(datos.rt_combustible || '');
+          $('#chf_casetas').val(datos.rt_casetas || '');
+          $('#chf_desgaste').val(datos.rt_desgaste || '');
+          $('#chf_operador').val(datos.rt_operador || '');
+          $('#chf_total').val(datos.rt_costodvl || '');
+          $('#chf_porcentaje').val(0); 
+          $('#chf_venta').val(datos.rt_ventadvl || '');
+
+        }
+      });
+    }
+  }
+  function checkdestino(){
+    var datax = {
+      origen: document.getElementById("origen").value
+    };
+    $.ajax({
+      url: 'query/selectdestino.php',
+      method: 'POST',
+      dataType: 'json',
+      data: datax, // Los datos que quieres enviar
+      success: function (data) {
+        //console.log(data);
+        // La función que se ejecuta cuando la consulta AJAX es exitosa
+        var select = $('#destino');
+
+        // Limpia las opciones actuales en el select
+        select.empty();
+
+        if (data.length === 0 || data === 1 || data === 2) {
+          // Si no hay resultados o el valor es 1 o 2, agrega una opción "Sin resultados"
+          select.append($('<option></option>')
+            .attr('value', '')
+            .text('SIN RESULTADOS'));
+        } else {
+          // Si hay resultados, llena el select con las opciones obtenidas de la consulta
+          $.each(data, function (key, value) {
+            select.append($('<option></option>')
+              .attr('value', value.id)
+              .text(value.nombre));
+          });
+        }
+      }
+    });
+  }
+  function eliminarprov(id, cotizacion){
+    const confirmacion = confirm("¿Estás seguro de eliminar este proveedor?");
+    if (confirmacion) {
+      window.location.href = '?modulo=cotizaciones&accion=eliminarproveedor&cotizacion='+cotizacion+'&id='+id;
+    }
+  }
+  function calcdim(){
+    var largo = document.getElementById("largodim");
+    var ancho = document.getElementById("anchodim");
+    var alto = document.getElementById("altodim");
+    var volumen = document.getElementById("volumendim");
+
+    // Convertir los valores de los campos a números, o 0 si están vacíos
+    var largoValor = largo.value === "" ? 0 : parseFloat(largo.value);
+    var anchoValor = ancho.value === "" ? 0 : parseFloat(ancho.value);
+    var altoValor = alto.value === "" ? 0 : parseFloat(alto.value);
+    
+    // Calcular la suma
+    var resultado = largoValor * anchoValor * altoValor;
+    
+    // Asignar el resultado al campo de volumen
+    volumen.value = resultado;
+  }
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('formCotizacion');
+
+    calcdim();
 
     form.addEventListener('submit', () => {
       recalc(); // calcula y actualiza los campos antes del envío
@@ -3803,8 +3801,13 @@ if($this->model->estatus != "N") $readonly = "readonly";
   // ---------- Elementos ----------
   const kmManual     = document.getElementById('chf_km_manual');
   const kmAuto       = document.getElementById('chf_km_auto');
+  const kmProv       = document.getElementById('chf_km_proveedor');
+  const kmTarifario  = document.getElementById('chf_km_tarifario');
   const boxManual    = document.getElementById('chf_kmManualBox');
   const boxAuto      = document.getElementById('chf_kmAutoBox');
+  const boxProv      = document.getElementById('chf_kmProvBox');
+  const divunidadtarifa  = document.getElementById('unidadtarifa');
+  const divtablatarifa  = document.getElementById('tablatarifa');
   const kmInput      = document.getElementById('chf_km');
   const kmMostrado   = document.getElementById('chf_km_mostrado');
   const selTarifario = document.getElementById('chf_tarifario');
@@ -3828,19 +3831,49 @@ if($this->model->estatus != "N") $readonly = "readonly";
 
   // ---------- Toggle modo ----------
   function toggleKmMode(){
+    //console.log('entro aqui');
+
     if(kmAuto.checked){
       boxManual.style.display = 'none';
+      boxProv.style.display = 'none';
       boxAuto.style.display   = '';
       hMode.value = 'auto';
-    } else {
+      divunidadtarifa.style.display = '';
+      divtablatarifa.style.display = '';
+    } else if(kmProv.checked){
+      boxManual.style.display = 'none';
+      boxAuto.style.display = 'none';
+      boxProv.style.display   = '';
+      hMode.value = 'proveedor';
+      divunidadtarifa.style.display = 'none';
+      divtablatarifa.style.display = 'none';
+    }else if(kmTarifario.checked){
+      document.getElementById("chf_km").readOnly = true;
       boxManual.style.display = '';
       boxAuto.style.display   = 'none';
+      boxProv.style.display   = 'none';
       hMode.value = 'manual';
+      divunidadtarifa.style.display = '';
+      divtablatarifa.style.display = '';
+      document.getElementById("chf_casetas").readOnly = true;
+      document.getElementById("idextra").hidden = true;
+    } else {
+      document.getElementById("idextra").hidden = false;
+      document.getElementById("chf_casetas").readOnly = false;
+      document.getElementById("chf_km").readOnly = false;
+      boxManual.readOnly = false;
+      boxManual.style.display = '';
+      boxAuto.style.display   = 'none';
+      boxProv.style.display   = 'none';
+      hMode.value = 'manual';
+      divunidadtarifa.style.display = '';
+      divtablatarifa.style.display = '';
     }
     recalc(); // recalcula por si cambia
   }
-  [kmManual, kmAuto].forEach(el => el.addEventListener('change', toggleKmMode));
+  [kmManual, kmAuto, kmProv, kmTarifario].forEach(el => el.addEventListener('change', toggleKmMode));
   toggleKmMode();
+  traerdatos();
 
   // ---------- Util ----------
   function toNum(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
@@ -3856,45 +3889,49 @@ if($this->model->estatus != "N") $readonly = "readonly";
 
   // ---------- Re-cálculo costos ----------
   function recalc() {
-    const tarId = parseInt(selTarifario.value || 0);
-    const t = getTarifarioById(tarId);
+    const kmTarifario  = document.getElementById('chf_km_tarifario');
+    
+    if(!kmTarifario.checked){
+      const tarId = parseInt(selTarifario.value || 0);
+      const t = getTarifarioById(tarId);
 
-    // Convertir entradas a decimales
-    const km = parseFloat(kmManual.checked ? kmInput.value : hKm.value) || 0;
-    const porc = parseFloat(document.getElementById("chf_porcentaje").value) || 0;
-    const outCas = parseFloat(document.getElementById("chf_casetas").value) || 0;
+      // Convertir entradas a decimales
+      const km = parseFloat(kmManual.checked ? kmInput.value : hKm.value) || 0;
+      const porc = parseFloat(document.getElementById("chf_porcentaje").value) || 0;
+      const outCas = parseFloat(document.getElementById("chf_casetas").value) || 0;
 
-    console.log("casetas: ", outCas);
+      console.log("casetas: ", outCas);
 
-    kmMostrado.value = numFmt2(km);
-    hKm.value = km;
-    hTarId.value = tarId || '';
+      kmMostrado.value = numFmt2(km);
+      hKm.value = km;
+      hTarId.value = tarId || '';
 
-    // Convertir también los valores del tarifario a número decimal
-    const rend = parseFloat(t.tc_rendimiento) || 0;
-    const cap  = parseFloat(t.tc_capacidad_tanque) || 0;
-    const vdes = parseFloat(t.tc_var_desgaste) || 0;
-    const prec = parseFloat(PRECIO) || 0;
+      // Convertir también los valores del tarifario a número decimal
+      const rend = parseFloat(t.tc_rendimiento) || 0;
+      const cap  = parseFloat(t.tc_capacidad_tanque) || 0;
+      const vdes = parseFloat(t.tc_var_desgaste) || 0;
+      const prec = parseFloat(PRECIO) || 0;
 
-    // Cálculos asegurando decimales
-    const tanq = rend > 0 ? (km / rend) : 0;
-    const comb = prec * cap * tanq;
-    const desg = km * (vdes * 10);
-    const oper = km * (vdes * 10);
-    const total = comb + outCas + desg + oper;
-    const venta = total * (1 + (porc / 100));
+      // Cálculos asegurando decimales
+      const tanq = rend > 0 ? (km / rend) : 0;
+      const comb = prec * cap * tanq;
+      const desg = km * (vdes * 10);
+      const oper = km * (vdes * 10);
+      const total = comb + outCas + desg + oper;
+      const venta = total * (1 + (porc / 100));
 
-    // Mostrar resultados formateados
-    outTanques.value = numFmt4(tanq);
-    outComb.value    = numFmt2(comb);
-    outDesg.value    = numFmt2(desg);
-    outOper.value    = numFmt2(oper);
-    outTotal.value   = numFmt2(total);
-    outVenta.value   = numFmt2(venta);
+      // Mostrar resultados formateados
+      outTanques.value = numFmt4(tanq);
+      outComb.value    = numFmt2(comb);
+      outDesg.value    = numFmt2(desg);
+      outOper.value    = numFmt2(oper);
+      outTotal.value   = numFmt2(total);
+      outVenta.value   = numFmt2(venta);
 
-    // Guardar en inputs ocultos
-    hTot.value = total;
-    hVen.value = venta;
+      // Guardar en inputs ocultos
+      hTot.value = total;
+      hVen.value = venta;
+    }
   }
 
 
@@ -4101,6 +4138,8 @@ if($this->model->estatus != "N") $readonly = "readonly";
             }
           });
         }
+
+        
       </script>
       <?php
       //////////////////////////////////////////////////////////////////////////////////////////////////////////

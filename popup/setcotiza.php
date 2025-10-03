@@ -6,7 +6,7 @@ header("Expires: Sat, 1 Jul 2000 05:00:00 GMT"); // Fecha en el pasado
 session_start();
 include_once('../funciones.php');
 //foreachdie();
-$tablero = $_GET['tablero'];
+//$tablero = $_GET['tablero'];
 include_once('../modulos/cotizaciones.php');
 $mcotiza = new modelcotizaciones();
 $mcotiza->select($_GET['idcotiza']);
@@ -143,7 +143,7 @@ echo'
         echo '</div>
         <div id="suggestions-block"></div>
       </div>';
-      echo '<div class="col-12 col-md-3 ">
+      echo '<div class="col-12 col-md-3 " hidden>
         <div class="mb-5">
           <label for"nmbac">Alias de tu cotización</label>
           <input type="text" name="nmbac" maxlength="50" value="'.$nmbact.'" id="nmbac" class="form-control" placeholder="Nombre de tu actividad" required="required" onfocus="this.select();"/>
@@ -180,15 +180,7 @@ echo'
           </div>  
         </div>
       </div>';
-      /* if($estatus == "N" || $estatus == "R")
-      echo '<div class="col-12 col-md-2" >
-        <div class="mb-5">
-          <label >Venta rápida</label>
-          <div class="">
-          <input type="checkbox" id="reccliente" name="reccliente" '.$reccliente.' class="flipswitch2"/>
-          </div>
-        </div>
-      </div>'; */
+
       echo '<div class="col-6 col-md-2">
         <div class="mb-5">
           <label for"correo">Responsable</label>
@@ -215,84 +207,27 @@ echo'
           $hiddenpor = '';
           $hiddenmonto = 'hidden';
         } */
-        $num = array();
-        $k =0;
-        $j=0;
-        $l=0;
-        $categoria = array();
-        $sqlcat = 'SELECT cat_id FROM categorias WHERE cat_inflable = "1"';
-        $resultcat = setq($sqlcat);
-        while($rowcat = $resultcat -> fetch_array()){
-          $categoria[$k] = $rowcat['cat_id'];
-          $k++;
-        }
-        $sqlsel = 'SELECT * FROM crm_cotizacionesd INNER JOIN articulos ON a_id = cdm_articulo WHERE cdm_cotizacion = "'.$mcotiza->id.'"';
-        $resultsel = setq($sqlsel);
-        while($rowsel = $resultsel -> fetch_array()){
-          if($rowsel['a_tipoprod'] == "M"){
-            $sqlcant = 'SELECT SUM(ccv_cantidad), a_categoria FROM crm_cotizacion_variantes INNER JOIN articulos ON a_id = ccv_articulo WHERE ccv_cotizaciond = "'.$rowsel['cdm_id'].'" AND ccv_cotizacion = "'.$mcotiza->id.'" AND a_categoria IN (SELECT cat_id FROM categorias WHERE cat_inflable = "1")';
-            $resultcant = setq($sqlcant);
-            list($cant, $catart) = $resultcant -> fetch_array();
-            if(!$num[$catart]) $num[$catart] = 0;
-            $num[$catart] += ($cant*$rowsel['cdm_cantidad']);
-            $l+= ($cant*$rowsel['cdm_cantidad']);
-          } else {
-            if(in_array($rowsel['a_categoria'], $categoria)){
-              if(!$num[$rowsel['a_categoria']]) $num[$rowsel['a_categoria']] = 0;
-              $num[$rowsel['a_categoria']] += $rowsel['cdm_cantidad'];
-              $l+= $rowsel['cdm_cantidad'];
-            }
-          }
-        }
-        if($estatus != "V") $hiddenpor = "";
-        else $hiddenpor = "hidden";
-        echo '<div class="col-6 col-md-3 mt-2" id="porcentajediv" '.$hiddenpor.'>
+        $selm = '';
+        $seld = '';
+        if($mcotiza->moneda == "USD") $seld = 'selected';
+        else $selm = 'selected';
+        
+        echo '<div class="col-6 col-md-3" id="porcentajediv">
           <div class="mb-5">
-            <label for"fini">%Descuento (Porcentaje)</label>
-            <select name="descuento" class="form-control" required>
-              <option value="0" selected>Selecciona el descuento</option>';
-              if(count($num)>0){
-                $sql = 'SELECT DISTINCT(d_descuento) FROM descuentos WHERE d_estatus = "1"'; 
-                $sql.=' AND (';
-                foreach($num AS $cat => $valor){
-                  $j++;
-                  $sql.='(d_categoria = "'.$cat.'" AND d_numeroart <= "'.$valor.'")';
-                  if($j<count($num)){
-                    $sql.=' OR ';
-                  }
-                }
-                $sql.=') ORDER BY d_descuento ASC';
-                $result = setq($sql);
-                while($row = $result -> fetch_array()){
-                  if($row['d_descuento'] == $descuento) $sel = "selected";
-                  else $sel = "";
-                  echo '<option value="'.$row['d_descuento'].'" '.$sel.'>'.$row['d_descuento'].' %</option>';
-                }
-              }
-
-              $sqldst = 'SELECT d_descuento FROM descuentos  WHERE d_estatus = "1" AND d_categoria = "T" AND d_numeroart <= "'.$l.'"';
-              $resultdst = setq($sqldst);
-              while($rowdst = $resultdst -> fetch_array()){
-                if($rowdst['d_descuento'] == $descuento) $sel = "selected";
-                  else $sel = "";
-                  echo '<option value="'.$rowdst['d_descuento'].'" '.$sel.'>'.$rowdst['d_descuento'].' %</option>';
-              }
-            echo '</select>
-            <!-- <input type="number" name="descuento" min="0" max="100" step="1" value="'.$descuento.'" id="descuento" class="form-control" placeholder="Porcentaje de descuento" required="required" onfocus="this.select();" data-toggle="tooltip" data-placement="right" title="Expresar descuento en porcentaje" '.$blockdes.' /> -->
+            <label for"fini">Moneda</label>
+            <select name="moneda" class="form-control" required>
+              <option value="MXN" '.$selm.'>MXN</option>
+              <option value="USD" '.$seld.'>USD</option>
+            </select>
           </div>
         </div>';
-        /* echo '<div class="col-6 col-md-3 mt-2 " id="montodiv" '.$hiddenmonto.'>
+
+        echo '<div class="col-6 col-md-3 mt-2" id="porcentajediv">
           <div class="mb-5">
-            <label for"fini">$ Descuento (Monto)</label>
-            <input type="number" name="impdescuento" min="0" step="1" value="'.$impdescuento.'" id="impdescuento" class="form-control" placeholder="Monto de descuento" required="required" onfocus="this.select();" data-toggle="tooltip" data-placement="right" title="Expresar descuento en cantidad" />
+            <label for"fini">Cambio de moneda</label>
+            <input type="number" name="preciodolares" min="0" step="0.01" value="'.$mcotiza->preciodolares.'" id="preciodolares" class="form-control" placeholder="Cambio de moneda" required="required" onfocus="this.select();"/>
           </div>
-        </div>'; */
-        /* echo '<div class="col-auto mt-8" >
-        <div class="mb-5">
-          <button type="button" name="btnporcentaje"  id="btnporcentaje" onclick="cambiardescuento(0);" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Ingresar descuento por porcentaje" '.$hiddenmonto.'> <i class="fas fa-percent"></i> Descuento en porcentaje</>
-          <button type="button"name="btnmonto"  id="btnmonto" class="btn btn-primary" onclick="cambiardescuento(1);" data-toggle="tooltip" data-placement="right" title="Ingresar descuento por monto" '.$hiddenpor.'><i class="fas fa-calculator" ></i> Descuento en monto</>
-        </div>
-      </div>'; */
+        </div>';
         
       //}
       echo '
@@ -399,7 +334,7 @@ echo'
           <div class="col-12 col-md-3">
             <div class="mb-5" >
               <label >Código postal</label>
-              <input type="text" value="'.htmlspecialchars(str_pad(preg_replace("/\D/", "", (string)($cp ?? "")), 5, "0", STR_PAD_LEFT), ENT_QUOTES, "UTF-8").'" class="form-control" onchange="colonia();" id="cp" name="cp"  '.$disall.'>
+              <input type="text" value="'.htmlspecialchars(str_pad(preg_replace("/\D/", "", (string)(isset($cp) ? $cp : "")), 5, "0", STR_PAD_LEFT), ENT_QUOTES, "UTF-8").'" class="form-control" onchange="colonia();" id="cp" name="cp"  '.$disall.'>
               <div id="nameError" class="error-message"></div>
             </div>
           </div>

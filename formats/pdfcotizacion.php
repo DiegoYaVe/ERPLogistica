@@ -470,20 +470,36 @@ function WriteHTML($html)
   $vendedor = busca($cotiza->responsable, 'usuarios', 'u_id' ,'CONCAT(u_nmb, " ", u_apellidos)');
   $puestov = busca($cotiza->responsable, 'usuarios', 'u_id' ,'u_puesto');
   $correov = busca($cotiza->responsable, 'usuarios', 'u_id' ,'u_correo');
-  $origen = "4 Mosey Drive Bloomfield CT 06002.";
-  $destino = busca($cotiza->direnvio, 'crm_direcciones', 'cd_id', 'CONCAT(cd_calle," ",cd_nume," ",cd_numi," ",cd_colonia," ",cd_municipio," ",cd_cp)');
-  $peso = "35 Kg aprox\n22\" Largo X 22\" Ancho X 14\" Alto.";
-  $sql = 'SELECT * FROM crm_cotizacionesd WHERE cdm_cotizacion = "'.$cotizacion.'"';
-  $result = setq($sql);
-  while($row = $result -> fetch_array()){
-    $descripcion = $row['cdm_nmbarticulo'];
-    $precio = $row['cdm_precio']; // Asegúrate que este campo exista
+  $origen = busca($cotiza->motivo, 'ruta_origen', 'ro_id', 'ro_descripcion');
+  $destino = busca($cotiza->dirdestino, 'ruta_destino', 'rd_id', 'rd_descripcion');
+  if(!$destino) $destino = busca($cotiza->direnvio, 'crm_direcciones', 'cd_id', 'CONCAT(cd_calle," ",cd_nume," ",cd_numi," ",cd_colonia," ",cd_municipio," ",cd_cp)');
+  $peso = $cotiza->pesomercancia." Kg aprox\n$cotiza->largomercancia\" Largo X $cotiza->anchomercancia\" Ancho X $cotiza->altomercancia\" Alto.";
+  if($cotiza->tipokm != "proveedor"){
+    $sql = 'SELECT * FROM crm_cotizacionesd WHERE cdm_cotizacion = "'.$cotizacion.'"';
+    $result = setq($sql);
+    while($row = $result -> fetch_array()){
+      $descripcion = utf8_decode($row['cdm_nmbarticulo']);
+      $precio = $cotiza->mtotal; // Asegúrate que este campo exista
 
-    // Si necesitas formatear el precio
-    $precio_formateado = "$ " . number_format($precio, 2); // ej: "$ 850.00"
+      // Si necesitas formatear el precio
+      $precio_formateado = "$ " . number_format($precio, 2); // ej: "$ 850.00"
 
-    // Agregar al arreglo
-    $concepts[] = [$descripcion, $precio_formateado];
+      // Agregar al arreglo
+      $concepts[] = [$descripcion, $precio_formateado];
+    }
+  } else {
+    $sql = 'SELECT * FROM crm_cotizaciones_proveedor WHERE cp_cotizacion = "'.$cotiza->id.'"';
+    $result = setq($sql);
+    while($row = $result -> fetch_array()){
+      $descripcion = utf8_decode($row['cp_concepto']);
+      $precio = floatval($row['cp_monto'])+floatval($row['cp_extra']); // Asegúrate que este campo exista
+
+      // Si necesitas formatear el precio
+      $precio_formateado = "$ " . number_format($precio, 2); // ej: "$ 850.00"
+
+      // Agregar al arreglo
+      $concepts[] = [$descripcion, $precio_formateado];
+    }
   }
 
  /*  $concepts = [
@@ -492,7 +508,8 @@ function WriteHTML($html)
       ["FLETE NACIONAL", "$ 3,800 MXP + IVA - RET"]
   ]; */
 
-  $terms = [
+  $terms = array();
+  /* $terms = [
       "La mercancía viaja sin seguro.",
       "Libre de maniobras.",
       "Carga general.",
@@ -504,7 +521,12 @@ function WriteHTML($html)
       "Cotización puerta a puerta.",
       "Incluye impuestos de aduana.",
       "Servicio consolidado."
-  ];
+  ]; */
+  $sqlcon = 'SELECT * FROM crm_cotizaciones_condiciones WHERE cf_cotizacion = "'.$cotizacion.'"';
+  $resultcon = setq($sqlcon);
+  while($rowcon = $resultcon -> fetch_array()){
+    $terms[] = $rowcon['cf_descripcion'];
+  }
   $pdf->SetTextColor(0);
   $pdf->SetFont('Arial', '', 35);
   $pdf->Cell(140, 8, utf8_decode("COTIZACIÓN"), 0);
