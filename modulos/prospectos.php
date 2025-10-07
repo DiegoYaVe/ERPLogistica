@@ -187,7 +187,7 @@ ini_set('display_errors', 0);
         }
       
                                                                                                                                                       
-        $this->model->setdatalead("",$_POST['lead'],$_POST['nmb'],$_POST['cp'],$_POST['correo'],$_POST['telefono'],$_POST['code'],$_POST['pais'],"P",$_POST['observacion'],$vendedor,$ncaptura,$_SESSION['uid'],"NULL",date("Y-m-d"));
+        $this->model->setdatalead("",$_POST['lead'],$_POST['nmb'], $_POST['comentarios'], $_POST['cp'],$_POST['correo'],$_POST['telefono'],$_POST['code'],$_POST['pais'],"P",$_POST['empresa'],$vendedor,$ncaptura,$_SESSION['uid'],"NULL",date("Y-m-d"));
         $this->model->insertlead();
       }
       $link = '?modulo=prospectos&accion=show&id='.$_POST['lead'];
@@ -375,17 +375,18 @@ ini_set('display_errors', 0);
     }
 
 
-    function setdatalead($id,$lead,$nmb,$cp,$correo,$telefono,$code,$pais,$estatus,$observacion,$vendedor,$ncaptura,$ucaptura,$hasigna,$fechaasigna,$consecutivo){
+    function setdatalead($id,$lead,$nmb,$comentarios,$cp,$correo,$telefono,$code,$pais,$estatus,$empresa,$vendedor,$ncaptura,$ucaptura,$hasigna,$fechaasigna,$consecutivo){
       $this->id = $id;
       $this->lead = $lead;
       $this->nmb = clearvmayus($nmb);
+      $this->comentarios = $comentarios;
       $this->cp = $cp;
       $this->correo = $correo;
       $this->telefono = $telefono;
       $this->code = $code;
       $this->pais = $pais;
       $this->estatus = clearvmayus($estatus);
-      $this->observacion = clearvmayus($observacion);
+      $this->empresa = clearvmayus($empresa);
       $this->vendedor = $vendedor;
       $this->ncaptura = $ncaptura;
       $this->ucaptura = clearvmayus($ucaptura);
@@ -401,6 +402,8 @@ ini_set('display_errors', 0);
       $sql = 'INSERT INTO crm_leads SET'.$sqlf.'
               cl_lead = "'.$this->lead.'",
               cl_nmb = "'.$this->nmb.'",
+              cl_empresa = "'.$this->empresa.'",
+              cl_comentarios = "'.$this->comentarios.'",
               cl_cp = "'.$this->cp.'",
               cl_correo = "'.$this->correo.'",
               cl_telefono = "'.$this->telefono.'" ,
@@ -1114,7 +1117,7 @@ license_key: 'gpl',
               Swal.fire({
                 icon: "warning",
                 title: "Estado duplicado",
-                text: "Ya existe una hoja activa para ese estado. ¿Deseas ser redirigido a la hoja?",
+                text: "Ya existe una hoja activa von ese nombre. ¿Deseas ser redirigido a la hoja?",
                 showCancelButton: true,
                 confirmButtonText: "Ir a la hoja",
                 cancelButtonText: "Cancelar"
@@ -1964,8 +1967,8 @@ function show(){
           <input type="hidden" id="pais" name="pais" value="">
           <div class="row g-2">
             <div class="col-md-6">
-              <label for="obs" class="form-label">Empresa</label>
-              <input type="text" id="obs" name="obs" class="form-control">
+              <label for="empresa" class="form-label">Empresa</label>
+              <input type="text" id="empresa" name="empresa" class="form-control">
             </div>
             <div class="col-md-6">
               <label for="telefono" class="form-label">Teléfono *</label>
@@ -1982,6 +1985,10 @@ function show(){
             <div class="col-md-6">
               <label for="correo" class="form-label">Correo electrónico</label>
               <input type="email" id="correo" name="correo" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label for="comentarios" class="form-label">Comentarios</label>
+              <textarea id="comentarios" name="comentarios" class="form-control" rows="4" required></textarea>
             </div>
           </div>
         </form>
@@ -2124,6 +2131,7 @@ function show(){
                 <table width="90%" class="mb-0 table-hover table-striped" id="myTable">
                   <thead class="bg-light-blue bg-darken-2">
                     <tr>
+                      <th></th>
                       <th><b>Empresa</b></th>
                       <th><b>Nombre</b></th>
                       <th><b>Teléfono</b></th>
@@ -2131,6 +2139,7 @@ function show(){
                       <th><b>Fecha Límite</b></th>
                       <th><b>Acercamiento</b></th>
                       <th></th>
+                      <th><b>Comentarios</b></th>
                     </tr>
                   </thead>
                   <tbody>';
@@ -2274,11 +2283,12 @@ function show(){
   <div class="row">
     <div class="col-5">
       <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero">
-        <i class="fas fa-book-open"></i> Iniciar
+        <i class="fas fa-book-open"></i>
       </button>
       <button type="button" onClick="editarLead('.$row['cl_id'].');" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Editar prospecto">
-        <i class="bi bi-pencil-fill fs-7"></i> Editar
+        <i class="bi bi-pencil-fill fs-7"></i>
       </button>
+      <button type="button" onClick="borrarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
     </div>
     <div class="col-4">
       <select class="form-control form-control-sm estatus-select" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
@@ -2321,15 +2331,19 @@ function show(){
       $badgeClass = 'badge bg-warning text-dark'; // amarillo (faltan ≤ 2 días)
   }
 
+  $rutaIcono = busca($row['cl_ucaptura'], 'usuarios', 'u_id', 'u_icono');
+
   // 4) Render de fila
   echo '<tr>
-          <td>'.$row['cl_observacion'].'</td>
+          <td><img src="'.$rutaIcono.'" alt="icono" style="width:24px; height:24px; object-fit:contain;"></td>
+          <td>'.$row['cl_empresa'].'</td>
           <td>'.$row['cl_nmb'].'</td>
           <td>'.$phone.'</td>
           <td>'.$row['cl_correo'].'</td>
           <td><span class="'.$badgeClass.'" title="Vigencia de 7 días desde la asignación">'.$fechaContactoStr.'</span></td>
           <td>'.$checkb.'</td>
           <td>'.$acciones.'</td>
+          <td>'.$row['cl_comentarios'].'</td>
         </tr>';
 
                       }
@@ -2675,8 +2689,9 @@ function show(){
       document.getElementById("cp").value = "";
       document.getElementById("correo").value = "";
       document.getElementById("telefono").value = "";
-      document.getElementById("obs").value = "";
-      //document.getElementById("code").value = "";
+      document.getElementById("empresa").value = "";
+      document.getElementById("comentarios").value = "";
+
       document.getElementById("pais").value = "";
       
       // Reinicia el texto del botón por si vienes de una edición
@@ -2829,7 +2844,8 @@ function show(){
         };
       var pais = document.getElementById("pais").value;
 
-      var observacion = document.getElementById("obs").value;
+      var empresa = document.getElementById("empresa").value;
+      var comentarios = document.getElementById("comentarios").value;
       var id = "";
       if(document.getElementById("id")){
         id = document.getElementById("id").value;
@@ -2845,12 +2861,13 @@ function show(){
                   dataType: 'json',
                   data: {
                       'nmb': nmb,
+                      'comentarios': comentarios,
                       "cp": cp,
                       "correo": correo,
                       "telefono": telefono,
                       "code": code,
                       "pais": pais,
-                      "observacion": observacion,
+                      "empresa": empresa,
                       "lead": lead,
                       "id": id
                   },
@@ -2940,7 +2957,8 @@ function show(){
   var $telefono = document.getElementById("telefono");
   var $code     = document.getElementById("code");
   var $pais     = document.getElementById("pais");
-  var $obs      = document.getElementById("obs");
+  var $empresa      = document.getElementById("empresa");
+  var $comentarios      = document.getElementById("comentarios");
   var $btnSave  = document.getElementById("btnGuardarProspecto"); // usa el id real del botón
 
   $.ajax({
@@ -2981,7 +2999,8 @@ function show(){
       telefono:  d.telefono  ?? d.cl_tel      ?? "",
       code:      d.code      ?? d.cl_code     ?? "",
       pais:      d.pais      ?? d.cl_pais     ?? "",
-      obs:       d.obs       ?? d.cl_observacion ?? d.cl_notas ?? ""
+      empresa:       d.empresa       ?? d.cl_empresa ?? "",
+      comentarios:       d.comentarios       ?? d.cl_comentarios ?? ""
     };
 
     // Rellena los campos (solo si existen en el DOM)
@@ -2993,7 +3012,8 @@ function show(){
     if ($telefono) $telefono.value = v.telefono;
     if ($code)     $code.value     = v.code;
     if ($pais)     $pais.value     = v.pais;
-    if ($obs)      $obs.value      = v.obs;
+    if ($empresa)      $empresa.value      = v.empresa;
+    if ($comentarios)      $comentarios.value      = v.comentarios;
 
     // Protege el uso de intl-tel-input si existe
     if (window.iti && typeof iti.setCountry === "function") {
@@ -3006,7 +3026,8 @@ function show(){
     if ($cp)       $cp.removeAttribute("readonly");
     if ($correo)   $correo.removeAttribute("readonly");
     if ($telefono) $telefono.removeAttribute("readonly");
-    if ($obs)      $obs.removeAttribute("readonly");
+    if ($empresa)      $empresa.removeAttribute("readonly");
+    if ($comentarios)      $comentarios.removeAttribute("readonly");
     if ($btnSave)  $btnSave.removeAttribute("disabled");
   })
   .fail(function(xhr) {
@@ -3091,7 +3112,9 @@ function show(){
               var cp = document.getElementById("cp");
               var correo = document.getElementById("correo");
               var telefono = document.getElementById("telefono");
-              var obs = document.getElementById("obs"); // Cambiar el nombre de la variable a "obs"
+              var empresa = document.getElementById("empresa");
+              var comentarios = document.getElementById("comentarios");
+
               var btnguardar = document.getElementById("btnguardar");
               $.ajax({
                       url: "query/eliminarprospecto.php",
@@ -3103,19 +3126,21 @@ function show(){
                       },
                   })
                   .done(function(data) {
+                      window.location.reload();
                       document.getElementById("mi-contenido").innerHTML = data.html;
                       nmb.removeAttribute("readonly");
                       cp.removeAttribute("readonly");
                       correo.removeAttribute("readonly");
                       telefono.removeAttribute("readonly");
-                      obs.removeAttribute("readonly");
+                      empresa.removeAttribute("readonly");
                       btnguardar.setAttribute("disabled", true);
                       leadId.value = "";
                       nmb.value = "";
+                      comentarios.value = "";
                       cp.value = "";
                       correo.value = "";
                       telefono.value = "";
-                      obs.value = "";
+                      empresa.value = "";
                       tel.value = data.tel;
                       document.getElementById("codes").value = data.codes;
                       if (data.registros >= 2) {

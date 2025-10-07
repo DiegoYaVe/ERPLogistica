@@ -28,7 +28,8 @@ if ($bandera == 1) {
     $response['telefono'] = $rowcl['cl_telefono'];
     $response['code'] = $rowcl['cl_code'];
     $response['pais'] = $rowcl['cl_pais'];
-    $response['obs'] = $rowcl['cl_observacion'];
+    $response['empresa'] = $rowcl['cl_empresa'];
+    $response['comentarios'] = $rowcl['cl_comentarios'];
 }
 $response['respuesta'] = $bandera;
 

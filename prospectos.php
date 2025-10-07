@@ -892,7 +892,7 @@ function finalizar(id) {
             Swal.fire({
               icon: "warning",
               title: "Estado duplicado",
-              text: "Ya existe una hoja activa para ese estado. ¿Deseas ser redirigido a la hoja?",
+              text: "Ya existe una hoja activa con este nombre. ¿Deseas ser redirigido a la hoja?",
               showCancelButton: true,
               confirmButtonText: "Ir a la hoja",
               cancelButtonText: "Cancelar"

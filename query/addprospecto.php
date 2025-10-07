@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 session_start();
 include_once('../funciones.php');
 include_once('../modulos/prospectos.php');
@@ -31,7 +31,8 @@ if (isset($_SESSION['uid'])) {
   $phone     = isset($_POST['telefono']) ? $_POST['telefono'] : '';
   $code      = isset($_POST['code']) ? $_POST['code'] : '';
   $pais      = isset($_POST['pais']) ? $_POST['pais'] : '';
-  $observacion = isset($_POST['observacion']) ? $_POST['observacion'] : '';
+  $empresa = isset($_POST['empresa']) ? $_POST['empresa'] : '';
+  $comentarios = isset($_POST['comentarios']) ? $_POST['comentarios'] : '';
   $lead      = isset($_POST['lead']) ? $_POST['lead'] : '';
 
   $status    = '';
@@ -133,13 +134,14 @@ if (isset($_SESSION['uid'])) {
       $id,
       $lead,
       $nmb,
+      $comentarios,
       $cp,
       $correo,
       $telefono,
       $code,
       $pais,
       $status,
-      $observacion,
+      $empresa,
       $vendedor,           // <<< vendedor forzado a sesión
       $ncaptura,
       $_SESSION['uid'],    // usuario que realiza la acción
@@ -185,12 +187,12 @@ if (isset($_SESSION['uid'])) {
 
         $html .= '
         <tr class="">
-          <th style="height: 44.84px;' . $backg . '">+' . $row['cl_code'] . " " . $row['cl_telefono'] . '</span></th>
-          <th style="height: 44.84px;' . $backg . '"><span>' . $row['cl_nmb'] . '</span></th>
-          <th style="height: 44.84px;' . $backg . '">' . $row['cl_cp'] . '</span></th>
-          <th style="height: 44.84px;' . $backg . '">' . $row['cl_correo'] . '</span></th>
-          <th style="height: 44.84px;' . $backg . '">' . $row['cl_observacion'] . '</span></th>
-          <th style="height: 44.84px;' . $backg . '">';
+          <th style="height: 38.43px;' . $backg . '">+' . $row['cl_code'] . " " . $row['cl_telefono'] . '</span></th>
+          <th style="height: 38.43px;' . $backg . '"><span>' . $row['cl_nmb'] . '</span></th>
+          <th style="height: 38.43px;' . $backg . '">' . $row['cl_cp'] . '</span></th>
+          <th style="height: 38.43px;' . $backg . '">' . $row['cl_correo'] . '</span></th>
+          <th style="height: 38.43px;' . $backg . '">' . $row['cl_observacion'] . '</span></th>
+          <th style="height: 38.43px;' . $backg . '">';
 
         if ($row['cl_estatus'] == "P") {
           $html .= '<button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>  
@@ -221,11 +223,14 @@ if (isset($_SESSION['uid'])) {
               <div class="col-md-2">
                 <input type="hidden" value="' . $vend . '" id="venoriginal' . $row['cl_id'] . '">
                 <button type="button" onClick="editarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-primary"><i class="fas fa-user-edit"></i></button>
-              </div>
+                <button type="button" onClick="borrarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                </div>
             </div>';
         }
 
-        $html .= '</th></tr>';
+        $html .= '</th>
+        <th style="height: 38.43px;' . $backg . '">' . $row['cl_comentarios'] . '</span></th>
+        </tr>';
 
         if ($i == 1) {
           $telefonos .= $row['cl_telefono'];

@@ -3621,7 +3621,7 @@ if($this->model->estatus != "N") $readonly = "readonly";
                     <input type="number" step="0.01" min="1" class="form-control" id="costo" name="costo" value="0">
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label"><b>Extra</b></label>
+                    <label class="form-label"><b>Profit</b></label>
                     <input type="number" step="0.01" min="1" class="form-control" id="extra" name="extra" value="0">
                   </div>
                   <div class="col-md-6">
@@ -3658,7 +3658,7 @@ if($this->model->estatus != "N") $readonly = "readonly";
                 <tr>
                   <th>Proveedor</th>
                   <th>Costo</th>
-                  <th>Extra</th>  
+                  <th>Profit</th>  
                   <th>Tipo de unidad</th>   
                   <th>Concepto</th>          
                   <th>Archivo</th>

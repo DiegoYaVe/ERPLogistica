@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 class usuarios{ 
   var $model;
   var $view;
@@ -112,6 +112,45 @@ class usuarios{
         }
     }
 
+    if (isset($_FILES['u_icono']) && $_FILES['u_icono']['error'] === UPLOAD_ERR_OK) {
+        // id del usuario que estás editando
+        $uid = $this->model->id ?: (isset($_POST['id']) ? $_POST['id'] : '');
+
+        // Carpeta destino (dentro del módulo)
+        $uploadDir = __DIR__ . "/uploads/iconos/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $tmpName  = $_FILES['u_icono']['tmp_name'];
+        $origName = basename($_FILES['u_icono']['name']);
+        $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+        // Validación simple de extensión
+        $extsOK = ['png','jpg','jpeg','gif','webp','ico'];
+        if (!in_array($ext, $extsOK, true)) {
+            // si quieres, puedes setear un mensaje/flag
+            // $errorFirma = "EXTENSION_NO_PERMITIDA";
+        } else {
+            // Nombre único
+            $newName = "firma_" . uniqid() . "." . $ext;
+            $destino = $uploadDir . $newName;
+
+            if (move_uploaded_file($tmpName, $destino)) {
+                // Guarda ruta **relativa** para que <img src="..."> funcione
+                // OJO: esta ruta debe ser accesible por el servidor web
+                $firmaPath = "modulos/uploads/iconos/" . $newName;
+
+                // UPDATE usando setq() como en todo tu código (sin $conn)
+                $sql = "UPDATE usuarios 
+                          SET u_icono = '" . addslashes($firmaPath) . "'
+                        WHERE u_id = '" . addslashes($uid) . "'
+                          AND u_empresa = '" . addslashes($_SESSION['emp']) . "'";
+                setq($sql);
+            }
+        }
+    }
+
 
 
     $sqlgrupo = 'SELECT * FROM grupos WHERE g_estatus = "A"';
@@ -217,6 +256,7 @@ class modelusuarios{
       $this->saludo = $row['u_saludo'];
       $this->notificaciones = $row['u_notificaciones'];
       $this->u_firma = $row['u_firma'];
+      $this->u_icono = $row['u_icono'];
       
     }
     function result($page,$nmb,$grupo,$estatus){
@@ -842,6 +882,22 @@ class viewusuarios{
                       <?php endif; ?>
                     </div>
                   </div>
+
+                  <div class="row">
+                    <div class="mb-3">
+                      <label for="u_icono" class="form-label">Icono personal</label>
+                      <input type="file" name="u_icono" id="u_icono" class="form-control" accept="image/*">
+                      
+                      <!-- Vista previa si ya existe firma -->
+                      <?php if (!empty($this->model->u_icono)): ?>
+                        <div class="mt-2">
+                          <p>Icono actual:</p>
+                          <img src="<?php echo htmlspecialchars($this->model->u_icono); ?>" alt="Icono">
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+
                   <p style="font-size: x-small;" for=""><i>(*) Requeridos</i></p>
                   <div class="form-actions">
                     <a href="?modulo=usuarios&accion=index">
