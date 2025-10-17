@@ -66,7 +66,7 @@ class clientes{
     $result = setq($sql);
     list($existe) = $result ->fetch_array(); 
     if(!$existe){
-      $this->model->setdata($id,$_POST['nmb'],$_POST['apellidos'],$_POST['alias'],$_POST['correo1'],$telefono1,$telefono2,$_POST['obs'],$_POST['almacen'],$_POST['precio'], date('Y-m-d H:i:s'), $_SESSION['uid'], $_POST['empresa']);
+      $this->model->setdata($id,$_POST['nmb'],$_POST['apellidos'],$_POST['especial'],$_POST['alias'],$_POST['correo1'],$telefono1,$telefono2,$_POST['obs'],$_POST['almacen'],$_POST['precio'], date('Y-m-d H:i:s'), $_SESSION['uid'], $_POST['empresa']);
       $ok = $this->model->setuser();
 
 
@@ -378,15 +378,13 @@ class modelclientes{
     $this->precio= $row['c_precio'];
     $this->fregistro= $row['c_fregistro'];
     $this->uregistro= $row['c_uregistro'];
-    
+    $this->especial= $row['c_especial'];
   }
 
   function result($fini,$ffin,$page){
     $bloque = 50;
     $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-    $sql = 'SELECT * FROM crm_clientes WHERE ';
-    if($grupo != "ADMIN" && $grupo != "GERENCIA" && $grupo != "SUBGERENCIA") $sql.='c_uregistro = "'.$_SESSION['uid'].'"';
-    else $sql .= "1=1";
+    $sql = 'SELECT * FROM crm_clientes';
     $sql.=' ORDER BY c_id DESC LIMIT 0,500';
     
     $result = setq($sql);
@@ -395,7 +393,7 @@ class modelclientes{
     $this->resultt = setq($sql);
   }
 
-  function setdata($id,$nmb,$apellidos,$alias,$email,$telefono1,$telefono2,$obs,$almacen,$precio, $fregistro, $uregistro, $empresa){
+  function setdata($id,$nmb,$apellidos,$especial,$alias,$email,$telefono1,$telefono2,$obs,$almacen,$precio, $fregistro, $uregistro, $empresa){
     mb_internal_encoding("UTF-8");
     $simbol = array('"',"'");
     $cambio = "";
@@ -413,11 +411,18 @@ class modelclientes{
     $this->fregistro = trim($fregistro);
     $this->uregistro = trim($uregistro);
     $this->empresa = str_replace($simbol,$cambio,mb_strtoupper(trim($empresa)));
+    $this->especial= $especial;
 
 //    unique($this->alias,'c_nmb','crm_clientes');
   }
 
   function setuser(){
+    if($this->especial == "on"){
+      $this->especial = "1";
+    } else{
+      $this->especial = "0";
+    }
+
     $sql = 'INSERT INTO crm_clientes SET
             c_id = "'.$this->id.'",
             c_alias = "'.$this->alias.'",
@@ -431,6 +436,7 @@ class modelclientes{
             c_precio= "'.$this->precio.'",
             c_fregistro = "'.$this->fregistro.'",
             c_uregistro = "'.$this->uregistro.'",
+            c_especial= "'.$this->especial.'",
             c_obs= "'.$this->obs.'"
             ON DUPLICATE KEY UPDATE
             c_alias = "'.$this->alias.'",
@@ -442,6 +448,7 @@ class modelclientes{
             c_almacen= "'.$this->almacen.'",
             c_precio= "'.$this->precio.'",
             c_telefono2= "'.$this->telefono2.'",
+            c_especial= "'.$this->especial.'",
             c_obs= "'.$this->obs.'"';
     $ok = setq($sql);
 
@@ -995,6 +1002,16 @@ class viewclientes{
   echo '<form autocomplete="off" name="cliedit" id="cliedit" action="?modulo=clientes&accion=setuser" method="post" >
         <input type="hidden" name="solog" value="0" id="sologas" />';
   if($this->model->id)
+      
+      $disabledespecial = '';
+      $despecial = '  ';
+      $style = '';
+
+      if((int)$this->model->especial == 1){
+        $disabledespecial = '';
+        $despecial = ' checked="checked" ';
+      }
+
     echo '<input type="hidden" name="id" value="'.$this->model->id.'" />';
   echo '
         <div class="card-body in">
@@ -1053,6 +1070,12 @@ class viewclientes{
                   <div class="input-group-desc">
                     <label class="label--desc">Observaciones</label>
                     <textarea name="obs" class="form-control" placeholder="Si tienes alguna observación del cliente escribela a continuación">'.$observaciones.'</textarea >
+                  </div>
+                </div>
+                <div class="col-6 col-md-2" >
+                  <div class="mb-5">
+                    <label for"fini">Precio especial</label>
+                    <input type="checkbox" name="especial" id="especial" '.$despecial.' '.$disabledespecial.' '.$style.' class="flipswitchsn" />
                   </div>
                 </div>
             </div>
@@ -2386,6 +2409,8 @@ echo '
   if($_GET['accion'] == "precios") $alertprc = 'class="alert alert-info"'; else $alertprc = "";
   if($_GET['accion'] == "fiscales") $alertfisc = 'class="alert alert-info"'; else $alertfisc = "";
   if($_GET['accion'] == "expediente") $alertexp = 'class="alert alert-info"'; else $alertexp = "";
+  if($_GET['accion'] == "rutas") $alertrutas = 'class="alert alert-info"'; else $alertrutas = "";
+
 
   echo '<div class="col-md-3">
         <div class="card">
@@ -2426,6 +2451,10 @@ echo '
                     <tr '.$alertfisc.'>
                       <th><a href="?modulo=clientes&accion=expediente&cliente='.$this->model->id.'">
                       <i class="fas fa-folder"></i> Expediente</th>
+                    </a></tr>
+                    <tr '.$alertrutas.'>
+                      <th><a href="?modulo=rutas&accion=index&idCliente='.$this->model->id.'">
+                      <i class="fas fa-folder"></i> Rutas</th>
                     </a></tr>';
                     /* echo '<tr>
                       <th '.$alertbtc.'>

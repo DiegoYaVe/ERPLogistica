@@ -18,9 +18,7 @@ if(!isset($_REQUEST['page'])) $_REQUEST['page'] = 0;
 
 
 //$grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-$sql = 'SELECT * FROM crm_clientes WHERE ';
-if($grupo != "ADMIN" && $grupo != "GERENCIA" && $grupo != "SUBGERENCIA") $sql.='c_uregistro = "'.$_SESSION['uid'].'"';
-else $sql .= "1=1";
+$sql = 'SELECT * FROM crm_clientes';
 $sql.=' ORDER BY c_id ASC ';
 $result = setq($sql); 
 $arreglo = array();

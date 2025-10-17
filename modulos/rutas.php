@@ -1,9 +1,9 @@
 <?php
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 class rutas{
 
 function __construct(){
-    $this->model = new modelrutas($obj);
+    $this->model = new modelrutas();
 }
 function index(){
     
@@ -19,15 +19,15 @@ function puntos(){
 }
 
 function insertdestino(){
-  $sqlins='INSERT INTO ruta_destino SET rd_nombre = "'.$_POST['nombre'].'", rd_descripcion = "'.$_POST['descripcion'].'", rd_estatus = "A"';
+  $sqlins='INSERT INTO ruta_destino SET rd_nombre = "'.$_POST['nombre'].'", rd_descripcion = "'.$_POST['descripcion'].'", rd_estatus = "A", rd_idcliente = "' . $_POST['idCliente'] . '"';
   setq($sqlins);
-  redirect('?modulo=rutas&accion=puntos'); 
+  redirect('?modulo=rutas&accion=puntos&idCliente='.$_POST['idCliente']); 
 }
 
 function insertorigen(){
-  $sqlins='INSERT INTO ruta_origen SET ro_nombre = "'.$_POST['nombre'].'", ro_descripcion = "'.$_POST['descripcion'].'", ro_estatus = "A"';
+  $sqlins='INSERT INTO ruta_origen SET ro_nombre = "'.$_POST['nombre'].'", ro_descripcion = "'.$_POST['descripcion'].'", ro_estatus = "A", ro_idcliente = "' . $_POST['idCliente'] . '"';
   setq($sqlins);
-  redirect('?modulo=rutas&accion=puntos'); 
+  redirect('?modulo=rutas&accion=puntos&idCliente='.$_POST['idCliente']); 
 }
 
 function insert(){
@@ -45,9 +45,10 @@ function insert(){
     rt_operador = "' . $_POST['operador'] . '", 
     rt_costodvl = "' . $_POST['costodvl'] . '", 
     rt_ventadvl = "' . $_POST['ventadvl'] . '", 
+    rt_idcliente = "' . $_POST['idCliente'] . '",
     rt_ventakraus = "' . $_POST['ventakraus'] . '"';
   setq($sqlins);
-  redirect('?modulo=rutas&accion=index');
+  redirect('?modulo=rutas&accion=index&idCliente='.$_POST['idCliente']);
 }
 function update(){
   
@@ -65,56 +66,61 @@ function update(){
     rt_operador = "' . $_POST['operador'] . '", 
     rt_costodvl = "' . $_POST['costodvl'] . '", 
     rt_ventadvl = "' . $_POST['ventadvl'] . '", 
+    rt_idcliente = "' . $_POST['idCliente'] . '",
     rt_ventakraus = "' . $_POST['ventakraus'] . '" WHERE rt_id = "'.$_POST['id'].'"';
   setq($sqlupd);
 
-  redirect('?modulo=rutas&accion=index');
+  redirect('?modulo=rutas&accion=index&idCliente='.$_POST['idCliente']);
 }
 
 function borrar(){
   $sql = 'DELETE FROM ruta_tarifario
-          WHERE rt_id = "'.$_GET['id'].'"';
+          WHERE rt_id = "'.$_GET['id'].'" AND rt_idcliente = "' . $_GET['idCliente'] . '"';
   setq($sql);
 
-  redirect("?modulo=rutas&accion=index");
+  redirect("?modulo=rutas&accion=index&idCliente=".$_POST['idCliente']);
 }
 
 function borrarorigen(){
   $sql = 'DELETE FROM ruta_origen
-          WHERE ro_id = "'.$_GET['id'].'"';
+          WHERE ro_id = "'.$_GET['id'].'" AND ro_idcliente = "' . $_GET['idCliente'] . '"';
   setq($sql);
 
-  redirect("?modulo=rutas&accion=puntos");
+  redirect("?modulo=rutas&accion=puntos&idCliente=".$_POST['idCliente']);
 }
 
 function borrardestino(){
   $sql = 'DELETE FROM ruta_destino
-          WHERE rd_id = "'.$_GET['id'].'"';
+          WHERE rd_id = "'.$_GET['id'].'" AND rd_idcliente = "' . $_GET['idCliente'] . '"';
   setq($sql);
 
-  redirect("?modulo=rutas&accion=puntos");
+  redirect("?modulo=rutas&accion=puntos&idCliente=".$_POST['idCliente']);
 }
 }
 
 class modelrutas{
 function result(){ //filtro
   
-  $sql = 'SELECT * FROM ruta_tarifario INNER JOIN ruta_origen ON ro_id = rt_origen INNER JOIN ruta_destino ON rd_id = rt_destino  WHERE 1=1 ';
+  $sql = 'SELECT * FROM ruta_tarifario 
+  INNER JOIN ruta_origen ON ro_id = rt_origen AND ro_idCliente = rt_idCliente
+  INNER JOIN ruta_destino ON rd_id = rt_destino AND rd_idCliente = rt_idCliente
+  WHERE 1=1 AND rt_idCliente = '.$_GET['idCliente'];
   $sql.=' ORDER BY rt_id ASC ';
   $this->result = setq($sql);
   $this->resultt = setq($sql);
 }
-function select($id){
-    $sql = 'SELECT * FROM ruta_tarifario WHERE rt_id="'.$id.'"';
+function select($id, $idCliente){
+    $sql = 'SELECT * FROM ruta_tarifario WHERE rt_id="'.$id.'" AND rt_idCliente = "' . $idCliente . '"';
     $result = setq($sql);
     $row = $result->fetch_array();
     $this->id = $row['rt_id'];
     $this->nmb = $row['rt_nmb'];
     $this->siglas = $row['rt_siglas'];
     $this->inflable = $row['rt_inflable'];
+    $this->idCliente = $row['rt_idCliente'];
 }
 
-function setdata($id,$nmb,$siglas, $inflable){
+function setdata($id,$nmb,$siglas,$inflable,$idCliente){
     mb_internal_encoding("UTF-8");
     $simbol = array('"',"'","#","$","%", "&","/","(",")","=","?","¡","*","+","~","^","[","°","|","{","}","[","]");
     $cambio = "";
@@ -122,12 +128,14 @@ function setdata($id,$nmb,$siglas, $inflable){
     $this->nmb = clearvmayus($nmb);
     $this->siglas = clearvmayus($siglas);
     $this->inflable = clearvmayus($inflable);
+    $this->idCliente = $idCliente;
 }
 function insert(){
     $sql = 'INSERT INTO rutas SET
             rt_id = "'.$this->id.'",
             rt_nmb = "'.$this->nmb.'",
             rt_siglas = "'.$this->siglas.'",
+            rt_idCliente = "'.$this->idCliente.'",
             rt_inflable = "'.$this->inflable.'"';
     setq($sql);
 }
@@ -136,7 +144,7 @@ function update(){
             rt_nmb = "'.$this->nmb.'",
             rt_siglas = "'.$this->siglas.'",
             rt_inflable = "'.$this->inflable.'"
-            WHERE rt_id = "'.$this->id.'"';
+            WHERE rt_id = "'.$this->id.'" AND rt_idCliente = "'.$this->idCliente.'"';
     setq($sql);
 }
 
@@ -190,10 +198,14 @@ function browse() {
     </script>
     <?php
     
-      $nuevo = '<a id="nuevo" class="btn btn-sm btn-primary" data-fancybox data-type="ajax" data-src="popup/setruta.php" href="javascript:;">
+      $nuevo = '
+      <a href="?modulo=clientes&accion=edit&id='.$_GET['idCliente'].'">
+      <button type="button" class=" btn btn-warning"><i class="fa fa-arrow-left"></i>Atrás</button>
+      </a>
+      <a id="nuevo" class="btn btn-sm btn-primary" data-fancybox data-type="ajax" data-src="popup/setruta.php?idCliente='.$_GET['idCliente'].'" href="javascript:;">
         <i class="fa fa-plus"></i> Nuevo
       </a>';
-      $boton = '<a href="?modulo=rutas&accion=puntos">
+      $boton = '<a href="?modulo=rutas&accion=puntos&idCliente='.$_GET['idCliente'].'">
                 <button type="button" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Origen/Destino </button>
               </a>';
       
@@ -271,7 +283,7 @@ function browse() {
         <td>$'.number_format($row['rt_costodvl'],2).'</td>
         <td>$'.number_format($row['rt_ventadvl'], 2).'</td>
         <td>';
-          echo '<a data-toggle="tooltip" data-placement="top" title data-original-title="Editar ruta" data-fancybox data-type="ajax" data-src="popup/setruta.php?id='.$row['rt_id'].'" href="javascript:;">
+          echo '<a data-toggle="tooltip" data-placement="top" title data-original-title="Editar ruta" data-fancybox data-type="ajax" data-src="popup/setruta.php?id='.$row['rt_id'].'&idCliente='.$_GET['idCliente'].'" href="javascript:;">
             <button type="button" class="btn btn-info">
               <i class="fas fa-pen" style="color: #ffffff;"></i>
             </button>
@@ -303,7 +315,7 @@ function browse() {
 function puntos() {
    
       $izquierda = '
-      <a href="?modulo=rutas&accion=index">
+      <a href="?modulo=rutas&accion=index&idCliente='.$_GET['idCliente'].'">
       <button type="button" class=" btn btn-warning"><i class="fa fa-arrow-left"></i>Atrás</button>
       </a>';  
 
@@ -333,13 +345,14 @@ function puntos() {
       <div class="card-body row" >';
         echo '<div class="col-md-6 col-6 col-sm-6 mb-4">
           <form method="post" action="?modulo=rutas&accion=insertorigen" class="row">
+            <input type="hidden" id="idCliente" name="idCliente" value="'.$_GET['idCliente'].'"/>
             <div class="col-5 col-md-5">
               <label for="agregar" class">Nombre</label>
               <input type="text" name="nombre" id="nombre" placeholder="Nombre" class="form-control" required />
             </div>
             <div class="col-5 col-md-5">
               <label for="agregar" class">Descripción</label>
-              <input type="text" name="descripcion" id="descripcion" placeholder="Descripcion" class="form-control" required />
+              <input type="text" name="descripcion" id="descripcion" placeholder="Descripcion" class="form-control"/>
             </div>
             <div class="col-2 col-md-2 mt-6">
               <button class="btn btn-sm btn-primary"><i class="fas fa-plus"></i>Añadir</button>
@@ -356,7 +369,7 @@ function puntos() {
                     <th width="20%"></th>
                   </tr>
                 </thead>'; 
-    $setqo = 'SELECT * FROM ruta_origen';
+    $setqo = 'SELECT * FROM ruta_origen WHERE ro_idcliente = "' . $_GET['idCliente'] . '"';
     $resulto = setq($setqo);
     while ($row = $resulto->fetch_array()) {
         echo '<tr>
@@ -376,13 +389,14 @@ function puntos() {
 
     echo '<div class="col-md-6 col-6 col-sm-6">
           <form method="post" action="?modulo=rutas&accion=insertdestino" class="row">
+            <input type="hidden" id="idCliente" name="idCliente" value="'.$_GET['idCliente'].'"/>
             <div class="col-5 col-md-5">
               <label for="agregar" class">Nombre</label>
               <input type="text" name="nombre" id="nombre" placeholder="Nombre" class="form-control" required />
             </div>
             <div class="col-5 col-md-5">
               <label for="agregar" class">Descripción</label>
-              <input type="text" name="descripcion" id="descripcion" placeholder="Descripcion" class="form-control" required />
+              <input type="text" name="descripcion" id="descripcion" placeholder="Descripcion" class="form-control" />
             </div>
             <div class="col-2 col-md-2 mt-6">
               <button class="btn btn-sm btn-primary"><i class="fas fa-plus"></i>Añadir</button>
@@ -399,7 +413,7 @@ function puntos() {
                     <th width="20%"></th>
                   </tr>
                 </thead>'; 
-    $setqo = 'SELECT * FROM ruta_destino';
+    $setqo = 'SELECT * FROM ruta_destino WHERE rd_idcliente = "' . $_GET['idCliente'] . '"';
     $resulto = setq($setqo);
     while ($row = $resulto->fetch_array()) {
         echo '<tr>

@@ -133,9 +133,19 @@ ini_set('display_errors', 0);
     }
 
     function show(){
-      $this->model->resultlead($_GET['id']);
+      if (!isset($_REQUEST['fini'])) $_REQUEST['fini'] = date('Y-m-d',strtotime('-30 days'));
+      if (!isset($_REQUEST['ffin'])) $_REQUEST['ffin'] = date('Y-m-d'); 
+      if (!isset($_REQUEST['cliente'])) $_REQUEST['cliente'] = NULL;
+      if (!isset($_REQUEST['estatus'])) $_REQUEST['estatus'] = NULL;
+
+      /* $grupo = busca($_SESSION['uid'],'usuarios','u_id','u_grupo');*/
+      if (!isset($_REQUEST['vendedor'])) $_REQUEST['vendedor'] = $_SESSION['uid'];
+      
+      $this->model->resultlead($_GET['id'],$_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus'],$_REQUEST['vendedor']);
       $this->view = new viewprospectos($this->model);
-      $this->view->show();
+      $this->view->show($_GET['id'],$_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus'],$_REQUEST['vendedor']);
+
+
       /* $this->view->show($_REQUEST['nmb'], $_REQUEST['hini'], $_REQUEST['hfin'], $_REQUEST['page']); */
     }
     function insertlead(){
@@ -470,13 +480,39 @@ ini_set('display_errors', 0);
       }
     }
 
-    function resultlead($id){
+    function resultlead($id, $fini, $ffin, $proveedor, $estatus, $vendedor){
       /* $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_fasigna = "'.date("Y-m-d").'" ORDER BY cl_estatus = "P" DESC, cl_id DESC'; */
-      $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_estatus != "R" AND cl_estatus != "X" ORDER BY cl_estatus = "P" DESC, cl_id DESC';
+      $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_estatus != "R" AND cl_estatus != "X"';
+      if ($fini || $ffin) {
+        $sql .= ' AND DATE(cl_fasigna) BETWEEN "' . addslashes($fini) . '" AND "' . addslashes($ffin) . '"';
+      }
+      if ($vendedor) {
+        $sql .= ' AND cl_ucaptura = "'.$vendedor.'"';
+      }
+
+      if ($estatus) {
+        $sql .= ' AND cl_observacion = "'.$estatus.'"';
+      }
+
+      $sql .= ' ORDER BY cl_estatus = "P" DESC, cl_id DESC';
       $this->result = setq($sql);
 
       /* $sql = 'SELECT * FROM crm_leads WHERE cl_lead = "'.$id.'" AND cl_fasigna = "'.date("Y-m-d").'" AND cl_estatus = "P" ORDER BY cl_id DESC'; */
-      $sql0 = 'SELECT * FROM crm_leads WHERE cl_estatus = "P" AND cl_fasigna = "'.date("Y-m-d").'" AND cl_lead = "'.$id.'" ORDER BY cl_id DESC';
+      $sql0 = 'SELECT * FROM crm_leads WHERE cl_estatus = "P" AND cl_fasigna = "'.date("Y-m-d").'" AND cl_lead = "'.$id.'"';
+
+      if ($fini || $ffin) {
+        $sql0 .= ' AND DATE(cl_fasigna) BETWEEN "' . addslashes($fini) . '" AND "' . addslashes($ffin) . '"';
+      }
+      
+      if ($vendedor) {
+        $sql0 .= ' AND cl_ucaptura = "'.$vendedor.'"';
+      }
+
+      if ($estatus) {
+        $sql0 .= ' AND cl_observacion = "'.$estatus.'"';
+      }
+
+      $sql0 .= ' ORDER BY cl_id DESC';
       $this->resultt = setq($sql0);
     }
 
@@ -670,10 +706,21 @@ function browse($ugen,$estatus,$fini,$ffin,$hini,$hfin,$page){
       </div>
       <div class="mb-5">
     <label class="mr-sm-2">Estatus:</label>
-    <select name="estatus" id="estatus" class="form-control" >
-      <option value="">Todos</option>
-      <option value="A" ' . ($estatus == "A" ? "selected" : "") . '>Activo</option>
-      <option value="F" ' . ($estatus == "F" ? "selected" : "") . '>Finalizado</option>
+
+
+
+    <select name="estatus" id="estatus" class="form-control" >';
+    ?>
+      <option value="" <?= ($estatus === "") ? "selected" : "" ?>>Todos</option>
+      <option value="No iniciado" <?= ($estatus === "No iniciado") ? "selected" : "" ?>>No iniciado</option>
+      <option value="Correo Enviado" <?= ($estatus === "Correo Enviado") ? "selected" : "" ?>>Correo Enviado</option>
+      <option value="No localizado" <?= ($estatus === "No localizado") ? "selected" : "" ?>>No localizado</option>
+      <option value="Reunión concretada" <?= ($estatus === "Reunión concretada") ? "selected" : "" ?>>Reunión concretada</option>
+      <option value="Grupo Creado" <?= ($estatus === "Grupo Creado") ? "selected" : "" ?>>Grupo Creado</option>
+      <option value="Buzón" <?= ($estatus === "Buzón") ? "selected" : "" ?>>Buzón</option>
+      <option value="Negado" <?= ($estatus === "Negado") ? "selected" : "" ?>>Negado</option>
+      <option value="Contactar Nuevamente" <?= ($estatus === "Contactar Nuevamente") ? "selected" : "" ?>>Contactar Nuevamente</option>
+    <?php echo '
     </select>
     </div>
       <div class="mb-5">
@@ -1529,7 +1576,7 @@ license_key: 'gpl',
 
 }
     
-function show(){      
+function show($idd,$fini,$ffin,$proveedor,$estatus_lead,$vendedor){      
     $estatus = busca($_GET['id'], "crm_capturaleads", "cc_id", "cc_estatus");
     echo '
       <link rel="stylesheet" href="assets/css/intlTelInput.css">
@@ -1679,1674 +1726,1665 @@ function show(){
     </button>';
     $finalizar = '<button type="button" onClick="finalizar('.$_GET['id'].')" class="btn btn-sm btn-danger"><i class="fas fa-window-close"></i>Finalizar hoja</button>';
     
-?>
-<script>
-  window.enviarCorreosHoja = function(idHoja){
-            Swal.fire({
-              icon: 'question',
-              title: '¿Enviar correos masivos?',
-              text: 'Se enviará un correo individual a cada lead único por correo de esta hoja.',
-              showCancelButton: true,
-              confirmButtonText: 'Sí, enviar',
-              cancelButtonText: 'Cancelar'
-            }).then((res) => {
-              if (!res.isConfirmed) return;
+    ?>
+    <script>
+      window.enviarCorreosHoja = function(idHoja){
+                Swal.fire({
+                  icon: 'question',
+                  title: '¿Enviar correos masivos?',
+                  text: 'Se enviará un correo individual a cada lead único por correo de esta hoja.',
+                  showCancelButton: true,
+                  confirmButtonText: 'Sí, enviar',
+                  cancelButtonText: 'Cancelar'
+                }).then((res) => {
+                  if (!res.isConfirmed) return;
 
-              $.ajax({
-                url: 'query/send_bulk_emails.php',
-                type: 'POST',
-                dataType: 'json',
-                data: { idHoja: idHoja },
-                success: function(r){
-                  if (r && r.ok) {
-                    const detalle = `Total leads: ${r.total}\nCorreos únicos: ${r.unicos}\nEnviados: ${r.enviados}\nFallidos: ${r.fallidos}`;
-                    Swal.fire('Envío completado', detalle, 'success');
-                  } else {
-                    Swal.fire('Error', (r && r.msg) ? r.msg : 'No se pudo completar el envío.', 'error');
-                  }
-                },
-                error: function(xhr){
-                  console.error('send_bulk_emails.php fail', xhr.status, xhr.responseText);
-                  Swal.fire('Error', 'Fallo la petición al servidor.', 'error');
-                }
-              });
-            });
-          }
-  </script>
-<?php
-    $atras = '
-    <a href="?modulo=prospectos&accion=index">
-      <button class="btn btn-sm btn-warning">
-        <i class="fa fa-arrow-left"></i> Atrás
-      </button>
-    </a>
-
-    <button type="button" id="btnNuevoProspecto" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoProspecto">
-      <i class="fas fa-user-plus"></i> Nuevo prospecto
-    </button>
-    ';  
-    
-    $detalles = '
-    <button id="nuevo" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#verdetalles" >
-      <i class="fa fa-info"></i> Detalles
-    </button>';
-
-    $vendedores = '
-      <a data-fancybox data-type="ajax" data-src="popup/setordenvendedores.php?id='.$_GET['id'].'" href="javascript:;" >
-      <button id="vendedores" type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#vervendedores" >
-        <i class="fas fa-sort-alpha-up"></i> Vendedores
-      </button>
-        </a>
-      ';
-    $vendedores = '';
-
-      $filtro = '
-        <form autocomplete="off" action="?modulo=leadscapturados&accion=index" method="post" id="filtro" class="">
-          <div class="mb-5" hidden>
-            <label class="mr-sm-2">Page:</label>
-            <div class="position-relative has-icon-left">
-              <input type="text" id="page" name="page" class="form-control" value="'.$page.'" required>
-            </div>
-          </div>
-          <div class="mb-2">
-            <label class="mr-sm-2">Telefono:</label>
-            <div class="position-relative has-icon-left">
-              <input type="number" id="telefono" name="telefono" placeholder="Buscar por número de telefono" class="form-control" value="'.$telefono.'" required>
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-          <div class="mb-5" style="max-width: 250px">
-            <label for="">Buscar por vendedor:</label>
-            <select id="uvendedor" class="form-control" name="uvendedor">
-              <option value="">Todos</option>';
-              $sqlvend = 'SELECT * FROM usuarios WHERE u_estatus = "A" AND u_grupo = "VENTAS"';
-              $resultvend = setq($sqlvend);
-              while($row = $resultvend->fetch_array()){
-                if($vendedor == $row['u_id']) $sel = 'selected';
-                else $sel = '';
-                $filtro .= '<option value="'.$row['u_id'].'">'.$row['u_nmb'].' '.$row['u_apellidos'].'</option> '.$sel.'';
+                  $.ajax({
+                    url: 'query/send_bulk_emails.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { idHoja: idHoja },
+                    success: function(r){
+                      if (r && r.ok) {
+                        const detalle = `Total leads: ${r.total}\nCorreos únicos: ${r.unicos}\nEnviados: ${r.enviados}\nFallidos: ${r.fallidos}`;
+                        Swal.fire('Envío completado', detalle, 'success');
+                      } else {
+                        Swal.fire('Error', (r && r.msg) ? r.msg : 'No se pudo completar el envío.', 'error');
+                      }
+                    },
+                    error: function(xhr){
+                      console.error('send_bulk_emails.php fail', xhr.status, xhr.responseText);
+                      Swal.fire('Error', 'Fallo la petición al servidor.', 'error');
+                    }
+                  });
+                });
               }
-              $filtro .= 
-            '</select>
-          </div>
+      </script>
+    <?php
+        $atras = '
+        <a href="?modulo=prospectos&accion=index">
+          <button class="btn btn-sm btn-warning">
+            <i class="fa fa-arrow-left"></i> Atrás
+          </button>
+        </a>
 
-          <div class="mb-5" style="max-width: 250px">
-            <label for="">Buscar por estatus:</label>
-            <select id="estatusfiltro" class="form-control" name="estatus">
-              <option value="">Todos</option>
-              <option value="X" '.$estatus.'>Sin negociación</option>
-              <option value="A" '.$estatus.'>Asignados</option>
-              <option value="R" '.$estatus.'>Reasignados</option>
-            </select>
-          </div>
+        <button type="button" id="btnNuevoProspecto" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoProspecto">
+          <i class="fas fa-user-plus"></i> Nuevo prospecto
+        </button>
+        ';  
+        
+        $detalles = '
+        <button id="nuevo" type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#verdetalles" >
+          <i class="fa fa-info"></i> Detalles
+        </button>';
 
-          <div class="mb-2">
-            <label class="mr-sm-2">Fecha:</label>
-            <div class="position-relative has-icon-left">
-              <input type="date" id="fecha" name="fecha" class="form-control" value="" required>
-              <div class="form-control-position">
-                <i class="icon-calendar5"></i>
-              </div>
-            </div>
-          </div>
-          <div class="mb-5">
-            <label>Acciones:</label><br>
-            <button type="button" onclick="mandar(0)" class="btn btn-success"><i class="fas fa-search"></i> Filtrar </button>
-            <a href="?modulo=leadscapturados&accion=index"><button type="button" class="btn btn-warning">
-              <span class="glyphicon glyphicon-record"></span> <i class="fas fa-broom"></i> Limpiar
+        $vendedores = '
+          <a data-fancybox data-type="ajax" data-src="popup/setordenvendedores.php?id='.$_GET['id'].'" href="javascript:;" >
+          <button id="vendedores" type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#vervendedores" >
+            <i class="fas fa-sort-alpha-up"></i> Vendedores
+          </button>
             </a>
-          </div>
-        </form>
+          ';
+        $vendedores = '';
+
+         
+
+             $filtro = '
+          <form class="" role="form" method="post" action="?modulo=prospectos&accion=show&id='.$_GET['id'].'" id="filtro">
+            <div class="mb-5">
+              <label for="">Cliente</label>
+              <input type="text" name="cliente" id="cliente" placeholder="Nombre del cliente" class="form-control" value="'.$proveedor.'" />
+            </div>';
+            $filtro .='<div class="mb-5">
+                <label for="tipom">Asesor</label>';
+            //if($grupo == "GERENCIA" || $grupo == "ADMIN" || $grupo == "FINANZAS"){
+              $sqlvd = 'SELECT * FROM usuarios WHERE u_grupo != "CHOFER"';
+              $resultvd = setq($sqlvd);
+              $filtro .= '<select id="vendedor" name="vendedor" class="form-control">
+              <option value="" selected>TODOS</option>';
+              while($rowvd = $resultvd -> fetch_array()){
+                if($rowvd['u_id'] == $vendedor) $sel = 'selected';  
+                else $sel = '';
+                $filtro.='<option value="'.$rowvd['u_id'].'" '.$sel.'>'.$rowvd['u_nmb'].' '.$rowvd['u_apellidos'].'</option>';
+              }
+              $filtro .= '</select>';
+              /*
+            } else {
+              $nmb = busca($_SESSION['uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
+              $filtro .= '<input type="text" name="vendedor" id="vendedor" class="form-control" value="'.$nmb.'" readonly/>';
+            }
+              */
+            $filtro .= '</div>';
+            $filtro .='<div class="mb-5">
+              <label for="tipom">Desde</label>
+              <input type="date" name="fini" id="fini" class="form-control" value="'.$fini.'" />
+            </div>
+            <div class="mb-5">
+              <label for="tipom">Hasta</label>
+              <input type="date" name="ffin" id="ffin" class="form-control" value="'.$ffin.'" />
+            </div>
+            <div class="mb-5">
+              <label for="tipom">Estatus</label>
+              <select class="form-control" name="estatus" id="estatus" >';
+
+                $filtro .= '<option value=""'.(($estatus_lead==='')?' selected':'').'>Todos</option>';
+                $filtro .= '<option value="No iniciado"'.(($estatus_lead==='No iniciado')?' selected':'').'>No iniciado</option>';
+                $filtro .= '<option value="Correo Enviado"'.(($estatus_lead==='Correo Enviado')?' selected':'').'>Correo Enviado</option>';
+                $filtro .= '<option value="No localizado"'.(($estatus_lead==='No localizado')?' selected':'').'>No localizado</option>';
+                $filtro .= '<option value="Reunión concretada"'.(($estatus_lead==='Reunión concretada')?' selected':'').'>Reunión concretada</option>';
+                $filtro .= '<option value="Grupo Creado"'.(($estatus_lead==='Grupo Creado')?' selected':'').'>Grupo Creado</option>';
+                $filtro .= '<option value="Buzón"'.(($estatus_lead==='Buzón')?' selected':'').'>Buzón</option>';
+                $filtro .= '<option value="Negado"'.(($estatus_lead==='Negado')?' selected':'').'>Negado</option>';
+                $filtro .= '<option value="Contactar Nuevamente"'.(($estatus_lead==='Contactar Nuevamente')?' selected':'').'>Contactar Nuevamente</option>';
+
+            $filtro .= '
+                </select>
+            </div><!-- form group [search] -->
+            <div class="mb-5">
+              <label for="">Acciones</label> <br>
+              <button type="button" onclick="mandar(0);" class="btn btn-info">
+                <span class="glyphicon glyphicon-record"></span> <i class="fas fa-filter"></i> Filtrar
+              </button>
+              <a href="?modulo=remisiones&accion=index"><button type="button" class="btn btn-warning">
+                <span class="glyphicon glyphicon-record"></span> <i class="fas fa-times-circle"></i> Limpiar
+              </button></a>
+            </div>
+          </form>';
+
+        if($estatus == "A"){
+          toolbar($_GET['modulo'],$atras,$filtro,$finalizar.$otro.$vendedores, $detalles);
+        }
+        
+
+
+        echo '
+        <style>
+        .container { 
+          display: flex;
+          width: 100%;
+          height: 100%;
+          padding: 20px;
+          background: white;
+          justify-content: center;
+        }
+
+        .container-dos { 
+          display: flex;
+          width: 100%;  
+          justify-content: center;
+        }
+
+        .list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: table;
+          white-space: nowrap;
+          width: 100%;
+        }
+
+        .list tr {
+          background-color: #f0f0f0;
+          display: table-row;
+          color: #5c5c5c;
+        }
+
+        .list tr:nth-child(odd) {
+          background-color: #f2f2f2;
+          display: table-row;
+          font-size: 9pt;
+          color: #5c5c5c;
+        }
+
+        .list td:nth-child(even) {
+          background-color: #e8e8e8;
+          display: table-row;
+          font-size: 9pt;
+          color: #5c5c5c;
+        }
+
+        .list tr:nth-child(even):hover {
+          background-color: #dadada;
+        }
+
+        .list tr:nth-child(1) th:first-child {
+          border-top-left-radius: 6px;
+        }
+
+        .list tr:nth-child(1) th:last-child {
+          border-top-right-radius: 6px;
+        }
+
+        /*Inicio Estas 2*/
+
+        .list thead tr:nth-child(1) {
+          background-color: #201c2b;
+          text-transform: uppercase;
+          font-size: 8pt;
+          font-weight: bold;
+          color: #b8b5c0;
+        }
+
+        .list thead tr:nth-child(1) th {
+          border-bottom: 2px solid #7d5bbe;
+          padding: 14px;
+        } 
+        
+        .list thead tr:nth-child(2) th {
+          border-bottom: 2px solid #7d5bbe;
+          padding: 14px;
+        }  
+
+        /*Fin Estas 2*/
+
+        .list th {
+          text-align: left;
+          display: table-cell;
+          padding: 6px;
+          vertical-align: middle;
+        }
+
+        .tabla-scroll {
+          max-height: 300px; /* Establece la altura máxima que deseas */
+          overflow-y: scroll;
+        }
+        
+        .tabla-scroll table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        
+        .tabla-scroll th,
+        .tabla-scroll td {
+          padding: 8px;
+          border: 1px solid #ccc;
+        }
+        
+        .tabla-scroll thead {
+          position: sticky;
+          top: 0;
+          background-color: #f5f5f5;
+        }
+        
+        .table-container {
+          overflow-x: auto;
+        }
+        table {
+          width: 100%;
+          max-width: 100%;
+          border-collapse: collapse;
+        }
+        table, th, td {
+          
+          white-space: nowrap;
+          /* Establece white-space en nowrap para evitar que el texto se rompa */
+        }
+
+        </style>
         ';
 
-    if($estatus == "A"){
-      toolbar($_GET['modulo'],$atras,'',$finalizar.$otro.$vendedores, $detalles);
-    }
-    
-
-
-    echo '
-    <style>
-    .container { 
-      display: flex;
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      background: white;
-      justify-content: center;
-    }
-
-    .container-dos { 
-      display: flex;
-      width: 100%;  
-      justify-content: center;
-    }
-
-    .list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: table;
-      white-space: nowrap;
-      width: 100%;
-    }
-
-    .list tr {
-      background-color: #f0f0f0;
-      display: table-row;
-      color: #5c5c5c;
-    }
-
-    .list tr:nth-child(odd) {
-      background-color: #f2f2f2;
-      display: table-row;
-      font-size: 9pt;
-      color: #5c5c5c;
-    }
-
-    .list td:nth-child(even) {
-      background-color: #e8e8e8;
-      display: table-row;
-      font-size: 9pt;
-      color: #5c5c5c;
-    }
-
-    .list tr:nth-child(even):hover {
-      background-color: #dadada;
-    }
-
-    .list tr:nth-child(1) th:first-child {
-      border-top-left-radius: 6px;
-    }
-
-    .list tr:nth-child(1) th:last-child {
-      border-top-right-radius: 6px;
-    }
-
-    /*Inicio Estas 2*/
-
-    .list thead tr:nth-child(1) {
-      background-color: #201c2b;
-      text-transform: uppercase;
-      font-size: 8pt;
-      font-weight: bold;
-      color: #b8b5c0;
-    }
-
-    .list thead tr:nth-child(1) th {
-      border-bottom: 2px solid #7d5bbe;
-      padding: 14px;
-    } 
-    
-    .list thead tr:nth-child(2) th {
-      border-bottom: 2px solid #7d5bbe;
-      padding: 14px;
-    }  
-
-    /*Fin Estas 2*/
-
-    .list th {
-      text-align: left;
-      display: table-cell;
-      padding: 6px;
-      vertical-align: middle;
-    }
-
-    .tabla-scroll {
-      max-height: 300px; /* Establece la altura máxima que deseas */
-      overflow-y: scroll;
-    }
-    
-    .tabla-scroll table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .tabla-scroll th,
-    .tabla-scroll td {
-      padding: 8px;
-      border: 1px solid #ccc;
-    }
-    
-    .tabla-scroll thead {
-      position: sticky;
-      top: 0;
-      background-color: #f5f5f5;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      max-width: 100%;
-      border-collapse: collapse;
-    }
-    table, th, td {
-      
-      white-space: nowrap;
-      /* Establece white-space en nowrap para evitar que el texto se rompa */
-    }
-
-    </style>
-    ';
-
-    echo '
-    <script>
-    $( document ).ready(function() {
-      initEvents();
-    });
-    
-    function initEvents() {
-        $(".list").hover(function(){
-        $(".list li:first span").stop().animate({borderWidth: "5", backgroundColor: "#3f3659", color: "#e5e3e8"},{duration: 170, complete: function() {}} );     
-      }, function () {        
-        $(".list li:first span").stop().animate({borderWidth: "2", backgroundColor: "#201c2b", color: "#b8b5c0"},{duration: 170, complete: function() {}} ); 
-      });
-    }
-    </script>
-      ';
-      //MODAL NUEVO PROSPECTO
-      echo '
-<div class="modal fade" id="modalNuevoProspecto" tabindex="-1" aria-labelledby="modalNuevoProspectoLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="modalNuevoProspectoLabel">Prospecto</h5>
-        <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <form id="formNuevoProspecto" autocomplete="off">
-          <!-- NUEVO: id para edición -->
-          <input type="hidden" id="id" name="id" value="">
-          <!-- FIX: comilla faltante en value -->
-          <input type="hidden" id="lead" name="lead" value="' . htmlspecialchars($_GET['id'] ?? '', ENT_QUOTES, 'UTF-8') . '">
-          <input type="hidden" id="code" name="code" value="">
-          <input type="hidden" id="pais" name="pais" value="">
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label for="empresa" class="form-label">Empresa</label>
-              <input type="text" id="empresa" name="empresa" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label for="telefono" class="form-label">Teléfono *</label>
-              <input type="number" id="telefono" name="telefono" maxlength="12" class="form-control" required>
-            </div>
-            <div class="col-md-6">
-              <label for="nmb" class="form-label">Nombre completo *</label>
-              <input type="text" id="nmb" name="nmb" class="form-control" required>
-            </div>
-            <div class="col-md-6">
-              <label for="cp" class="form-label">Código Postal</label>
-              <input type="number" id="cp" name="cp" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label for="correo" class="form-label">Correo electrónico</label>
-              <input type="email" id="correo" name="correo" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label for="comentarios" class="form-label">Comentarios</label>
-              <textarea id="comentarios" name="comentarios" class="form-control" rows="4" required></textarea>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button id="btnGuardarProspecto" type="button" class="btn btn-primary" onclick="addProspecto()">
-          <i class="fas fa-save"></i> Guardar
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>';
-
-
-      ?>
-
-      <?php
-          ?>
-    <script>
-
-    function alertSweet(icono, titulo, mensaje) {
-        Swal.fire({
-            icon: icono,
-            title: titulo,
-            text: mensaje
-        }).then((result) => {
-            if (result.isConfirmed || result.isDenied) {
-                Swal.close();
-            }
+        echo '
+        <script>
+        $( document ).ready(function() {
+          initEvents();
         });
-    }
-
-    /* function mandar(id){
-      document.getElementById("page").value = id;
-      document.getElementById("filtro").submit();
-    } */
-
-    function finalizar(id) {
-      Swal.fire({
-        icon: "question",
-        title: "Atención",
-        html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
-        showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
-        showCancelButton: true, // Muestra el botón de cancelar
-        focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
-        confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
-        confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
-        cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
-        cancelButtonColor: "#d33", // Color del botón "Cancelar"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = "?modulo=leadscapturados&accion=finalizar&id=" + id;
+        
+        function initEvents() {
+            $(".list").hover(function(){
+            $(".list li:first span").stop().animate({borderWidth: "5", backgroundColor: "#3f3659", color: "#e5e3e8"},{duration: 170, complete: function() {}} );     
+          }, function () {        
+            $(".list li:first span").stop().animate({borderWidth: "2", backgroundColor: "#201c2b", color: "#b8b5c0"},{duration: 170, complete: function() {}} ); 
+          });
         }
-        Swal.close();
-      });
-    }
+        </script>
+          ';
+          //MODAL NUEVO PROSPECTO
+          echo '
+    <div class="modal fade" id="modalNuevoProspecto" tabindex="-1" aria-labelledby="modalNuevoProspectoLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="modalNuevoProspectoLabel">Prospecto</h5>
+            <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <form id="formNuevoProspecto" autocomplete="off">
+              <!-- NUEVO: id para edición -->
+              <input type="hidden" id="id" name="id" value="">
+              <!-- FIX: comilla faltante en value -->
+              <input type="hidden" id="lead" name="lead" value="' . htmlspecialchars($_GET['id'] ?? '', ENT_QUOTES, 'UTF-8') . '">
+              <input type="hidden" id="code" name="code" value="">
+              <input type="hidden" id="pais" name="pais" value="">
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label for="empresa" class="form-label">Empresa</label>
+                  <input type="text" id="empresa" name="empresa" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="telefono" class="form-label">Teléfono *</label>
+                  <input type="number" id="telefono" name="telefono" maxlength="12" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="nmb" class="form-label">Nombre completo *</label>
+                  <input type="text" id="nmb" name="nmb" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="cp" class="form-label">Código Postal</label>
+                  <input type="number" id="cp" name="cp" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="correo" class="form-label">Correo electrónico</label>
+                  <input type="email" id="correo" name="correo" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="comentarios" class="form-label">Comentarios</label>
+                  <textarea id="comentarios" name="comentarios" class="form-control" rows="4" required></textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button id="btnGuardarProspecto" type="button" class="btn btn-primary" onclick="addProspecto()">
+              <i class="fas fa-save"></i> Guardar
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>';
 
 
-    </script>
+          ?>
 
           <?php
-          //Modal - Nuevo deal - TABLERO
-          echo '
-          <div class="modal fade text-xs-left" id="newtablero" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h4 class="modal-title" id="myModalLabel33">Nueva hoja de leadscapturados</h4>
-                </div>
-                <form method="post" action="?modulo=leadscapturados&accion=insert" autocomplete="off" >
-                  <div class="modal-body row">
-                    <div class="col-md-6 col-xs-12">
-                      <label>Fecha inicio: </label>
-                      <div class="mb-5">
-                        <div class="position-relative has-icon-left">
-                          <input type="datetime-local" id="fini" name="fini" class="form-control" value="'.date('Y-m-d').'T'.date('H:i:s').'" step="any" required readonly>
-                          <div class="form-control-position">
-                            <i class="icon-calendar5"></i>
+              ?>
+        <script>
+
+        function alertSweet(icono, titulo, mensaje) {
+            Swal.fire({
+                icon: icono,
+                title: titulo,
+                text: mensaje
+            }).then((result) => {
+                if (result.isConfirmed || result.isDenied) {
+                    Swal.close();
+                }
+            });
+        }
+
+        /* function mandar(id){
+          document.getElementById("page").value = id;
+          document.getElementById("filtro").submit();
+        } */
+
+        function finalizar(id) {
+          Swal.fire({
+            icon: "question",
+            title: "Atención",
+            html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
+            showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
+            showCancelButton: true, // Muestra el botón de cancelar
+            focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
+            confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
+            confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
+            cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
+            cancelButtonColor: "#d33", // Color del botón "Cancelar"
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "?modulo=leadscapturados&accion=finalizar&id=" + id;
+            }
+            Swal.close();
+          });
+        }
+
+
+        </script>
+
+              <?php
+              //Modal - Nuevo deal - TABLERO
+              echo '
+              <div class="modal fade text-xs-left" id="newtablero" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h4 class="modal-title" id="myModalLabel33">Nueva hoja de leadscapturados</h4>
+                    </div>
+                    <form method="post" action="?modulo=leadscapturados&accion=insert" autocomplete="off" >
+                      <div class="modal-body row">
+                        <div class="col-md-6 col-xs-12">
+                          <label>Fecha inicio: </label>
+                          <div class="mb-5">
+                            <div class="position-relative has-icon-left">
+                              <input type="datetime-local" id="fini" name="fini" class="form-control" value="'.date('Y-m-d').'T'.date('H:i:s').'" step="any" required readonly>
+                              <div class="form-control-position">
+                                <i class="icon-calendar5"></i>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6 col-xs-12">
+                          <label>Usuario: </label>
+                          <div class="mb-5">
+                          <input type="text" id="ugen" name="ugen" class="form-control" value="'.$_SESSION['uid'].'" required readonly>
+                          </div>
+                        </div>
+                        <div class="col-md-12 col-xs-12">
+                          <label>Observaciones: </label>
+                          <div class="mb-5">
+                            <textarea id="observacion" class="form-control" rows="4" name="observacion" placeholder="Escribe una obervación"></textarea>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div class="col-md-6 col-xs-12">
-                      <label>Usuario: </label>
-                      <div class="mb-5">
-                      <input type="text" id="ugen" name="ugen" class="form-control" value="'.$_SESSION['uid'].'" required readonly>
+                      <div class="modal-footer p-2">
+                        <center><button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Registrar hoja nueva</button></center>
                       </div>
-                    </div>
-                    <div class="col-md-12 col-xs-12">
-                      <label>Observaciones: </label>
-                      <div class="mb-5">
-                        <textarea id="observacion" class="form-control" rows="4" name="observacion" placeholder="Escribe una obervación"></textarea>
-                      </div>
-                    </div>
+                    </form>
                   </div>
-                  <div class="modal-footer p-2">
-                    <center><button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Registrar hoja nueva</button></center>
+                </div>
+              </div>';
+              //filtro
+          echo '
+          <form hidden id="formreg" method="post" action="?modulo=clientes&accion=edit" autocomplete="off">
+            <input type="number" name="flag" value="1" hidden>
+            <input type="text" id="idp" name="idp" hidden>
+            <input type="text" id="nmbp" name="nmbp" hidden>
+            <input type="text" id="telefonop" name="telefonop" hidden>
+            <input type="text" id="correop" name="correop" hidden>
+            <input type="text" id="cpp" name="cpp" hidden>
+            <input type="text" id="observacionesp" name="observacionesp" hidden>
+          </form>
+          ';
+
+          echo '
+          <form hidden id="formtablero" method="post" action="?modulo=tableros&accion=index" autocomplete="off">
+            <input type="number" name="flag" value="1" hidden>
+            <!-- <input type="text" id="aliasp2" name="aliasp" hidden> -->
+            <input type="text" id="idlead" name="idlead" hidden>
+          </form>
+          ';
+          $nombres = array();
+          $sqlnmb = 'SELECT u_nmb, u_apellidos, u_id FROM usuarios WHERE u_grupo = "VENTAS" AND u_estatus = "A" ';
+          $resultnmb = setq($sqlnmb);
+          while($rownmb = $resultnmb -> fetch_array()){
+            $nombres[$rownmb['u_id']] = $rownmb['u_nmb'].' '.$rownmb['u_apellidos'];
+          }
+
+          ?>
+          <div class="card mt-3">
+            <div class="card-body row" >
+              <div class="col-md-12 col-12 col-sm-12">
+                <style>
+            /* --- Ajustes de tabla --- */
+            #myTable { width: 100% !important; }
+            #myTable thead th { white-space: nowrap; }
+            #myTable tbody td { vertical-align: middle; }
+
+            /* Cols con ancho mínimo para evitar “brincos” */
+            .col-ico   { position: sticky; left: 0; background: #fff; z-index: 2; width: 48px; }
+            .col-emp   { min-width: 180px; }
+            .col-nom   { min-width: 180px; }
+            .col-tel   { min-width: 150px; white-space: nowrap; }
+            .col-mail  { min-width: 220px; }
+            .col-fecha { min-width: 120px; }
+            .col-acerc { min-width: 100px; text-align:center; }
+            .col-acc   { min-width: 120px; }
+            .col-com   { min-width: 260px; }
+
+            /* Comentarios truncados con ellipsis */
+            .comment-clip {
+              max-width: 360px;
+              display: inline-block;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              vertical-align: bottom;
+            }
+
+            /* Select de estatus coloreado */
+            .estatus-select { font-weight: 600; }
+            .estatus-select option[value="No iniciado"]           { background:#00bcd4; color:#fff; }
+            .estatus-select option[value="Correo Enviado"]        { background:#4caf50; color:#fff; }
+            .estatus-select option[value="No localizado"]         { background:#f57c00; color:#fff; }
+            .estatus-select option[value="Reunion concretada"]    { background:#1565c0; color:#fff; }
+            .estatus-select option[value="Grupo Creado"]          { background:#00897b; color:#fff; }
+            .estatus-select option[value="Buzon"]                 { background:#ffeb3b; color:#000; }
+            .estatus-select option[value="Negado"]                { background:#424242; color:#ff4d4d; }
+            .estatus-select option[value="Contactar Nuevamente"]  { background:#b71c1c; color:#fff; }
+
+            /* Botón “Acciones” compacto */
+            .btn-actions { white-space: nowrap; }
+            .scroll-x { overflow-x: auto; }              /* el scroll vive aquí */
+      #tblWrap { overflow: visible !important; }   /* no recortar dropdowns */
+      /* por si algún padre crea stacking contexts */
+      .dropdown-menu { z-index: 2000; }            /* por encima de cards/toolbars */
+          </style>
+
+          <script>
+            function aplicarColorSelect(select) {
+              let color = "#00bcd4", textColor = "white";
+              switch (select.value) {
+                case "Correo Enviado": color="#4caf50"; break;
+                case "No localizado": color="#f57c00"; break;
+                case "Reunion concretada": color="#1565c0"; break;
+                case "Grupo Creado": color="#00897b"; break;
+                case "Buzon": color="#ffeb3b"; textColor="black"; break;
+                case "Negado": color="#424242"; textColor="red"; break;
+                case "Contactar Nuevamente": color="#b71c1c"; break;
+                case "": case "No iniciado": default: color="#00bcd4";
+              }
+              select.style.backgroundColor = color;
+              select.style.color = textColor;
+            }
+            document.addEventListener("DOMContentLoaded", function() {
+              document.querySelectorAll(".estatus-select").forEach(s => {
+                aplicarColorSelect(s);
+                s.addEventListener("change", function(){ aplicarColorSelect(this); });
+              });
+              // Tooltips Bootstrap 5 (si usas Bootstrap 5)
+              if (window.bootstrap) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                  return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+              }
+            });
+          </script>
+                <div class="scroll-x">
+                <div class="table-responsive overflow-visible" style="height: 500px;" id="tblWrap">
+                  <center>
+                    <table id="myTable">
+                      <thead class="bg-light-blue bg-darken-2">
+                        <tr>
+                    <th class="col-ico"></th>
+                    <th class="col-emp"><b>Empresa</b></th>
+                    <th class="col-nom"><b>Nombre</b></th>
+                    <th class="col-tel"><b>Teléfono</b></th>
+                    <th class="col-mail"><b>Correo</b></th>
+                    <th class="col-fecha"><b>Fecha Límite</b></th>
+                    <th class="col-fecha"><b></b></th>
+                    <th class="col-acerc"><b>Acercamiento</b></th>
+                    <th class="col-acc"></th>
+                    <th class="col-com"><b>Comentarios</b></th>
+                  </tr>
+                      </thead>
+                      <tbody>
+                        <?php
+                        
+                  while($row = $this->model->result->fetch_array()){
+                    $nmbcompleto = $nombres[$row['cl_vendedor']];
+                    $html = html_entity_decode($texto);
+                    $texto = str_replace('<br>', "\n", $html);
+                    $texto = strip_tags($texto);
+                    $texto_codificado = urlencode($texto);
+                    if (empty($texto)) {
+                      $texto_codificado = urlencode("¡Hola, un gusto saludarte!");
+                    }
+
+                    $numero_de_telefono = $row['cl_telefono'];
+                    $link_whatsapp = "https://api.whatsapp.com/send?phone=$numero_de_telefono&text=$texto_codificado";
+
+                    if ($row['cl_estatus'] == "A") {
+                      $estatusdesc = "Asignado";
+                    } else if ($row['cl_estatus'] == "R" && $grupo != "ADMIN" && $grupo != "GERENCIA") {
+                      $estatusdesc = "Asignado";
+                    } else if ($row['cl_estatus'] == "R") {
+                      $estatusdesc = "Reasignado";
+                    } else {
+                      $estatusdesc = "Sin negociación";
+                      $acciones = '';
+                    }
+                    $check = ($row['cl_acercamiento'] == 0) ? "" : " checked disabled";
+
+                    // --- NUEVO: acciones en dropdown compacto ---
+                    $acciones = '
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                              data-bs-toggle="dropdown" data-bs-display="static">
+                        Acciones
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <a class="dropdown-item" href="javascript:void(0)" onclick="iniciarTablero('.$row['cl_id'].')">
+                            <i class="fas fa-book-open me-2"></i>Iniciar tablero
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="javascript:void(0)" onclick="editarLead('.$row['cl_id'].')">
+                            <i class="bi bi-pencil-fill me-2"></i>Editar prospecto
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="borrarLead('.$row['cl_id'].')">
+                            <i class="fa fa-trash me-2"></i>Eliminar
+                          </a>
+                        </li>
+                        
+                      </ul>
+                    </div>';
+
+
+    $checkb = '<input class="form-check-input consult-check" onclick="marcarAcercamiento('.$row['cl_id'].')"
+                                      type="checkbox" name="select'.$row['cl_id'].'" id="select'.$row['cl_id'].'" '.$check.'>';
+
+                    // Fechas / badge
+                    $fasignaDt = !empty($row['cl_fasigna']) ? new DateTime($row['cl_fasigna']) : new DateTime('today');
+                    if (!empty($row['cl_fechalimite'])) {
+                      $limiteDt = new DateTime($row['cl_fechalimite']);
+                    } else {
+                      $limiteDt = (clone $fasignaDt)->modify('+7 days');
+                    }
+                    $fechaContactoStr = $limiteDt->format('d-m-Y');
+
+                    $hoy = new DateTime('today');
+                    $amarilloDesde = (clone $limiteDt)->modify('-2 days');
+                    $badgeClass = 'badge bg-success';
+                    if ($hoy > $limiteDt) {
+                      $badgeClass = 'badge bg-danger';
+                    } elseif ($hoy >= $amarilloDesde) {
+                      $badgeClass = 'badge bg-warning text-dark';
+                    }
+
+                    $rutaIcono = busca($row['cl_ucaptura'], 'usuarios', 'u_id', 'u_icono');
+                    $correoSafe = htmlspecialchars($row['cl_correo'] ?? '', ENT_QUOTES, 'UTF-8');
+                    $comentSafe = htmlspecialchars($row['cl_comentarios'] ?? '', ENT_QUOTES, 'UTF-8');
+
+      // 4) Render de fila
+    echo '
+                    <tr>
+                      <td class="col-ico"><img src="'.$rutaIcono.'" alt="icono" style="width:24px; height:24px; object-fit:contain;"></td>
+                      <td class="col-emp">'.$row['cl_empresa'].'</td>
+                      <td class="col-nom">'.$row['cl_nmb'].'</td>
+                      <td class="col-tel">
+                        <a href="'.$link_whatsapp.'" target="_blank" class="text-decoration-none">
+                          '.$row['cl_telefono'].'
+                          <i class="fab fa-whatsapp ms-1" style="font-size: 18px;"></i>
+                        </a>
+                      </td>
+                      <td class="col-mail">
+                        <a href="mailto:'.$correoSafe.'">'.$correoSafe.'</a>
+                      </td>
+                      <td class="col-fecha">
+                        <span class="'.$badgeClass.'" data-bs-toggle="tooltip" title="Vigencia de 7 días desde la asignación">'.$fechaContactoStr.'</span>
+                      </td>
+                      <td class="col-mail">
+                        <div class="col-12">
+                          <select class="form-control form-control-sm estatus-select" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
+                            <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
+                            <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
+                            <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
+                            <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
+                            <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
+                            <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
+                            <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
+                            <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td class="col-acerc">
+                        '.$checkb.'
+                      </td>
+                      <td class="col-acc">
+                        '.$acciones.'
+                      </td>
+                      <td class="col-com">
+                        <span class="comment-clip" title="'.$comentSafe.'">'.$comentSafe.'</span>
+                      </td>
+                    </tr>';
+
+                          }
+                        echo '</tbody>';
+                      echo '</table>
+                    </center>
                   </div>
-                </form>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            ';
+
+          
+          if($_REQUEST['page'] == 0){
+            $hidden = 'style="pointer-events: none;
+            background: #70707026;
+            color: black;"';
+          }else $hidden = "";
+
+          echo '<div class="col-md-12 mt-5 text-xs-center">
+            <div class="mb-3">
+              <nav aria-label="Page navigation">
+                <ul class="pagination">
+                  ';
+
+                  echo '
+                  <script>
+                    function mandar(id){
+                      document.getElementById("filtro").submit();
+                    }
+                  </script>';
+
+                  //$_REQUEST['categoria'],$_REQUEST['marca'],$_REQUEST['page'],$_REQUEST['unidad'],$_REQUEST['linean'],$_REQUEST['esquema']
+          $sqlf = '';
+          if(!empty($estatus)){
+            $sqlf .= ' cl_estatus = "'.$estatus.'"';
+          } else{
+            $sqlf .= ' cl_estatus IN ("R", "A")';
+          }
+          $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
+          if($grupo == 'ADMIN' || $grupo == 'GERENCIA'){
+            if(!empty($vendedor)){
+              $sqlf .= ' AND cl_vendedor = "'.$vendedor.'"';
+            } else{
+              $sqlf .= '';
+            }
+          } else {
+            if(!empty($vendedor) && $vendedor != $_SESSION['uid']){
+              $sqlf .= '';
+              $caso = 1;
+            } else{
+              $sqlf .= ' AND cl_vendedor = "'.$_SESSION['uid'].'"';
+            }
+          }
+
+          $bloque = 50;
+          if(trim($sqlf) == ""){
+            $sql = 'SELECT COUNT(*) FROM crm_leads';
+          } else {
+            $sql = 'SELECT COUNT(*) FROM crm_leads WHERE '.$sqlf.'';
+          }
+          
+          $resultpg = setq($sql);
+          list($numg) =  $resultpg->fetch_array();
+          $pageres = ceil($numg/$bloque);
+
+            if($pageres>=10){
+              if($_REQUEST['page'] == 0) { $min = 1; $nombre = "Inicio";}
+              else {$min = $_REQUEST['page']-1; $nombre = "Inicio...";}
+              if($min <= 1) $min = 1;
+
+              if($_REQUEST['page'] == ($pageres-1)) $max = ($pageres-1);
+              else $max = $_REQUEST['page']+3;
+              if($max >= ($pageres-1)) $max = ($pageres-1);
+
+              if($_REQUEST['page'] == 0) $active = "active";
+              else $active = "";
+              echo '';
+            }elseif($pageres<=9){
+              $max=$pageres;
+              $min=0;
+            }
+            //for($i=0;$i<$pageres;$i++){
+            for($i=$min;$i<$max;$i++){
+              if($_REQUEST['page'] == $i) $active = "active";
+              else $active = "";
+              if($i == 0) $nombre = "Inicio";
+              else $nombre = $i;
+              echo '';
+            }
+            if($pageres<=9){
+            }else{
+              if($_REQUEST['page'] == ($pageres-5)) $nombre = ($pageres-2);
+              else $nombre = '... '.($pageres-2);
+              if($_REQUEST['page'] == $i) $active = "active";
+              else $active = "";
+              if($_REQUEST['page'] >= ($pageres-4)) echo '';
+              else echo '';
+              echo '';
+            }
+            if($_REQUEST['page'] == ($pageres-1) || $pageres <= 1) $hidden2 = 'style="pointer-events: none;
+            background: #70707026;
+            color: black;"';
+            else $hidden2 = '';
+            echo '
+          </ul>
+        </nav>
+        </div>
+        </div>'; 
+
+          echo '<script>
+
+          /* function mandar(id){
+            var telefono = document.getElementById("telefono");
+            var estatusfiltro = document.getElementById("estatusfiltro");
+            var fecha = document.getElementById("fecha");
+            var vendedor = document.getElementById("uvendedor");
+
+            if(id == 0){          
+              estatusfiltro.value = "";
+              fecha.value = "";
+              vendedor.value = "";
+              telefono.value = "";
+              page.value = "0";
+            } 
+
+            //$("#myTable").DataTable().clear().draw();
+            $("#myTable").DataTable().destroy();
+
+            $("#myTable").DataTable({
+              paging: true,
+              scrollY: 400,
+              processing: true,
+              ordering: false,
+              language: {
+                  url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+              },
+              ajax: {
+                url: "query/datatableleadscapturados.php",
+                type: "POST",
+                datatype: "json",
+                data:{ 
+                  "estatusfiltro": estatusfiltro.value,
+                  "fecha": fecha.value,
+                  "vendedor": vendedor.value,
+                  "page": page.value,
+                  "telefono": telefono.value
+                }
+              },
+              pageLength: "50",
+              responsivePriority: 1,
+            });
+          } */
+
+          function mandar(id){
+            document.getElementById("filtro").submit();
+          }
+
+          function registrarCliente(id){
+            $.ajax({
+              url: "query/consultalead.php", 
+              type: "POST", 
+              dataType: "json", 
+              data: {
+                "id": id
+              },
+              success: function(data) {
+                document.getElementById("idp").value = id;
+                document.getElementById("nmbp").value = data["nmb"];
+                document.getElementById("telefonop").value = data["telefono"];
+                document.getElementById("correop").value = data["correo"];
+                document.getElementById("cpp").value = data["cp"];
+                document.getElementById("observacionesp").value = data["observaciones"];
+                document.getElementById("formreg").submit();
+              },
+              error: function(jqXHR, textStatus, errorThrown) {
+                  // Manejo de errores
+                  console.log("Error: " + textStatus);
+              }
+          });
+          }
+
+          function iniciarTablero(id){
+            var formulario = document.getElementById("formtablero");
+            document.getElementById("idlead").value = id;
+            formulario.submit();
+          }
+          
+    
+          function marcarAcercamiento(id){
+            var checkb = document.getElementById("select"+id);
+            var estatus = 0;
+
+            // Verifica si está marcado
+            if (checkb.checked) {
+              estatus = 1;
+            } else {
+              estatus = 0;
+            }
+
+            $.ajax({
+              url: "query/marcaracercamiento.php", 
+              type: "POST",  
+              data: {
+                "id": id,
+                "estatus": estatus
+              },
+              success: function(data) {
+                //mandar(1);
+                window.location.reload();
+              },
+              error: function(jqXHR, textStatus, errorThrown) {
+                  // Manejo de errores
+                  console.log("Error: " + textStatus);
+              }
+          });
+          }
+          //mandar(0);
+
+          function cambiarEstatusLead(select, idLead) {
+            const nuevoEstatus = select.value;
+
+            $.ajax({
+              url: "query/actualiza_estatus_observacion.php",
+              type: "POST",
+              data: {
+                id: idLead,
+                estatus: nuevoEstatus
+              },
+              success: function(response) {
+                //Swal.fire({
+                  //icon: "success",
+                  //title: "Actualizado",
+                  //text: "Estatus actualizado correctamente."
+                //});
+              },
+              error: function() {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "No se pudo actualizar el estatus."
+                });
+              }
+            });
+          }
+
+        </script>';
+
+
+        /*  echo '
+          <script>
+          $("#myTable").DataTable( {
+                paging: true,
+                scrollY: 400,
+                processing: true,
+                ordering: false,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+                },
+                ajax: {
+                url: "query/datatableleadscapturados.php",
+                type: "POST",
+                datatype: "json",
+                data:{ 
+                  "estatusfiltro": "",
+                  "fecha": ""
+                }
+                },
+                pageLength: "50",
+                responsivePriority: 1,
+            });
+          </script>
+          '; */
+
+
+                } else{
+          echo '
+          <div class="card">
+              <div class="card-body">';
+              echo '<div class=" col-12 table-responsive">
+              <center><table width="100%" class="mb-0 table table-hover table-striped" id="myTable">
+              <thead class="bg-light-blue bg-darken-2 ">
+                <tr>
+                  <th><b>Telefono</b></th>
+                  <th><b>Nombre</b></th>
+                  <th><b>Código postal</b></th>
+                  <th><b>Correo</b></th>
+                  <th><b>Observaciones</b></th>
+                  <th><b>Hora de asignación</b></th>
+                  <th><b>Fecha de asignación</b></th>
+                </tr>
+              </thead>';
+              echo '<tbody>';
+              $fecha = '';
+              while($row = $this->model->result->fetch_array()){
+              echo'
+                <tr class="">
+                  <th style="height: 44.84px;">'.$row['cl_telefono'].'</span></th>
+                  <th style="height: 44.84px;"><span>'.$row['cl_nmb'].'</span></th>
+                  <th style="height: 44.84px;">'.$row['cl_cp'].'</span></th>
+                  <th style="height: 44.84px;">'.$row['cl_correo'].'</span></th>
+                  <th style="height: 44.84px;">'.$row['cl_observacion'].'</span></th>
+                  <th style="height: 44.84px;">'.$row['cl_hasigna'].'</span></th>
+                  <th style="height: 44.84px;">'.$row['cl_fasigna'].'</span></th>
+                </tr>';
+
+                $fecha = $row['cl_fasigna'];
+              }
+              echo '
+              </tbody>';
+            echo '</table>
             </div>
           </div>';
-          //filtro
-      echo '
-      <form hidden id="formreg" method="post" action="?modulo=clientes&accion=edit" autocomplete="off">
-        <input type="number" name="flag" value="1" hidden>
-        <input type="text" id="idp" name="idp" hidden>
-        <input type="text" id="nmbp" name="nmbp" hidden>
-        <input type="text" id="telefonop" name="telefonop" hidden>
-        <input type="text" id="correop" name="correop" hidden>
-        <input type="text" id="cpp" name="cpp" hidden>
-        <input type="text" id="observacionesp" name="observacionesp" hidden>
-      </form>
-      ';
+            }
+          ?>
+          <script src="assets/js/intlTelInput.js"></script>
+          <script>
+          // Ejecutamos el focus cuando se cargue la pagina
+          window.onload = setFocus;
+          //Hacemos focus en el elemento nombre
+          function setFocus() {
+              const inputElement = document.getElementById('telefono');
+              inputElement.focus();
+          }
 
-      echo '
-      <form hidden id="formtablero" method="post" action="?modulo=tableros&accion=index" autocomplete="off">
-        <input type="number" name="flag" value="1" hidden>
-        <!-- <input type="text" id="aliasp2" name="aliasp" hidden> -->
-        <input type="text" id="idlead" name="idlead" hidden>
-      </form>
-      ';
-      $nombres = array();
-      $sqlnmb = 'SELECT u_nmb, u_apellidos, u_id FROM usuarios WHERE u_grupo = "VENTAS" AND u_estatus = "A" ';
-      $resultnmb = setq($sqlnmb);
-      while($rownmb = $resultnmb -> fetch_array()){
-        $nombres[$rownmb['u_id']] = $rownmb['u_nmb'].' '.$rownmb['u_apellidos'];
-      }
+      document.getElementById("btnNuevoProspecto").addEventListener("click", function () {
+          document.getElementById("id").value = "";
+          document.getElementById("lead").value = "<?php echo $_GET['id']; ?>";
+          document.getElementById("nmb").value = "";
+          document.getElementById("cp").value = "";
+          document.getElementById("correo").value = "";
+          document.getElementById("telefono").value = "";
+          document.getElementById("empresa").value = "";
+          document.getElementById("comentarios").value = "";
 
+          document.getElementById("pais").value = "";
+          
+          // Reinicia el texto del botón por si vienes de una edición
+          document.getElementById("btnGuardarProspecto").innerHTML = '<i class="fas fa-save"></i> Guardar';
 
-      echo '
-      <div class="card mt-3">
-        <div class="card-body row" >';
-          echo '<div class="col-md-12 col-12 col-sm-12">
-            <div class="table-responsive text-medium" >
-              <center>
-                <table width="90%" class="mb-0 table-hover table-striped" id="myTable">
-                  <thead class="bg-light-blue bg-darken-2">
-                    <tr>
-                      <th></th>
-                      <th><b>Empresa</b></th>
-                      <th><b>Nombre</b></th>
-                      <th><b>Teléfono</b></th>
-                      <th><b>Correo</b></th>
-                      <th><b>Fecha Límite</b></th>
-                      <th><b>Acercamiento</b></th>
-                      <th></th>
-                      <th><b>Comentarios</b></th>
-                    </tr>
-                  </thead>
-                  <tbody>';
-                    
-                    while($row = $this->model->result->fetch_array()){
-                      // if($_SESSION['uid'] == "ADMIN") echo $row['cl_vendedor'].'<br>';
-                      $nmbcompleto = $nombres[$row['cl_vendedor']];
-                      // Decodificar entidades HTML
-                      $html = html_entity_decode($texto);
-                      // Reemplazar saltos de línea con saltos de línea reales
-                      $texto = str_replace('<br>', "\n", $html);
-                      // Eliminar etiquetas HTML restantes
-                      $texto = strip_tags($texto); 
-                      $texto_codificado = urlencode($texto);
-                      if(empty($texto)){
-                        /* $phone = $row['cl_telefono']; */
-                        $texton = "¡Hola, un gusto saludarte!";
-                        $texto_codificado = urlencode($texton);
-                      }
-                      //$numero_de_telefono = "+".$row['cl_code'].$row['cl_telefono']; // Reemplaza con tu número de teléfono en formato internacional
-                      $numero_de_telefono = $row['cl_telefono']; // Reemplaza con tu número de teléfono en formato internacional
+          // Resetea validaciones o focus si usas
+          $("#btnguardar").prop("disabled", true);
 
-                      $link_whatsapp = "https://api.whatsapp.com/send?phone=$numero_de_telefono&text=$texto_codificado";
-                      
-                      /* $phone = '<a href="'.$link_whatsapp.'" target="_blank">'.'+'.$row['cl_code'].$row['cl_telefono'].'&nbsp;
-                      <button style="border: 0px; background: white;" title="Contactar por WhatsApp">
-                          <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
-                      </button>
-                      </a>'; */
-                      $phone = '<a href="'.$link_whatsapp.'" target="_blank">'.$row['cl_telefono'].'&nbsp;
-                      <button style="border: 0px; background: white;" title="Contactar por WhatsApp">
-                          <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
-                      </button>
-                      </a>';
-
-                      if($row['cl_estatus'] == "A"){
-                        $estatusdesc = "Asignado";
-                      } else if($row['cl_estatus'] == "R" && $grupo != "ADMIN" && $grupo != "GERENCIA"){
-                        $estatusdesc = "Asignado";
-                      } else if($row['cl_estatus'] == "R"){
-                        $estatusdesc = "Reasignado";
-                      } else {
-                        $estatusdesc = "Sin negociación";
-                        /* $acciones = '<center><span><em>Lead "Sin negociación"</em></span></center>'; */
-                        $acciones = '';
-                      }
-                      if($row['cl_acercamiento'] == 0){
-                        $check = "";
-                      } else{
-                        $check = " checked disabled";
-                        /* $acciones = '<center><span><em>Se hizo acercamiento a este lead</em></span></center>'; */
-                      }
-  echo '
-  <style>
-    .estatus-select option[value="No iniciado"] {
-      background-color: #00bcd4; /* Azul claro */
-      color: white;
-    }
-    .estatus-select option[value="Correo Enviado"] {
-      background-color: #4caf50; /* Verde */
-      color: white;
-    }
-    .estatus-select option[value="No localizado"] {
-      background-color: #f57c00; /* Naranja */
-      color: white;
-    }
-    .estatus-select option[value="Reunion concretada"] {
-      background-color: #1565c0; /* Azul fuerte */
-      color: white;
-    }
-    .estatus-select option[value="Grupo Creado"] {
-      background-color: #00897b; /* Verde azulado */
-      color: white;
-    }
-    .estatus-select option[value="Buzon"] {
-      background-color: #ffeb3b; /* Amarillo */
-      color: black;
-    }
-    .estatus-select option[value="Negado"] {
-      background-color: #424242; /* Gris oscuro */
-      color: red;
-    }
-    .estatus-select option[value="Contactar Nuevamente"] {
-      background-color: #b71c1c; /* Rojo fuerte */
-      color: white;
-    }
-  </style>
-
-  <script>
-  function aplicarColorSelect(select) {
-      let color = "#00bcd4"; // default "No iniciado"
-      let textColor = "white";
-
-      switch (select.value) {
-          case "": // si no tiene valor
-          case "No iniciado": 
-              color = "#00bcd4"; 
-              break;
-          case "Correo Enviado": 
-              color = "#4caf50"; 
-              break;
-          case "No localizado": 
-              color = "#f57c00"; 
-              break;
-          case "Reunion concretada": 
-              color = "#1565c0"; 
-              break;
-          case "Grupo Creado": 
-              color = "#00897b"; 
-              break;
-          case "Buzon": 
-              color = "#ffeb3b"; 
-              textColor = "black"; 
-              break;
-          case "Negado": 
-              color = "#424242"; 
-              textColor = "red"; 
-              break;
-          case "Contactar Nuevamente": 
-              color = "#b71c1c"; 
-              break;
-      }
-
-      select.style.backgroundColor = color;
-      select.style.color = textColor;
-  }
-
-  // Aplicar al cargar la página
-  document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".estatus-select").forEach(select => {
-          aplicarColorSelect(select);
-          select.addEventListener("change", function() {
-              aplicarColorSelect(this);
-          });
+          // Restablece la lada por defecto
+          iti.setCountry("mx");
       });
-  });
-  </script>
-  ';
 
-  $acciones = '
-  <div class="row">
-    <div class="col-5">
-      <button type="button" onClick="iniciarTablero('.$row['cl_id'].');" class="btn btn-sm btn-success" data-toggle="tooltip" title="Iniciar un tablero">
-        <i class="fas fa-book-open"></i>
-      </button>
-      <button type="button" onClick="editarLead('.$row['cl_id'].');" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Editar prospecto">
-        <i class="bi bi-pencil-fill fs-7"></i>
-      </button>
-      <button type="button" onClick="borrarLead(' . $row['cl_id'] . ');" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-    </div>
-    <div class="col-4">
-      <select class="form-control form-control-sm estatus-select" onchange="cambiarEstatusLead(this, '.$row['cl_id'].')">
-        <option value="No iniciado" '.($row['cl_observacion'] == "No iniciado" ? 'selected' : '').'>No iniciado</option>
-        <option value="Correo Enviado" '.($row['cl_observacion'] == "Correo Enviado" ? 'selected' : '').'>Correo Enviado</option>
-        <option value="No localizado" '.($row['cl_observacion'] == "No localizado" ? 'selected' : '').'>No localizado</option>
-        <option value="Reunion concretada" '.($row['cl_observacion'] == "Reunion concretada" ? 'selected' : '').'>Reunión concretada</option>
-        <option value="Grupo Creado" '.($row['cl_observacion'] == "Grupo Creado" ? 'selected' : '').'>Grupo Creado</option>
-        <option value="Buzon" '.($row['cl_observacion'] == "Buzon" ? 'selected' : '').'>Buzón</option>
-        <option value="Negado" '.($row['cl_observacion'] == "Negado" ? 'selected' : '').'>Negado</option>
-        <option value="Contactar Nuevamente" '.($row['cl_observacion'] == "Contactar Nuevamente" ? 'selected' : '').'>Contactar Nuevamente</option>
-      </select>
-    </div>
-  </div>';
+          if(document.getElementById("btnguardar")){
+          document.getElementById("btnguardar").addEventListener("click", function() {
+            // Deshabilita el botón al hacer clic
+            this.disabled = true;
+
+            // Habilita el botón nuevamente después de 2 segundos
+            setTimeout(function() {
+                /* document.getElementById("btnguardar").disabled = false; */
+            }, 2000); // 2000 milisegundos = 2 segundos
+          });
+          }
 
 
-  $checkb = '<center><input class="form-check-input consult-check" onclick="marcarAcercamiento('.$row['cl_id'].')" type="checkbox" name="select'.$row['cl_id'].'" id="select'.$row['cl_id'].'" '.$check.'></center>';
-  // Asegura TZ para evitar brincos de día
+      const inputs = document.querySelectorAll('.focusable');
 
-  // 1) Calcula la fecha límite (7 días desde fasigna) SOLO si no existe en DB
-  $fasignaDt = !empty($row['cl_fasigna']) ? new DateTime($row['cl_fasigna']) : new DateTime('today');
+      for (let i = 0; i < inputs.length; i++) {
+          inputs[i].addEventListener('keydown', function(event) {
+              if (event.key === 'Tab') {
+                  event.preventDefault();
 
-  if (!empty($row['cl_fechalimite'])) {
-      $limiteDt = new DateTime($row['cl_fechalimite']);
-  } else {
-      $limiteDt = (clone $fasignaDt)->modify('+7 days');
-  }
+                  const currentInput = inputs[i];
+                  const nextInput = inputs[(i + 1) % inputs.length];
 
-  // 2) Formatea para mostrar
-  $fechaContactoStr = $limiteDt->format('d-m-Y');
-
-  // 3) Semáforo de color
-  $hoy = new DateTime('today');
-  $amarilloDesde = (clone $limiteDt)->modify('-2 days');
-
-  $badgeClass = 'badge bg-success';   // verde (a buen tiempo)
-  if ($hoy > $limiteDt) {
-      $badgeClass = 'badge bg-danger'; // rojo (vencido)
-  } elseif ($hoy >= $amarilloDesde) {
-      $badgeClass = 'badge bg-warning text-dark'; // amarillo (faltan ≤ 2 días)
-  }
-
-  $rutaIcono = busca($row['cl_ucaptura'], 'usuarios', 'u_id', 'u_icono');
-
-  // 4) Render de fila
-  echo '<tr>
-          <td><img src="'.$rutaIcono.'" alt="icono" style="width:24px; height:24px; object-fit:contain;"></td>
-          <td>'.$row['cl_empresa'].'</td>
-          <td>'.$row['cl_nmb'].'</td>
-          <td>'.$phone.'</td>
-          <td>'.$row['cl_correo'].'</td>
-          <td><span class="'.$badgeClass.'" title="Vigencia de 7 días desde la asignación">'.$fechaContactoStr.'</span></td>
-          <td>'.$checkb.'</td>
-          <td>'.$acciones.'</td>
-          <td>'.$row['cl_comentarios'].'</td>
-        </tr>';
-
-                      }
-                    echo '</tbody>';
-                  echo '</table>
-                </center>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        ';
-
-      
-      if($_REQUEST['page'] == 0){
-        $hidden = 'style="pointer-events: none;
-        background: #70707026;
-        color: black;"';
-      }else $hidden = "";
-
-      echo '<div class="col-md-12 mt-5 text-xs-center">
-        <div class="mb-3">
-          <nav aria-label="Page navigation">
-            <ul class="pagination">
-              <li class="page-item">
-                <a class="page-link" onclick="mandar('.($_REQUEST['page']-1).')" aria-label="Previous" '.$hidden.'>
-                  <span aria-hidden="true">&laquo; Ant</span>
-                  <span class="sr-only">Anterior</span>
-                </a>
-              </li>';
-
-              echo '
-              <script>
-                function mandar(id){
-                  document.getElementById("page").value = id;
-                  document.getElementById("filtro").submit();
-                }
-              </script>';
-
-              //$_REQUEST['categoria'],$_REQUEST['marca'],$_REQUEST['page'],$_REQUEST['unidad'],$_REQUEST['linean'],$_REQUEST['esquema']
-      $sqlf = '';
-      if(!empty($estatus)){
-        $sqlf .= ' cl_estatus = "'.$estatus.'"';
-      } else{
-        $sqlf .= ' cl_estatus IN ("R", "A")';
-      }
-      $grupo = busca($_SESSION['uid'], 'usuarios', 'u_id', 'u_grupo');
-      if($grupo == 'ADMIN' || $grupo == 'GERENCIA'){
-        if(!empty($vendedor)){
-          $sqlf .= ' AND cl_vendedor = "'.$vendedor.'"';
-        } else{
-          $sqlf .= '';
-        }
-      } else {
-        if(!empty($vendedor) && $vendedor != $_SESSION['uid']){
-          $sqlf .= '';
-          $caso = 1;
-        } else{
-          $sqlf .= ' AND cl_vendedor = "'.$_SESSION['uid'].'"';
-        }
+                  if (currentInput.value !== '' || currentInput.id == "correo" || currentInput.id == "obs" ||
+                      currentInput.id == "cp") {
+                      nextInput.focus();
+                  }
+              }
+          });
       }
 
-      $bloque = 50;
-      if(trim($sqlf) == ""){
-        $sql = 'SELECT COUNT(*) FROM crm_leads';
-      } else {
-        $sql = 'SELECT COUNT(*) FROM crm_leads WHERE '.$sqlf.'';
-      }
-      
-      $resultpg = setq($sql);
-      list($numg) =  $resultpg->fetch_array();
-      $pageres = ceil($numg/$bloque);
-
-        if($pageres>=10){
-          if($_REQUEST['page'] == 0) { $min = 1; $nombre = "Inicio";}
-          else {$min = $_REQUEST['page']-1; $nombre = "Inicio...";}
-          if($min <= 1) $min = 1;
-
-          if($_REQUEST['page'] == ($pageres-1)) $max = ($pageres-1);
-          else $max = $_REQUEST['page']+3;
-          if($max >= ($pageres-1)) $max = ($pageres-1);
-
-          if($_REQUEST['page'] == 0) $active = "active";
-          else $active = "";
-          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar(0)">'.$nombre.'</a></li>';
-        }elseif($pageres<=9){
-          $max=$pageres;
-          $min=0;
-        }
-        //for($i=0;$i<$pageres;$i++){
-        for($i=$min;$i<$max;$i++){
-          if($_REQUEST['page'] == $i) $active = "active";
-          else $active = "";
-          if($i == 0) $nombre = "Inicio";
-          else $nombre = $i;
-          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.$i.')">'.$nombre.'</a></li>';
-        }
-        if($pageres<=9){
-        }else{
-          if($_REQUEST['page'] == ($pageres-5)) $nombre = ($pageres-2);
-          else $nombre = '... '.($pageres-2);
-          if($_REQUEST['page'] == $i) $active = "active";
-          else $active = "";
-          if($_REQUEST['page'] >= ($pageres-4)) echo '';
-          else echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.($pageres-2).')">'.$nombre.'</a></li>';
-          echo '<li class="page-item '.$active.'"><a class="page-link" onclick="mandar('.($pageres-1).')">'.($pageres-1).'</a></li>';
-        }
-        if($_REQUEST['page'] == ($pageres-1) || $pageres <= 1) $hidden2 = 'style="pointer-events: none;
-        background: #70707026;
-        color: black;"';
-        else $hidden2 = '';
-        echo '<li class="page-item">
-          <a class="page-link" onclick="mandar('.($_REQUEST['page']+1).')" aria-label="Next" '.$hidden2.'>
-            <span aria-hidden="true">Sig &raquo;</span>
-            <span class="sr-only">Siguiente</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-    </div>
-    </div>'; 
-
-      echo '<script>
-
-      /* function mandar(id){
-        var telefono = document.getElementById("telefono");
-        var estatusfiltro = document.getElementById("estatusfiltro");
-        var fecha = document.getElementById("fecha");
-        var vendedor = document.getElementById("uvendedor");
-
-        if(id == 0){          
-          estatusfiltro.value = "";
-          fecha.value = "";
-          vendedor.value = "";
-          telefono.value = "";
-          page.value = "0";
-        } 
-
-        //$("#myTable").DataTable().clear().draw();
-        $("#myTable").DataTable().destroy();
-
-        $("#myTable").DataTable({
+      //Evento que se ejecuta cuando el usuario presione la tecla de enter
+      document.addEventListener('keydown', function(event) {
+          // Verificar si la tecla presionada es Enter (keyCode 13 o key 'Enter')
+          if (event.key === 'Enter' || event.keyCode === 13) {
+              // Evitar el comportamiento predeterminado de la tecla Enter (evitar el envío de formularios)
+              event.preventDefault();
+              var boton = document.getElementById('btnguardar');
+              if (!boton.hasAttribute('disabled')) {
+                  boton.click();
+              }
+          }
+      });
+      $("#myTable").DataTable({
           paging: true,
           scrollY: 400,
           processing: true,
+          serverside: true,
           ordering: false,
           language: {
               url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
           },
-          ajax: {
-            url: "query/datatableleadscapturados.php",
-            type: "POST",
-            datatype: "json",
-            data:{ 
-              "estatusfiltro": estatusfiltro.value,
-              "fecha": fecha.value,
-              "vendedor": vendedor.value,
-              "page": page.value,
-              "telefono": telefono.value
-            }
-          },
           pageLength: "50",
           responsivePriority: 1,
-        });
-      } */
-
-      function mandar(id){
-        document.getElementById("page").value = id;
-        document.getElementById("filtro").submit();
-      }
-
-      function registrarCliente(id){
-        $.ajax({
-          url: "query/consultalead.php", 
-          type: "POST", 
-          dataType: "json", 
-          data: {
-            "id": id
-          },
-          success: function(data) {
-            document.getElementById("idp").value = id;
-            document.getElementById("nmbp").value = data["nmb"];
-            document.getElementById("telefonop").value = data["telefono"];
-            document.getElementById("correop").value = data["correo"];
-            document.getElementById("cpp").value = data["cp"];
-            document.getElementById("observacionesp").value = data["observaciones"];
-            document.getElementById("formreg").submit();
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-              // Manejo de errores
-              console.log("Error: " + textStatus);
-          }
       });
-      }
 
-      function iniciarTablero(id){
-        var formulario = document.getElementById("formtablero");
-        document.getElementById("idlead").value = id;
-        formulario.submit();
-      }
-      
- 
-      function marcarAcercamiento(id){
-        var checkb = document.getElementById("select"+id);
-        var estatus = 0;
+      // Inicializar la tabla arrastrable
+      const guardarOrdenBtn = document.getElementById("guardarOrden");
 
-        // Verifica si está marcado
-        if (checkb.checked) {
-          estatus = 1;
-        } else {
-          estatus = 0;
-        }
-
-        $.ajax({
-          url: "query/marcaracercamiento.php", 
-          type: "POST",  
-          data: {
-            "id": id,
-            "estatus": estatus
-          },
-          success: function(data) {
-            //mandar(1);
-            window.location.reload();
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-              // Manejo de errores
-              console.log("Error: " + textStatus);
-          }
+      guardarOrdenBtn.addEventListener("click", function() {
+          guardarOrdenBtn.setAttribute("disabled", true);
+          Swal.fire({
+              icon: "question",
+              title: "Atención",
+              text: "¿Está seguro de finalizar la captura?",
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              cancelButtonText: 'Cancelar',
+              confirmButtonText: 'Estoy seguro'
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  Swal.close();
+                  fcaptura();
+              }
+          })
       });
-      }
-      //mandar(0);
 
-      function cambiarEstatusLead(select, idLead) {
-        const nuevoEstatus = select.value;
-
-        $.ajax({
-          url: "query/actualiza_estatus_observacion.php",
-          type: "POST",
-          data: {
-            id: idLead,
-            estatus: nuevoEstatus
-          },
-          success: function(response) {
-            //Swal.fire({
-              //icon: "success",
-              //title: "Actualizado",
-              //text: "Estatus actualizado correctamente."
-            //});
-          },
-          error: function() {
-            Swal.fire({
-              icon: "error",
-              title: "Error",
-              text: "No se pudo actualizar el estatus."
-            });
-          }
-        });
+      function fcaptura() {
+          window.location.href = "?modulo=prospectos&accion=fcaptura&id=" + <?php echo $_GET['id'];?>;
       }
 
-    </script>';
-
-
-     /*  echo '
-      <script>
-       $("#myTable").DataTable( {
-            paging: true,
-            scrollY: 400,
-            processing: true,
-            ordering: false,
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
-            },
-             ajax: {
-            url: "query/datatableleadscapturados.php",
-            type: "POST",
-            datatype: "json",
-            data:{ 
-              "estatusfiltro": "",
-              "fecha": ""
-            }
-            },
-            pageLength: "50",
-            responsivePriority: 1,
-        });
-      </script>
-      '; */
-
-
-            } else{
-      echo '
-      <div class="card">
-          <div class="card-body">';
-          echo '<div class=" col-12 table-responsive">
-          <center><table width="100%" class="mb-0 table table-hover table-striped" id="myTable">
-          <thead class="bg-light-blue bg-darken-2 ">
-            <tr>
-              <th><b>Telefono</b></th>
-              <th><b>Nombre</b></th>
-              <th><b>Código postal</b></th>
-              <th><b>Correo</b></th>
-              <th><b>Observaciones</b></th>
-              <th><b>Hora de asignación</b></th>
-              <th><b>Fecha de asignación</b></th>
-            </tr>
-          </thead>';
-          echo '<tbody>';
-          $fecha = '';
-          while($row = $this->model->result->fetch_array()){
-          echo'
-            <tr class="">
-              <th style="height: 44.84px;">'.$row['cl_telefono'].'</span></th>
-              <th style="height: 44.84px;"><span>'.$row['cl_nmb'].'</span></th>
-              <th style="height: 44.84px;">'.$row['cl_cp'].'</span></th>
-              <th style="height: 44.84px;">'.$row['cl_correo'].'</span></th>
-              <th style="height: 44.84px;">'.$row['cl_observacion'].'</span></th>
-              <th style="height: 44.84px;">'.$row['cl_hasigna'].'</span></th>
-              <th style="height: 44.84px;">'.$row['cl_fasigna'].'</span></th>
-            </tr>';
-
-            $fecha = $row['cl_fasigna'];
-          }
-          echo '
-          </tbody>';
-        echo '</table>
-        </div>
-      </div>';
-        }
-      ?>
-      <script src="assets/js/intlTelInput.js"></script>
-      <script>
-      // Ejecutamos el focus cuando se cargue la pagina
-      window.onload = setFocus;
-      //Hacemos focus en el elemento nombre
-      function setFocus() {
-          const inputElement = document.getElementById('telefono');
+      function setFocusInput(input) {
+          const inputElement = document.getElementById(input);
           inputElement.focus();
       }
 
-  document.getElementById("btnNuevoProspecto").addEventListener("click", function () {
-      document.getElementById("id").value = "";
-      document.getElementById("lead").value = "<?php echo $_GET['id']; ?>";
-      document.getElementById("nmb").value = "";
-      document.getElementById("cp").value = "";
-      document.getElementById("correo").value = "";
-      document.getElementById("telefono").value = "";
-      document.getElementById("empresa").value = "";
-      document.getElementById("comentarios").value = "";
+      <?php echo isset($onfocus); ?>
 
-      document.getElementById("pais").value = "";
-      
-      // Reinicia el texto del botón por si vienes de una edición
-      document.getElementById("btnGuardarProspecto").innerHTML = '<i class="fas fa-save"></i> Guardar';
+      document.addEventListener("DOMContentLoaded", function() {
+          var phone = document.getElementById("telefono");
+          var correoInput = document.getElementById('correo');
+          var nmbInput = document.getElementById('nmb'); // Nuevo campo nmb
+          var cpInput = document.getElementById('cp'); // Nuevo campo cp
+          var miBoton = document.getElementById('btnguardar');
 
-      // Resetea validaciones o focus si usas
-      $("#btnguardar").prop("disabled", true);
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      // Restablece la lada por defecto
-      iti.setCountry("mx");
-  });
+          function updateGuardarButtonState() {
+              let phoneValue = phone.value;
 
+              /*     // Truncar el teléfono a 10 dígitos
+                  if (phoneValue.length > 0) {
+                    phoneValue = phoneValue.slice(0, 10);
+                    phone.value = phoneValue;
+                  } */
 
-      document.getElementById("btnguardar").addEventListener("click", function() {
-        // Deshabilita el botón al hacer clic
-        this.disabled = true;
+              const correo = correoInput.value;
+              const nmbValue = nmbInput.value; // Valor del nuevo campo nmb
+              const cpValue = cpInput.value; // Valor del nuevo campo cp
 
-        // Habilita el botón nuevamente después de 2 segundos
-        setTimeout(function() {
-            /* document.getElementById("btnguardar").disabled = false; */
-        }, 2000); // 2000 milisegundos = 2 segundos
+              const isPhoneValid = phoneValue.length >= 5.;
+              const isCorreoValid = correo === "" || emailRegex.test(correo);
+              const isNmbValid = nmbValue !== ""; // Campo nmb no debe estar vacío
+              const isCpValid = cpValue !== ""; // Campo cp no debe estar vacío
+
+              /* miBoton.disabled = !(isPhoneValid && isCorreoValid && isNmbValid && isCpValid); */
+            miBoton.disabled = !(isPhoneValid && isCorreoValid && isNmbValid);
+        }
+
+        // Agregar eventos de escucha para detectar cambios en los campos
+        phone.addEventListener('input', updateGuardarButtonState);
+        correoInput.addEventListener('input', updateGuardarButtonState);
+        nmbInput.addEventListener('input', updateGuardarButtonState); // Nuevo campo nmb
+        cpInput.addEventListener('input', updateGuardarButtonState); // Nuevo campo cp
       });
 
-  const inputs = document.querySelectorAll('.focusable');
+      function addProspecto() {
+          var guardarOrden = document.getElementById("guardarOrden");
+          var lead = document.getElementById("lead").value;
+          var nmb = document.getElementById("nmb").value;
+          var cp = document.getElementById("cp").value;
+          var email = document.getElementById("correo").value;
+          var correo = email.toLowerCase();
+          var telefono = document.getElementById("telefono").value;
+          var code = 0;
+            if(document.getElementById("code"))
+            {
+              code = document.getElementById("code").value
+            };
+          var pais = document.getElementById("pais").value;
 
-  for (let i = 0; i < inputs.length; i++) {
-      inputs[i].addEventListener('keydown', function(event) {
-          if (event.key === 'Tab') {
-              event.preventDefault();
-
-              const currentInput = inputs[i];
-              const nextInput = inputs[(i + 1) % inputs.length];
-
-              if (currentInput.value !== '' || currentInput.id == "correo" || currentInput.id == "obs" ||
-                  currentInput.id == "cp") {
-                  nextInput.focus();
-              }
+          var empresa = document.getElementById("empresa").value;
+          var comentarios = document.getElementById("comentarios").value;
+          var id = "";
+          if(document.getElementById("id")){
+            id = document.getElementById("id").value;
           }
-      });
-  }
+          if (nmb == "") {
+              alertSweet("error", "Atención", 'El campo "Nombre" no puede quedar vacío. Verifique');
+          } else {
+              $("#modalNuevoProspecto").modal('hide');
 
-  //Evento que se ejecuta cuando el usuario presione la tecla de enter
-  document.addEventListener('keydown', function(event) {
-      // Verificar si la tecla presionada es Enter (keyCode 13 o key 'Enter')
-      if (event.key === 'Enter' || event.keyCode === 13) {
-          // Evitar el comportamiento predeterminado de la tecla Enter (evitar el envío de formularios)
-          event.preventDefault();
-          var boton = document.getElementById('btnguardar');
-          if (!boton.hasAttribute('disabled')) {
-              boton.click();
-          }
-      }
-  });
-  $("#myTable").DataTable({
-      paging: true,
-      scrollY: 400,
-      processing: true,
-      serverside: true,
-      ordering: false,
-      language: {
-          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
-      },
-      pageLength: "50",
-      responsivePriority: 1,
-  });
-
-  // Inicializar la tabla arrastrable
-  const guardarOrdenBtn = document.getElementById("guardarOrden");
-
-  guardarOrdenBtn.addEventListener("click", function() {
-      guardarOrdenBtn.setAttribute("disabled", true);
-      Swal.fire({
-          icon: "question",
-          title: "Atención",
-          text: "¿Está seguro de finalizar la captura?",
-          showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
-          cancelButtonText: 'Cancelar',
-          confirmButtonText: 'Estoy seguro'
-      }).then((result) => {
-          if (result.isConfirmed) {
-              Swal.close();
-              fcaptura();
-          }
-      })
-  });
-
-  function fcaptura() {
-      window.location.href = "?modulo=prospectos&accion=fcaptura&id=" + <?php echo $_GET['id'];?>;
-  }
-
-  function setFocusInput(input) {
-      const inputElement = document.getElementById(input);
-      inputElement.focus();
-  }
-
-  <?php echo isset($onfocus); ?>
-
-  document.addEventListener("DOMContentLoaded", function() {
-      var phone = document.getElementById("telefono");
-      var correoInput = document.getElementById('correo');
-      var nmbInput = document.getElementById('nmb'); // Nuevo campo nmb
-      var cpInput = document.getElementById('cp'); // Nuevo campo cp
-      var miBoton = document.getElementById('btnguardar');
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      function updateGuardarButtonState() {
-          let phoneValue = phone.value;
-
-          /*     // Truncar el teléfono a 10 dígitos
-              if (phoneValue.length > 0) {
-                phoneValue = phoneValue.slice(0, 10);
-                phone.value = phoneValue;
-              } */
-
-          const correo = correoInput.value;
-          const nmbValue = nmbInput.value; // Valor del nuevo campo nmb
-          const cpValue = cpInput.value; // Valor del nuevo campo cp
-
-          const isPhoneValid = phoneValue.length >= 5.;
-          const isCorreoValid = correo === "" || emailRegex.test(correo);
-          const isNmbValid = nmbValue !== ""; // Campo nmb no debe estar vacío
-          const isCpValid = cpValue !== ""; // Campo cp no debe estar vacío
-
-          /* miBoton.disabled = !(isPhoneValid && isCorreoValid && isNmbValid && isCpValid); */
-        miBoton.disabled = !(isPhoneValid && isCorreoValid && isNmbValid);
-    }
-
-    // Agregar eventos de escucha para detectar cambios en los campos
-    phone.addEventListener('input', updateGuardarButtonState);
-    correoInput.addEventListener('input', updateGuardarButtonState);
-    nmbInput.addEventListener('input', updateGuardarButtonState); // Nuevo campo nmb
-    cpInput.addEventListener('input', updateGuardarButtonState); // Nuevo campo cp
-  });
-
-  function addProspecto() {
-      var guardarOrden = document.getElementById("guardarOrden");
-      var lead = document.getElementById("lead").value;
-      var nmb = document.getElementById("nmb").value;
-      var cp = document.getElementById("cp").value;
-      var email = document.getElementById("correo").value;
-      var correo = email.toLowerCase();
-      var telefono = document.getElementById("telefono").value;
-      var code = 0;
-        if(document.getElementById("code"))
-        {
-          code = document.getElementById("code").value
-        };
-      var pais = document.getElementById("pais").value;
-
-      var empresa = document.getElementById("empresa").value;
-      var comentarios = document.getElementById("comentarios").value;
-      var id = "";
-      if(document.getElementById("id")){
-        id = document.getElementById("id").value;
-      }
-      if (nmb == "") {
-          alertSweet("error", "Atención", 'El campo "Nombre" no puede quedar vacío. Verifique');
-      } else {
-          $("#modalNuevoProspecto").modal('hide');
-
-          $.ajax({
-                  url: "query/addprospecto.php",
-                  method: "POST",
-                  dataType: 'json',
-                  data: {
-                      'nmb': nmb,
-                      'comentarios': comentarios,
-                      "cp": cp,
-                      "correo": correo,
-                      "telefono": telefono,
-                      "code": code,
-                      "pais": pais,
-                      "empresa": empresa,
-                      "lead": lead,
-                      "id": id
-                  },
-              })
-              .done(function(data) {
-              //alert("DATAAA: " + data.respuesta);
-                  if (data.respuesta == 41) { //El telefono ya existe en la pagina
-                      alertSweet("error", "Atención", "Ya existe un registro para el vendedor " + data.agente +
-                          " con el mismo número de telefono en la tabla. Verifique.");
-                  } else if (data.respuesta == 42) { //El telefono ya existe en la pagina
-                      alertSweet("error", "Atención", "Este contacto ya esta asignado al vendedor " + data.agente +
-                          ".");
-                  } else if (data.respuesta == 247) { //La sesión caducó
-                      window.location.reload();
-                  } else if (data.respuesta == 22) {
-                      alertSweet("error", "Atención",
-                          "No hay vendedores activos. No fue posible asignar los prospectos.");
-                  } else {
-                    /*
-                      document.getElementById("mi-contenido").innerHTML = data.html;
-                      document.getElementById("id").value = "";
-                      document.getElementById("nmb").value = "";
-                      document.getElementById("cp").value = "";
-                      document.getElementById("correo").value = "";
-                      document.getElementById("telefono").value = "";
-                      document.getElementById("code").value = "";
-                      document.getElementById("pais").value = "";
-                      document.getElementById("obs").value = "";
-                      document.getElementById("tel").value = data.tel;
-                      document.getElementById("codes").value = data.codes;
-                    */
-                      $("#btnguardar").prop("disabled", true);
-                      if (data.respuesta == 0) {
-                          alertSweet("error", "Atención", "No se ha podido registrar el prospecto correctamente");
-                      } else if (data.respuesta == 2) {
-                          if (data.enviar == 1) {
-                              fcaptura();
-                          } else {
-                              alertSweet("", "Aviso", "La página está llena");
-                              /*
-                              document.getElementById("mi-contenido").innerHTML = data.html;
-                              document.getElementById("nmb").setAttribute("readonly", true);
-                              document.getElementById("correo").setAttribute("readonly", true);
-                              document.getElementById("cp").setAttribute("readonly", true);
-                              document.getElementById("telefono").setAttribute("readonly", true);
-                              document.getElementById("obs").setAttribute("readonly", true);
-                              */
-                          }
-                      } else if (data.respuesta == 3) {
-                          if (data.enviar == 1) {
-                            /*
-                              document.getElementById("mi-contenido").innerHTML = data.html;
-                              document.getElementById("nmb").setAttribute("readonly", true);
-                              document.getElementById("correo").setAttribute("readonly", true);
-                              document.getElementById("cp").setAttribute("readonly", true);
-                              document.getElementById("telefono").setAttribute("readonly", true);
-                              document.getElementById("obs").setAttribute("readonly", true);
-                              */
-                              fcaptura();
-                          }
-                          alertSweet("success", "Correcto", "Registro actualizado correctamente");
-                          window.location.reload();
-                          iti.setCountry("mx");
-                          document.getElementById("pais").value = "";
-                          document.getElementById("code").value = "";
-                      } else if(data.respuesta == 1){
-                        fcaptura();
-                      }
-
-                      if (data.registros >= 2) {
-                          guardarOrden.removeAttribute("disabled");
-                      } else {
-                          guardarOrden.setAttribute("disabled", true);
-                      }
-                  }
-              })
-      }
-  }
-
-  function editarLead(id) {
-  // cache de inputs
-  var $id       = document.getElementById("id");
-  var $lead     = document.getElementById("lead");
-  var $nmb      = document.getElementById("nmb");
-  var $cp       = document.getElementById("cp");
-  var $correo   = document.getElementById("correo");
-  var $telefono = document.getElementById("telefono");
-  var $code     = document.getElementById("code");
-  var $pais     = document.getElementById("pais");
-  var $empresa      = document.getElementById("empresa");
-  var $comentarios      = document.getElementById("comentarios");
-  var $btnSave  = document.getElementById("btnGuardarProspecto"); // usa el id real del botón
-
-  $.ajax({
-    url: "query/traerprospecto.php",
-    method: "POST",
-    dataType: "json",
-    data: { id: id }
-  })
-  .done(function(data) {
-    // Si tu endpoint regresa {respuesta:0|1, ...}
-    if (Number(data.respuesta) === 0) {
-      Swal.fire({
-        title: "Atención",
-        text: "El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.",
-        icon: "error"
-      }).then(() => {
-        window.location.href = "?modulo=prospectos&accion=show&id=<?php echo (int)($_GET['id'] ?? 0); ?>";
-      });
-      return;
-    }
-
-    // Abre el modal primero
-    $('#modalNuevoProspecto').modal('show');
-
-    // Cambia el texto del botón
-    if ($btnSave) $btnSave.innerHTML = '<i class="fas fa-save"></i> Actualizar';
-
-    // Normaliza nombres del JSON (usa el que llegue)
-    var d = data.data ? data.data : data; // por si viene anidado
-
-    // Soporta ambas convenciones cl_* o simple
-    var v = {
-      id:        d.id        ?? d.cl_id       ?? id,
-      lead:      d.lead      ?? d.cl_lead     ?? ($lead ? $lead.value : ""),
-      nmb:       d.nmb       ?? d.cl_nmb      ?? "",
-      cp:        d.cp        ?? d.cl_cp       ?? "",
-      correo:    d.correo    ?? d.cl_correo   ?? "",
-      telefono:  d.telefono  ?? d.cl_tel      ?? "",
-      code:      d.code      ?? d.cl_code     ?? "",
-      pais:      d.pais      ?? d.cl_pais     ?? "",
-      empresa:       d.empresa       ?? d.cl_empresa ?? "",
-      comentarios:       d.comentarios       ?? d.cl_comentarios ?? ""
-    };
-
-    // Rellena los campos (solo si existen en el DOM)
-    if ($id)       $id.value       = v.id;
-    if ($lead)     $lead.value     = v.lead;
-    if ($nmb)      $nmb.value      = v.nmb;
-    if ($cp)       $cp.value       = v.cp;
-    if ($correo)   $correo.value   = v.correo;
-    if ($telefono) $telefono.value = v.telefono;
-    if ($code)     $code.value     = v.code;
-    if ($pais)     $pais.value     = v.pais;
-    if ($empresa)      $empresa.value      = v.empresa;
-    if ($comentarios)      $comentarios.value      = v.comentarios;
-
-    // Protege el uso de intl-tel-input si existe
-    if (window.iti && typeof iti.setCountry === "function") {
-      var paisLower = (v.pais || "mx").toLowerCase();
-      try { iti.setCountry(paisLower); } catch(e) { /* ignora */ }
-    }
-
-    // Si en algún flujo bloqueaste inputs/btn, re-habilita:
-    if ($nmb)      $nmb.removeAttribute("readonly");
-    if ($cp)       $cp.removeAttribute("readonly");
-    if ($correo)   $correo.removeAttribute("readonly");
-    if ($telefono) $telefono.removeAttribute("readonly");
-    if ($empresa)      $empresa.removeAttribute("readonly");
-    if ($comentarios)      $comentarios.removeAttribute("readonly");
-    if ($btnSave)  $btnSave.removeAttribute("disabled");
-  })
-  .fail(function(xhr) {
-    console.error(xhr);
-    alert("Error de red al cargar el prospecto.");
-  });
-}
-
-  async function compararTelefono() {
-      var code = document.getElementById("code");
-      var lead = document.getElementById("lead");
-      var pais = document.getElementById("pais");
-
-      var id = document.getElementById("id").value;
-      var telefono0 = document.getElementById("telefono").value;
-      var telefonosCadena = document.getElementById("tel").value;
-      var codesCadena = document.getElementById("codes").value;
-      var telefonosArray = telefonosCadena.split(',');
-      var codesArray = codesCadena.split(',');
-
-      var coincidencias = false;
-
-      if (id !== "") {
-          console.log("Entra");
-          try {
-              const data = await $.ajax({
-                  url: "query/buscartel.php",
-                  method: "POST",
-                  data: {
-                      'id': id,
-                      "lead": lead.value,
-                      "pais": pais.value,
-                      "telefono": telefono0,
-                      "code": code.value
-                  },
-              });
-
-              if (data == 1) {
-                  coincidencias = true;
-              } else {
-                  coincidencias = false;
-              }
-          } catch (error) {
-              console.error("Error en la solicitud AJAX:", error);
-          }
-      } else {
-          for (var i = 0; i < telefonosArray.length; i++) {
-              var numeroTelefono = telefonosArray[i].trim();
-              var codeTelefono = codesArray[i].trim();
-              var telefonoConcat = code.value + telefono0;
-              var telefonoConcatArray = codeTelefono + numeroTelefono;
-              console.log("telefonoConcat: " + telefonoConcat + " === telefonoConcatArray: " + telefonoConcatArray);
-
-              if (telefonoConcat === telefonoConcatArray) {
-                  coincidencias = true;
-                  break;
-              }
-          }
-      }
-
-      return coincidencias;
-  }
-
-
-  function borrarLead(id) {
-      Swal.fire({
-          title: 'Atención',
-          html: "¿Estás seguro de borrar este registro?<br>Esta opción es irreversible.",
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
-          cancelButtonText: 'Cancelar',
-          confirmButtonText: 'Estoy seguro'
-      }).then((result) => {
-          if (result.isConfirmed) {
-              var guardarOrden = document.getElementById("guardarOrden");
-              var lead = document.getElementById("lead").value;
-              var leadId = document.getElementById(
-                  "id"); // Cambiar el nombre de la variable para evitar conflicto con el parámetro "id"
-              var nmb = document.getElementById("nmb");
-              var cp = document.getElementById("cp");
-              var correo = document.getElementById("correo");
-              var telefono = document.getElementById("telefono");
-              var empresa = document.getElementById("empresa");
-              var comentarios = document.getElementById("comentarios");
-
-              var btnguardar = document.getElementById("btnguardar");
               $.ajax({
-                      url: "query/eliminarprospecto.php",
+                      url: "query/addprospecto.php",
                       method: "POST",
                       dataType: 'json',
                       data: {
-                          'id': id,
-                          "lead": lead
+                          'nmb': nmb,
+                          'comentarios': comentarios,
+                          "cp": cp,
+                          "correo": correo,
+                          "telefono": telefono,
+                          "code": code,
+                          "pais": pais,
+                          "empresa": empresa,
+                          "lead": lead,
+                          "id": id
                       },
                   })
                   .done(function(data) {
-                      window.location.reload();
-                      document.getElementById("mi-contenido").innerHTML = data.html;
-                      nmb.removeAttribute("readonly");
-                      cp.removeAttribute("readonly");
-                      correo.removeAttribute("readonly");
-                      telefono.removeAttribute("readonly");
-                      empresa.removeAttribute("readonly");
-                      btnguardar.setAttribute("disabled", true);
-                      leadId.value = "";
-                      nmb.value = "";
-                      comentarios.value = "";
-                      cp.value = "";
-                      correo.value = "";
-                      telefono.value = "";
-                      empresa.value = "";
-                      tel.value = data.tel;
-                      document.getElementById("codes").value = data.codes;
-                      if (data.registros >= 2) {
-                          guardarOrden.removeAttribute("disabled");
+                  //alert("DATAAA: " + data.respuesta);
+                      if (data.respuesta == 41) { //El telefono ya existe en la pagina
+                          alertSweet("error", "Atención", "Ya existe un registro para el vendedor " + data.agente +
+                              " con el mismo número de telefono en la tabla. Verifique.");
+                      } else if (data.respuesta == 42) { //El telefono ya existe en la pagina
+                          alertSweet("error", "Atención", "Este contacto ya esta asignado al vendedor " + data.agente +
+                              ".");
+                      } else if (data.respuesta == 247) { //La sesión caducó
+                          window.location.reload();
+                      } else if (data.respuesta == 22) {
+                          alertSweet("error", "Atención",
+                              "No hay vendedores activos. No fue posible asignar los prospectos.");
                       } else {
-                          guardarOrden.setAttribute("disabled", true);
+                        /*
+                          document.getElementById("mi-contenido").innerHTML = data.html;
+                          document.getElementById("id").value = "";
+                          document.getElementById("nmb").value = "";
+                          document.getElementById("cp").value = "";
+                          document.getElementById("correo").value = "";
+                          document.getElementById("telefono").value = "";
+                          document.getElementById("code").value = "";
+                          document.getElementById("pais").value = "";
+                          document.getElementById("obs").value = "";
+                          document.getElementById("tel").value = data.tel;
+                          document.getElementById("codes").value = data.codes;
+                        */
+                          $("#btnguardar").prop("disabled", true);
+                          if (data.respuesta == 0) {
+                              alertSweet("error", "Atención", "No se ha podido registrar el prospecto correctamente");
+                          } else if (data.respuesta == 2) {
+                              if (data.enviar == 1) {
+                                  fcaptura();
+                              } else {
+                                  alertSweet("", "Aviso", "La página está llena");
+                                  /*
+                                  document.getElementById("mi-contenido").innerHTML = data.html;
+                                  document.getElementById("nmb").setAttribute("readonly", true);
+                                  document.getElementById("correo").setAttribute("readonly", true);
+                                  document.getElementById("cp").setAttribute("readonly", true);
+                                  document.getElementById("telefono").setAttribute("readonly", true);
+                                  document.getElementById("obs").setAttribute("readonly", true);
+                                  */
+                              }
+                          } else if (data.respuesta == 3) {
+                              if (data.enviar == 1) {
+                                /*
+                                  document.getElementById("mi-contenido").innerHTML = data.html;
+                                  document.getElementById("nmb").setAttribute("readonly", true);
+                                  document.getElementById("correo").setAttribute("readonly", true);
+                                  document.getElementById("cp").setAttribute("readonly", true);
+                                  document.getElementById("telefono").setAttribute("readonly", true);
+                                  document.getElementById("obs").setAttribute("readonly", true);
+                                  */
+                                  fcaptura();
+                              }
+                              alertSweet("success", "Correcto", "Registro actualizado correctamente");
+                              window.location.reload();
+                              iti.setCountry("mx");
+                              document.getElementById("pais").value = "";
+                              document.getElementById("code").value = "";
+                          } else if(data.respuesta == 1){
+                            fcaptura();
+                          }
+
+                          if (data.registros >= 2) {
+                              guardarOrden.removeAttribute("disabled");
+                          } else {
+                              guardarOrden.setAttribute("disabled", true);
+                          }
                       }
-                      setFocus();
-                  });
+                  })
           }
+      }
+
+      function editarLead(id) {
+      // cache de inputs
+      var $id       = document.getElementById("id");
+      var $lead     = document.getElementById("lead");
+      var $nmb      = document.getElementById("nmb");
+      var $cp       = document.getElementById("cp");
+      var $correo   = document.getElementById("correo");
+      var $telefono = document.getElementById("telefono");
+      var $code     = document.getElementById("code");
+      var $pais     = document.getElementById("pais");
+      var $empresa      = document.getElementById("empresa");
+      var $comentarios      = document.getElementById("comentarios");
+      var $btnSave  = document.getElementById("btnGuardarProspecto"); // usa el id real del botón
+
+      $.ajax({
+        url: "query/traerprospecto.php",
+        method: "POST",
+        dataType: "json",
+        data: { id: id }
       })
-  }
+      .done(function(data) {
+        // Si tu endpoint regresa {respuesta:0|1, ...}
+        if (Number(data.respuesta) === 0) {
+          Swal.fire({
+            title: "Atención",
+            text: "El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.",
+            icon: "error"
+          }).then(() => {
+            window.location.href = "?modulo=prospectos&accion=show&id=<?php echo (int)($_GET['id'] ?? 0); ?>";
+          });
+          return;
+        }
 
-  function alertSweet(icono, titulo, mensaje) {
-      Swal.fire({
-          icon: icono,
-          title: titulo,
-          text: mensaje
-      }).then((result) => {
-          if (result.isConfirmed || result.isDenied) {
-              Swal.close();
-          }
+        // Abre el modal primero
+        $('#modalNuevoProspecto').modal('show');
+
+        // Cambia el texto del botón
+        if ($btnSave) $btnSave.innerHTML = '<i class="fas fa-save"></i> Actualizar';
+
+        // Normaliza nombres del JSON (usa el que llegue)
+        var d = data.data ? data.data : data; // por si viene anidado
+
+        // Soporta ambas convenciones cl_* o simple
+        var v = {
+          id:        d.id        ?? d.cl_id       ?? id,
+          lead:      d.lead      ?? d.cl_lead     ?? ($lead ? $lead.value : ""),
+          nmb:       d.nmb       ?? d.cl_nmb      ?? "",
+          cp:        d.cp        ?? d.cl_cp       ?? "",
+          correo:    d.correo    ?? d.cl_correo   ?? "",
+          telefono:  d.telefono  ?? d.cl_tel      ?? "",
+          code:      d.code      ?? d.cl_code     ?? "",
+          pais:      d.pais      ?? d.cl_pais     ?? "",
+          empresa:       d.empresa       ?? d.cl_empresa ?? "",
+          comentarios:       d.comentarios       ?? d.cl_comentarios ?? ""
+        };
+
+        // Rellena los campos (solo si existen en el DOM)
+        if ($id)       $id.value       = v.id;
+        if ($lead)     $lead.value     = v.lead;
+        if ($nmb)      $nmb.value      = v.nmb;
+        if ($cp)       $cp.value       = v.cp;
+        if ($correo)   $correo.value   = v.correo;
+        if ($telefono) $telefono.value = v.telefono;
+        if ($code)     $code.value     = v.code;
+        if ($pais)     $pais.value     = v.pais;
+        if ($empresa)      $empresa.value      = v.empresa;
+        if ($comentarios)      $comentarios.value      = v.comentarios;
+
+        // Protege el uso de intl-tel-input si existe
+        if (window.iti && typeof iti.setCountry === "function") {
+          var paisLower = (v.pais || "mx").toLowerCase();
+          try { iti.setCountry(paisLower); } catch(e) { /* ignora */ }
+        }
+
+        // Si en algún flujo bloqueaste inputs/btn, re-habilita:
+        if ($nmb)      $nmb.removeAttribute("readonly");
+        if ($cp)       $cp.removeAttribute("readonly");
+        if ($correo)   $correo.removeAttribute("readonly");
+        if ($telefono) $telefono.removeAttribute("readonly");
+        if ($empresa)      $empresa.removeAttribute("readonly");
+        if ($comentarios)      $comentarios.removeAttribute("readonly");
+        if ($btnSave)  $btnSave.removeAttribute("disabled");
+      })
+      .fail(function(xhr) {
+        console.error(xhr);
+        alert("Error de red al cargar el prospecto.");
       });
-  }
+    }
 
-  function cambiarvendedor(k) {
-      var original = document.getElementById("venoriginal" + k);
-      var vendedor = document.getElementById("idvendedor" + k);
+      async function compararTelefono() {
+          var code = document.getElementById("code");
+          var lead = document.getElementById("lead");
+          var pais = document.getElementById("pais");
 
-      Swal.fire({
-          title: 'Atención?',
-          text: "¿Estás seguro de cambiar el vendedor de este lead?",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
-          confirmButtonText: 'De acuerdo',
-          cancelButtonText: 'Cancelar'
-      }).then((result) => {
-          if (result.isConfirmed) {
-              $.ajax({
-                      url: "query/cambiarvendedor.php",
+          var id = document.getElementById("id").value;
+          var telefono0 = document.getElementById("telefono").value;
+          var telefonosCadena = document.getElementById("tel").value;
+          var codesCadena = document.getElementById("codes").value;
+          var telefonosArray = telefonosCadena.split(',');
+          var codesArray = codesCadena.split(',');
+
+          var coincidencias = false;
+
+          if (id !== "") {
+              console.log("Entra");
+              try {
+                  const data = await $.ajax({
+                      url: "query/buscartel.php",
                       method: "POST",
                       data: {
-                          "id": k,
-                          "vendedor": vendedor.value
+                          'id': id,
+                          "lead": lead.value,
+                          "pais": pais.value,
+                          "telefono": telefono0,
+                          "code": code.value
                       },
-                  })
-                  .done(function(data) {
-                      if (data == 0) {
-                          Toast.fire({
-                              icon: 'success',
-                              title: 'Lead actualizado correctamente'
-                          })
-                          original.value = vendedor.value;
-                      } else if (data == 2) {
-                          Swal.fire({
-                              title: 'Atención',
-                              text: 'El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.',
-                              icon: 'error',
-                          }).then((result) => {
-                              if (result.isConfirmed) {
-                                  // El usuario hizo clic en el botón de confirmación
-                                  window.location.href = "?modulo=prospectos&accion=show&id=" +
-                                      <?php echo $_GET['id']; ?>;
-                              } else {
-                                  // El usuario cerró la alerta sin hacer clic en el botón de confirmación
-                                  window.location.href = "?modulo=prospectos&accion=show&id=" +
-                                      <?php echo $_GET['id']; ?>;
-                              }
-                          });
+                  });
 
-                      } else {
-                          //Oucrrió un error al actualizar el lead
-                          Toast.fire({
-                              icon: 'error',
-                              title: 'Oucrrió un error al actualizar el lead'
-                          })
-                          vendedor.value = original.value;
-                      }
-                  })
+                  if (data == 1) {
+                      coincidencias = true;
+                  } else {
+                      coincidencias = false;
+                  }
+              } catch (error) {
+                  console.error("Error en la solicitud AJAX:", error);
+              }
           } else {
-              vendedor.value = original.value;
+              for (var i = 0; i < telefonosArray.length; i++) {
+                  var numeroTelefono = telefonosArray[i].trim();
+                  var codeTelefono = codesArray[i].trim();
+                  var telefonoConcat = code.value + telefono0;
+                  var telefonoConcatArray = codeTelefono + numeroTelefono;
+                  console.log("telefonoConcat: " + telefonoConcat + " === telefonoConcatArray: " + telefonoConcatArray);
+
+                  if (telefonoConcat === telefonoConcatArray) {
+                      coincidencias = true;
+                      break;
+                  }
+              }
           }
-      })
 
-  }
-
-
-  // Agregar un evento que se ejecutará cuando el DOM esté listo
-  document.addEventListener("DOMContentLoaded", function() {
-      // Obtener el elemento del modal con el ID "newtablero"
-      const modalNewTablero = document.getElementById("newtablero");
-      // Comprobar si el elemento del modal existe en el DOM
-      if (modalNewTablero) {
-          // Si el modal existe, agregar un evento que se ejecutará cuando se oculte el modal
-          modalNewTablero.addEventListener("hidden.bs.modal", function() {
-              // Obtener el botón con el ID "nuevo"
-              const botonNuevo = document.getElementById("nuevo");
-              // Remover los atributos "data-bs-target" y "data-bs-toggle" del botón "nuevo"
-              botonNuevo.removeAttribute("data-bs-target");
-              botonNuevo.removeAttribute("data-bs-toggle");
-          });
+          return coincidencias;
       }
-  });
 
-  function finalizar(id) {
-      $.ajax({
-              url: "query/buscarprospectos.php",
-              method: "POST",
-              data: {
-                  "lead": "<?php echo $_GET["id"]; ?>"
-              },
-          })
-          .done(function(data) {
-              if (data > 0) {
-                  Swal.fire({
-                      title: "Atención",
-                      html: "¿Que acción deseas realiza con los prospectos capturados antes de finalizar la hoja?",
-                      icon: "question",
-                      showCancelButton: true,
-                      confirmButtonColor: "#3085d6",
-                      cancelButtonColor: "#d33",
-                      confirmButtonText: "Finalizar y asignar",
-                      cancelButtonText: "Cancelar",
-                      showDenyButton: true,
-                      denyButtonColor: "teal",
-                      denyButtonText: "Finalizar y NO asignar",
-                      allowOutsideClick: false,
-                  }).then((result) => {
-                      if (result.isConfirmed) {
-                          //Finalizó y asignó
-                          window.location.href = "?modulo=prospectos&accion=finalizaryasignar&id=" + id;
-                      } else if (result.isDenied) {
-                          //Finalizó y NO asignó
-                          window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
-                      }
-                  });
-              } else {
-                  Swal.fire({
-                      icon: "question",
-                      title: "Atención",
-                      html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
-                      showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
-                      showCancelButton: true, // Muestra el botón de cancelar
-                      focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
-                      confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
-                      confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
-                      cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
-                      cancelButtonColor: "#d33", // Color del botón "Cancelar"
-                      allowOutsideClick: false
-                  }).then((result) => {
-                      if (result.isConfirmed) {
-                          window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
-                      }
 
-                  });
+      function borrarLead(id) {
+          Swal.fire({
+              title: 'Atención',
+              html: "¿Estás seguro de borrar este registro?<br>Esta opción es irreversible.",
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              cancelButtonText: 'Cancelar',
+              confirmButtonText: 'Estoy seguro'
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  var guardarOrden = document.getElementById("guardarOrden");
+                  var lead = document.getElementById("lead").value;
+                  var leadId = document.getElementById(
+                      "id"); // Cambiar el nombre de la variable para evitar conflicto con el parámetro "id"
+                  var nmb = document.getElementById("nmb");
+                  var cp = document.getElementById("cp");
+                  var correo = document.getElementById("correo");
+                  var telefono = document.getElementById("telefono");
+                  var empresa = document.getElementById("empresa");
+                  var comentarios = document.getElementById("comentarios");
+
+                  var btnguardar = document.getElementById("btnguardar");
+                  $.ajax({
+                          url: "query/eliminarprospecto.php",
+                          method: "POST",
+                          dataType: 'json',
+                          data: {
+                              'id': id,
+                              "lead": lead
+                          },
+                      })
+                      .done(function(data) {
+                          window.location.reload();
+                          document.getElementById("mi-contenido").innerHTML = data.html;
+                          nmb.removeAttribute("readonly");
+                          cp.removeAttribute("readonly");
+                          correo.removeAttribute("readonly");
+                          telefono.removeAttribute("readonly");
+                          empresa.removeAttribute("readonly");
+                          btnguardar.setAttribute("disabled", true);
+                          leadId.value = "";
+                          nmb.value = "";
+                          comentarios.value = "";
+                          cp.value = "";
+                          correo.value = "";
+                          telefono.value = "";
+                          empresa.value = "";
+                          tel.value = data.tel;
+                          document.getElementById("codes").value = data.codes;
+                          if (data.registros >= 2) {
+                              guardarOrden.removeAttribute("disabled");
+                          } else {
+                              guardarOrden.setAttribute("disabled", true);
+                          }
+                          setFocus();
+                      });
               }
           })
-  }
+      }
 
-  //Inicio de las funciones de la lada
-  let input = document.querySelector("#telefono");
-  let iti = window.intlTelInput(input, {
-      initialCountry: "auto",
-      geoIpLookup: function(callback) {
-          //console.log(callback);
-          $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
-              const countryCode = (resp && resp.country) ? resp.country : "us";
-              callback(countryCode);
+      function alertSweet(icono, titulo, mensaje) {
+          Swal.fire({
+              icon: icono,
+              title: titulo,
+              text: mensaje
+          }).then((result) => {
+              if (result.isConfirmed || result.isDenied) {
+                  Swal.close();
+              }
           });
-      },
-      hiddenInput: "full_phone",
-      formatOnDisplay: false,
-      separateDialCode: true,
-      utilsScript: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/32471/utils.js",
-  });
+      }
 
-  iti.promise.then(function() {
-      var fullNumber = iti.getSelectedCountryData().dialCode;
-      document.getElementById("code").value = fullNumber;
+      function cambiarvendedor(k) {
+          var original = document.getElementById("venoriginal" + k);
+          var vendedor = document.getElementById("idvendedor" + k);
 
-      var selectedCountry = iti.getSelectedCountryData().iso2;
-      document.getElementById("pais").value = selectedCountry;
-  });
+          Swal.fire({
+              title: 'Atención?',
+              text: "¿Estás seguro de cambiar el vendedor de este lead?",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'De acuerdo',
+              cancelButtonText: 'Cancelar'
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  $.ajax({
+                          url: "query/cambiarvendedor.php",
+                          method: "POST",
+                          data: {
+                              "id": k,
+                              "vendedor": vendedor.value
+                          },
+                      })
+                      .done(function(data) {
+                          if (data == 0) {
+                              Toast.fire({
+                                  icon: 'success',
+                                  title: 'Lead actualizado correctamente'
+                              })
+                              original.value = vendedor.value;
+                          } else if (data == 2) {
+                              Swal.fire({
+                                  title: 'Atención',
+                                  text: 'El lead a editar ya tiene un tablero abierto. No es posible hacer cambios al registro.',
+                                  icon: 'error',
+                              }).then((result) => {
+                                  if (result.isConfirmed) {
+                                      // El usuario hizo clic en el botón de confirmación
+                                      window.location.href = "?modulo=prospectos&accion=show&id=" +
+                                          <?php echo $_GET['id']; ?>;
+                                  } else {
+                                      // El usuario cerró la alerta sin hacer clic en el botón de confirmación
+                                      window.location.href = "?modulo=prospectos&accion=show&id=" +
+                                          <?php echo $_GET['id']; ?>;
+                                  }
+                              });
 
-  input.addEventListener("input", function() {
-      updateCodeValue();
-  });
+                          } else {
+                              //Oucrrió un error al actualizar el lead
+                              Toast.fire({
+                                  icon: 'error',
+                                  title: 'Oucrrió un error al actualizar el lead'
+                              })
+                              vendedor.value = original.value;
+                          }
+                      })
+              } else {
+                  vendedor.value = original.value;
+              }
+          })
 
-  // Función para asignar el valor de la lada al input con id "code"
-  function updateCodeValue() {
-      var fullNumber = iti.getSelectedCountryData().dialCode;
-      document.getElementById("code").value = fullNumber;
+      }
 
-      var selectedCountry = iti.getSelectedCountryData().iso2;
-      document.getElementById("pais").value = selectedCountry;
-  }
 
-  // Agrega un manejador de eventos al documento (o al elemento contenedor)
-  document.addEventListener("click", function(event) {
-      updateCodeValue()
-  });
-  //Fin de la funciones de la lada
-  </script>
-  <?php
+      // Agregar un evento que se ejecutará cuando el DOM esté listo
+      document.addEventListener("DOMContentLoaded", function() {
+          // Obtener el elemento del modal con el ID "newtablero"
+          const modalNewTablero = document.getElementById("newtablero");
+          // Comprobar si el elemento del modal existe en el DOM
+          if (modalNewTablero) {
+              // Si el modal existe, agregar un evento que se ejecutará cuando se oculte el modal
+              modalNewTablero.addEventListener("hidden.bs.modal", function() {
+                  // Obtener el botón con el ID "nuevo"
+                  const botonNuevo = document.getElementById("nuevo");
+                  // Remover los atributos "data-bs-target" y "data-bs-toggle" del botón "nuevo"
+                  botonNuevo.removeAttribute("data-bs-target");
+                  botonNuevo.removeAttribute("data-bs-toggle");
+              });
+          }
+      });
+
+      function finalizar(id) {
+          $.ajax({
+                  url: "query/buscarprospectos.php",
+                  method: "POST",
+                  data: {
+                      "lead": "<?php echo $_GET["id"]; ?>"
+                  },
+              })
+              .done(function(data) {
+                  if (data > 0) {
+                      Swal.fire({
+                          title: "Atención",
+                          html: "¿Que acción deseas realiza con los prospectos capturados antes de finalizar la hoja?",
+                          icon: "question",
+                          showCancelButton: true,
+                          confirmButtonColor: "#3085d6",
+                          cancelButtonColor: "#d33",
+                          confirmButtonText: "Finalizar y asignar",
+                          cancelButtonText: "Cancelar",
+                          showDenyButton: true,
+                          denyButtonColor: "teal",
+                          denyButtonText: "Finalizar y NO asignar",
+                          allowOutsideClick: false,
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              //Finalizó y asignó
+                              window.location.href = "?modulo=prospectos&accion=finalizaryasignar&id=" + id;
+                          } else if (result.isDenied) {
+                              //Finalizó y NO asignó
+                              window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
+                          }
+                      });
+                  } else {
+                      Swal.fire({
+                          icon: "question",
+                          title: "Atención",
+                          html: "¿Está seguro de finalizar la hoja del día?<br>Esta opción es irreversible.",
+                          showCloseButton: true, // Muestra el botón de cerrar (x) en el SweetAlert
+                          showCancelButton: true, // Muestra el botón de cancelar
+                          focusConfirm: false, // Evita que el botón "Confirmar" obtenga el foco
+                          confirmButtonText: "Confirmar", // Texto para el botón "Confirmar"
+                          confirmButtonColor: "#3085d6", // Color del botón "Confirmar"
+                          cancelButtonText: "Cancelar", // Texto para el botón "Cancelar"
+                          cancelButtonColor: "#d33", // Color del botón "Cancelar"
+                          allowOutsideClick: false
+                      }).then((result) => {
+                          if (result.isConfirmed) {
+                              window.location.href = "?modulo=prospectos&accion=finalizar&id=" + id;
+                          }
+
+                      });
+                  }
+              })
+      }
+
+      //Inicio de las funciones de la lada
+      let input = document.querySelector("#telefono");
+      let iti = window.intlTelInput(input, {
+          initialCountry: "auto",
+          geoIpLookup: function(callback) {
+              //console.log(callback);
+              $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+                  const countryCode = (resp && resp.country) ? resp.country : "us";
+                  callback(countryCode);
+              });
+          },
+          hiddenInput: "full_phone",
+          formatOnDisplay: false,
+          separateDialCode: true,
+          utilsScript: "https://s3-us-west-2.amazonaws.com/s.cdpn.io/32471/utils.js",
+      });
+
+      iti.promise.then(function() {
+          var fullNumber = iti.getSelectedCountryData().dialCode;
+          document.getElementById("code").value = fullNumber;
+
+          var selectedCountry = iti.getSelectedCountryData().iso2;
+          document.getElementById("pais").value = selectedCountry;
+      });
+
+      input.addEventListener("input", function() {
+          updateCodeValue();
+      });
+
+      // Función para asignar el valor de la lada al input con id "code"
+      function updateCodeValue() {
+          var fullNumber = iti.getSelectedCountryData().dialCode;
+          document.getElementById("code").value = fullNumber;
+
+          var selectedCountry = iti.getSelectedCountryData().iso2;
+          document.getElementById("pais").value = selectedCountry;
+      }
+
+      // Agrega un manejador de eventos al documento (o al elemento contenedor)
+      document.addEventListener("click", function(event) {
+          updateCodeValue()
+      });
+      //Fin de la funciones de la lada
+      </script>
+      <?php
 }
   }
   ?>

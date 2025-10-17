@@ -69,7 +69,7 @@ if($mcotiza->id){
   if($mcotiza->diva == 0) $diva = '  ';
   else $diva='checked';
 
-  if($mcotiza->retencion == 0) $dret = '  ';
+  if($mcotiza->dretencion == 0) $dret = '  ';
   else $dret='checked';
 
   if($mcotiza->mtotal == 0) {
@@ -176,7 +176,7 @@ echo'
         <div class="mb-5">
           <label for"fini">Retención</label>
           <div class="">
-            <input type="checkbox" id="retencion" name="retencion" '.$dret.' '.$disabledret.' '.$style.' class="flipswitch2"/>
+            <input type="checkbox" id="dretencion" name="dretencion" '.$dret.' '.$disabledret.' '.$style.' class="flipswitch2"/>
           </div>  
         </div>
       </div>';
@@ -185,7 +185,7 @@ echo'
         <div class="mb-5">
           <label for"correo">Responsable</label>
           <select class="form-control" searchable="Responsable del tablero" name="responsable" '.$read.' '.$sel.'>';
-            $sqlu = 'SELECT u_nuser,u_id,u_nmb FROM usuarios WHERE u_estatus = "A" AND u_nuser != "1"';
+            $sqlu = 'SELECT u_nuser,u_id,u_nmb FROM usuarios WHERE u_estatus = "A" AND u_nuser != "1" AND u_puesto != "CHOFER"';
             $resultu = setq($sqlu);
             while($rowu = $resultu->fetch_array()){
               if($row['u_nuser'] != "1"){

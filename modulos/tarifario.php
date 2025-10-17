@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
 
 /* ===========================
    CONTROLADOR
@@ -30,6 +30,8 @@ class tarifario
   {
     $this->model->setdata(
       '', 
+      $_POST['precio'],
+      $_POST['tipo_combustible'],
       $_POST['unidad'], 
       $_POST['km'], 
       $_POST['rendimiento'], 
@@ -49,6 +51,8 @@ class tarifario
     $id = intval($_POST['id']);
     $this->model->setdata(
       $id, 
+      $_POST['precio'],
+      $_POST['tipo_combustible'],
       $_POST['unidad'], 
       $_POST['km'], 
       $_POST['rendimiento'], 
@@ -86,72 +90,81 @@ class tarifario
 class modeltarifario
 {
   // Entradas para INSERT/UPDATE
-  function setdata($id, $unidad, $km, $rend, $cap, $casetas, $var_desgaste, $ugenera, $falta, $estatus)
+  function setdata($id, $precio, $tipocombustible, $unidad, $km, $rend, $cap, $casetas, $var_desgaste, $ugenera, $falta, $estatus)
   {
-    $this->tc_id               = $id;
-    $this->tc_unidad           = trim($unidad);
-    //$this->tc_km               = floatval($km);
-    $this->tc_km               = floatval('1');
-    $this->tc_rendimiento      = floatval($rend);
-    $this->tc_capacidad_tanque = floatval($cap);
-    $this->tc_casetas          = floatval($casetas);
-    $this->tc_var_desgaste     = floatval($var_desgaste);
-    $this->tc_estatus          = $estatus;
-    $this->tc_ugenera          = $ugenera;
-    $this->tc_falta            = $falta;
-  }
+    $this->tc_id                 = (int)$id;
+    $this->tc_preciocombustible  = (float)$precio;
+    $this->tc_tipocombustible    = trim($tipocombustible);   // <— CONSISTENTE
+    $this->tc_unidad             = trim($unidad);
+    // Si decides fijar KM=1, déjalo así; si no, usa floatval($km)
+    $this->tc_km                 = 1.0;
+    $this->tc_rendimiento        = (float)$rend;
+    $this->tc_capacidad_tanque   = (float)$cap;
+    $this->tc_casetas            = (float)$casetas;
+    $this->tc_var_desgaste       = (float)$var_desgaste;
+    $this->tc_estatus            = $estatus;
+    $this->tc_ugenera            = $ugenera;
+    $this->tc_falta              = $falta;
+  } // <— ESTE } FALTABA
 
   function insert()
   {
     $sql = 'INSERT INTO tarifario_costos SET
-      tc_unidad = "'.addslashes($this->tc_unidad).'",
-      tc_km = "'.$this->tc_km.'",
-      tc_rendimiento = "'.$this->tc_rendimiento.'",
-      tc_capacidad_tanque = "'.$this->tc_capacidad_tanque.'",
-      tc_casetas = "'.$this->tc_casetas.'",
-      tc_var_desgaste = "'.$this->tc_var_desgaste.'",
-      tc_estatus = "'.$this->tc_estatus.'",
-      tc_ugenera = "'.addslashes($this->tc_ugenera).'",
-      tc_falta = "'.$this->tc_falta.'"';
-
+      tc_preciocombustible = "'.$this->tc_preciocombustible.'",
+      tc_tipocombustible   = "'.addslashes($this->tc_tipocombustible).'",
+      tc_unidad            = "'.addslashes($this->tc_unidad).'",
+      tc_km                = "'.$this->tc_km.'",
+      tc_rendimiento       = "'.$this->tc_rendimiento.'",
+      tc_capacidad_tanque  = "'.$this->tc_capacidad_tanque.'",
+      tc_casetas           = "'.$this->tc_casetas.'",
+      tc_var_desgaste      = "'.$this->tc_var_desgaste.'",
+      tc_estatus           = "'.$this->tc_estatus.'",
+      tc_ugenera           = "'.addslashes($this->tc_ugenera).'",
+      tc_falta             = "'.$this->tc_falta.'"';
     setq($sql);
   }
 
   function update($id)
   {
+    $id = (int)$id;
     $sql = 'UPDATE tarifario_costos SET
-      tc_unidad = "'.addslashes($this->tc_unidad).'",
-      tc_km = "'.$this->tc_km.'",
-      tc_rendimiento = "'.$this->tc_rendimiento.'",
-      tc_capacidad_tanque = "'.$this->tc_capacidad_tanque.'",
-      tc_casetas = "'.$this->tc_casetas.'",
-      tc_var_desgaste = "'.$this->tc_var_desgaste.'",
-      tc_umod = "'.addslashes($_SESSION['uid']).'",
-      tc_fmod = "'.date('Y-m-d H:i:s').'"
+      tc_preciocombustible = "'.$this->tc_preciocombustible.'",
+      tc_tipocombustible   = "'.addslashes($this->tc_tipocombustible).'",
+      tc_unidad            = "'.addslashes($this->tc_unidad).'",
+      tc_km                = "'.$this->tc_km.'",
+      tc_rendimiento       = "'.$this->tc_rendimiento.'",
+      tc_capacidad_tanque  = "'.$this->tc_capacidad_tanque.'",
+      tc_casetas           = "'.$this->tc_casetas.'",
+      tc_var_desgaste      = "'.$this->tc_var_desgaste.'",
+      tc_umod              = "'.addslashes($_SESSION['uid']).'",
+      tc_fmod              = "'.date('Y-m-d H:i:s').'"
       WHERE tc_id = "'.$id.'"';
     setq($sql);
   }
 
   function softdelete($id)
   {
-    $sql = 'UPDATE tarifario_costos SET tc_estatus="B", tc_umod="'.addslashes($_SESSION['uid']).'", tc_fmod="'.date('Y-m-d H:i:s').'" WHERE tc_id="'.$id.'"';
+    $id = (int)$id;
+    $sql = 'UPDATE tarifario_costos
+            SET tc_estatus="B", tc_umod="'.addslashes($_SESSION['uid']).'", tc_fmod="'.date('Y-m-d H:i:s').'"
+            WHERE tc_id="'.$id.'"';
     setq($sql);
   }
 
   function getActiveFuelPrice()
   {
-    $sql = 'SELECT cc_precio FROM config_combustible WHERE cc_activo="S" ORDER BY cc_vigente_desde DESC, cc_id DESC LIMIT 1';
+    $sql = 'SELECT cc_precio FROM config_combustible WHERE cc_activo="S"
+            ORDER BY cc_vigente_desde DESC, cc_id DESC LIMIT 1';
     $r = setq($sql);
-    if ($r && $row = $r->fetch_array()) return floatval($row[0]);
+    if ($r && $row = $r->fetch_array()) return (float)$row[0];
     return 0.0;
   }
 
   function setActiveFuelPrice($precio, $usuario)
   {
-    // Desactiva anteriores y crea registro activo
     setq('UPDATE config_combustible SET cc_activo="N" WHERE cc_activo="S"');
     $sql = 'INSERT INTO config_combustible SET
-      cc_precio = "'.$precio.'",
+      cc_precio = "'.(float)$precio.'",
       cc_vigente_desde = "'.date('Y-m-d').'",
       cc_activo = "S",
       cc_ugenera = "'.addslashes($usuario).'",
@@ -159,18 +172,21 @@ class modeltarifario
     setq($sql);
   }
 
-  function getAllRows() {
-    // Usa la vista para traer campos derivados ya calculados
+  function getAllRows()
+  {
     $sql = 'SELECT * FROM v_tarifario_costos WHERE tc_estatus="A" ORDER BY tc_id DESC';
     return setq($sql);
   }
 
-  function getOne($id) {
+  function getOne($id)
+  {
+    $id = (int)$id;
     $sql = 'SELECT * FROM tarifario_costos WHERE tc_id = "'.$id.'"';
     $r = setq($sql);
     return $r ? $r->fetch_assoc() : null;
   }
 }
+
 
 
 /* ===========================
@@ -210,88 +226,74 @@ class viewtarifario
   toolbar('tarifario', '', $accionPrecio, $nuevo, '');
 
   // Tabla (DataTable AJAX) —> sustituye tu tabla anterior por esto
-  echo '<div class="card mt-2"><div class="card-body">';
-  echo '<div class="table-responsive">';
-  echo '<table id="tarifarioDT" class="table table-hover table-striped" style="width:100%">';
-  echo '<thead class="bg-primary text-white">
-          <tr>
-            <th>UNIDAD</th>
-            <th>KM</th>
-            <th>REND.</th>
-            <th>PRECIO</th>
-            <th>CAP. TANQUE</th>
-            <th>TANQUES</th>
-            <th>COMBUSTIBLE</th>
-            <th>CASETAS</th>
-            <th>VAR. DESGASTE</th>
-            <th>DESGASTE</th>
-            <th>OPERADOR</th>
-            <th>TOTAL COSTO DVL</th>
-            <th>VENTA DVL</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>';
-  echo '</div></div></div>';
-  ?>
-  <script>
-  (function(){
-    // formateadores
-    const fmtNum2 = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fmtNum3 = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
-    const fmtCur  = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
+// Tabla (DataTable AJAX)
+echo '<div class="card mt-2"><div class="card-body">';
+echo '<div class="table-responsive">';
+echo '<table id="tarifarioDT" class="table table-hover table-striped" style="width:100%">';
+echo '<thead class="bg-primary text-white">
+        <tr>
+          <th>NOMBRE DE LA UNIDAD</th>
+          <th>REND. (km/l)</th>
+          <th>CAP. TANQUES (l)</th>
+          <th>VAR. DESGASTE</th>
+          <th>TIPO COMBUSTIBLE</th>
+          <th>COSTO COMBUSTIBLE</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>';
+echo '</div></div></div>';
+?>
+<script>
+(function(){
+  const fmtNum4 = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  const fmtNum6 = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  const fmtCur  = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 });
 
-    $('#tarifarioDT').DataTable({
-      processing: true,
-      serverSide: true,
-      ordering: true,
-      searching: true,
-      paging: true,
-      pageLength: 50,
-      ajax: {
-        url: 'query/datatabletarifario.php',
-        type: 'POST',
-        dataSrc: 'data'
-      },
-      language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
-      columns: [
-        { data: 'unidad' },
-        { data: 'km',               render: d => fmtNum2.format(d) },                                // 2 dec
-        { data: 'rendimiento',      render: d => new Intl.NumberFormat('es-MX',{minimumFractionDigits:4,maximumFractionDigits:4}).format(d) },
-        { data: 'precio',           render: d => fmtCur.format(d) },
-        { data: 'capacidad_tanque', render: d => new Intl.NumberFormat('es-MX',{minimumFractionDigits:3,maximumFractionDigits:3}).format(d) },
-        { data: 'tanques',          render: d => new Intl.NumberFormat('es-MX',{minimumFractionDigits:4,maximumFractionDigits:4}).format(d) },
-        { data: 'combustible',      render: d => fmtCur.format(d) },
-        { data: 'casetas',          render: d => fmtCur.format(d) },
-        { data: 'var_desgaste',     render: d => fmtNum3.format(d) },                                // 6 dec
-        { data: 'desgaste',         render: d => fmtCur.format(d) },
-        { data: 'operador',         render: d => fmtCur.format(d) },
-        { data: 'total',            render: d => '<b>'+fmtCur.format(d)+'</b>' },
-        { data: 'venta',            render: d => '<b>'+fmtCur.format(d)+'</b>' },
-        { data: 'acciones',         orderable: false, searchable: false }
-      ],
-      // Orden inicial (por TOTAL desc)
-      order: [[11, 'desc']],
-      responsive: true
-    });
-  })();
-  </script>
-  <?php
+  $('#tarifarioDT').DataTable({
+    processing: true,
+    serverSide: true,
+    ordering: true,
+    searching: true,
+    paging: true,
+    pageLength: 50,
+    ajax: {
+      url: 'query/datatabletarifario.php',
+      type: 'POST',
+      dataSrc: 'data'
+    },
+    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+    columns: [
+      { data: 'nombre' },                                               // NOMBRE
+      { data: 'rendimiento',      render: d => fmtNum4.format(d) },     // RENDIMIENTO
+      { data: 'capacidad_tanque', render: d => fmtNum4.format(d) },     // CAP. TANQUES
+      { data: 'var_desgaste',     render: d => fmtNum6.format(d) },     // VARIABLE DE DESGASTE
+      { data: 'tipo_combustible' },                                     // TIPO COMBUSTIBLE
+      { data: 'costo_combustible',render: d => fmtCur.format(d) },      // COSTO COMBUSTIBLE
+      { data: 'acciones',         orderable: false, searchable: false } // Acciones
+    ],
+    order: [[0, 'asc']], // Orden por NOMBRE
+    responsive: true
+  });
+})();
+</script>
+<?php
+
 }
 
   function show()
   {
-    $precio = $this->model->getActiveFuelPrice();
+    //$precio = $this->model->getActiveFuelPrice();
+    $precio = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_preciocombustible');
     $isEdit = isset($_GET['id']) && intval($_GET['id']) > 0;
-    $data = $isEdit ? $this->model->getOne(intval($_GET['id'])) : null;
 
-    $unidad  = $data ? $data['tc_unidad']            : '';
-    $km      = $data ? $data['tc_km']                : '0';
-    $rend    = $data ? $data['tc_rendimiento']       : '0';
-    $cap     = $data ? $data['tc_capacidad_tanque']  : '0';
-    $casetas = $data ? $data['tc_casetas']           : '0';
-    $varDes  = $data ? $data['tc_var_desgaste']      : '0';
+    $unidad  = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_unidad');
+    $km      = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_km');
+    $rend    = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_rendimiento');
+    $cap     = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_capacidad_tanque');
+    $casetas = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_casetas');
+    $varDes  = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_var_desgaste');
 
     $action = $isEdit ? '?modulo=tarifario&accion=update' : '?modulo=tarifario&accion=insert';
 
@@ -304,44 +306,57 @@ class viewtarifario
     echo '
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">UNIDAD</label>
+        <label class="form-label">NOMBRE DE LA UNIDAD</label>
         <input type="text" name="unidad" class="form-control" value="'.htmlspecialchars($unidad).'" required>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-md-3" hidden>
         <label class="form-label">KM</label>
         <input type="number" step="0.01" min="1" name="km" id="km" class="form-control" disabled value="1" required>
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">RENDIMIENTO (km/l)</label>
+        <label class="form-label">RENDIMIENTO</label>
         <input type="number" step="0.0001" min="0" name="rendimiento" id="rend" class="form-control" value="'.htmlspecialchars($rend).'" required>
       </div>
 
       <div class="col-md-3">
-        <label class="form-label">CAPACIDAD TANQUE (l)</label>
+        <label class="form-label">CAPACIDAD TANQUE</label>
         <input type="number" step="0.001" min="0" name="capacidad_tanque" id="cap" class="form-control" value="'.htmlspecialchars($cap).'" required>
       </div>
 
-      <div class="col-md-3">
+      <div class="col-md-3" hidden>
         <label class="form-label">CASETAS ($)</label>
         <input type="number" step="0.01" min="0" name="casetas" id="casetas" class="form-control" value="'.htmlspecialchars($casetas).'" required>
+      </div>
+
+      <div class="col-md-3">
+      <label class="form-label">TIPO DE COMBUSTIBLE</label>
+      <select id="tipo_combustible" name="tipo_combustible" class="form-control">';
+          $tipoActual = busca($_GET['id'], 'tarifario_costos', 'tc_id', 'tc_tipocombustible');
+          $opciones = ['DIESEL', 'GASOLINA'];
+
+          foreach ($opciones as $opcion) {
+            $selected = ($tipoActual == $opcion) ? 'selected' : '';
+            echo '<option value="'.$opcion.'" '.$selected.'>'.$opcion.'</option>';
+          }
+echo '
+    </select>
+    </div>
+      <div class="col-md-3">
+        <label class="form-label">PRECIO COMBUSTIBLE</label>
+        <input type="number" step="0.0001" min="0" id="precio" name="precio" class="form-control" value="'.number_format($precio,4,'.','').'">
       </div>
 
       <div class="col-md-3">
         <label class="form-label">VARIABLE DE DESGASTE</label>
         <input type="number" step="0.000001" min="0" name="var_desgaste" id="var" class="form-control" value="'.htmlspecialchars($varDes).'" required>
       </div>
-
-      <div class="col-md-3">
-        <label class="form-label">PRECIO COMBUSTIBLE (global)</label>
-        <input type="number" step="0.0001" min="0" id="precio" class="form-control" value="'.number_format($precio,4,'.','').'" readonly>
-      </div>
     </div>
 
     <hr/>
 
-    <div class="row g-3">
+    <div class="row g-3" hidden>
       <div class="col-md-2">
         <label class="form-label">TANQUES</label>
         <input type="text" id="tanques" class="form-control" readonly>

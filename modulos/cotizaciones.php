@@ -1,5 +1,5 @@
 <?php
-  //ini_set('display_errors', 1);
+  ini_set('display_errors', 0);
   class cotizaciones{
     function __construct(){
       $this->model = new modelcotizaciones($obj);
@@ -10,18 +10,12 @@
       if (!isset($_REQUEST['cliente'])) $_REQUEST['cliente'] = NULL;
       if (!isset($_REQUEST['estatus'])) $_REQUEST['estatus'] = NULL;
 
-      /* $grupo = busca($_SESSION['uid'],'usuarios','u_id','u_grupo');
-      if(!isset($_REQUEST['vendedor'])){ 
-        if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = NULL;
-        else $vendedor = $_SESSION['uid'];
-      }else {
-        if($grupo == "ADMIN" || $grupo == "GERENCIA" || $grupo == "FINANZAS") $vendedor = $_REQUEST['vendedor'];
-        else $vendedor = $_SESSION['uid'];
-      } */
+      /* $grupo = busca($_SESSION['uid'],'usuarios','u_id','u_grupo');*/
+      if (!isset($_REQUEST['vendedor'])) $_REQUEST['vendedor'] = $_SESSION['uid'];
 
-      $this->model->result($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus']);
+      $this->model->result($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus'],$_REQUEST['vendedor']);
       $this->view = new viewcotizaciones($this->model);
-      $this->view->browse($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus']);
+      $this->view->browse($_REQUEST['fini'],$_REQUEST['ffin'],$_REQUEST['cliente'],$_REQUEST['estatus'],$_REQUEST['vendedor']);
     } 
     function show(){
       include('tableros.php');
@@ -120,7 +114,9 @@
         }
       }
 
-      $this->model->SetData(NULL,$cl,$foliocot,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"N","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail, $direccion,$_POST['observadir'],$uuid,$_POST['almacen'], $envio, $retencion);
+      $unidadmedida = $_POST['unidad_medida'];
+
+      $this->model->SetData(NULL,$cl,$foliocot,$unidadmedida,$_POST['dretencion'],$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"N","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail, $direccion,$_POST['observadir'],$uuid,$_POST['almacen'], $envio, $retencion);
       $this->model->insertcotiza();
 
       $sql = 'INSERT INTO crm_cotizaciones_historial SET cch_cotizacion = "'.$this->model->idc.'", cch_fecha = "'.date('Y-m-d H:i:s').'", cch_user = "'.$_SESSION['uid'].'", cch_descripcion = "CREACIÓN DE LA COTIZACIÓN"';
@@ -272,8 +268,9 @@
           die();
         }
       }
+      $unidadmedida = $_POST['unidad_medida'];
 
-      $this->model->SetData($_GET['idcotiza'],$cl,NULL,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio, $retencion, $_POST['moneda'], $_POST['preciodolares']);
+      $this->model->SetData($_GET['idcotiza'],$cl,NULL,$unidadmedida,$_POST['dretencion'],$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,$_POST['estatus'],"0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'], $_POST['impdescuento'] ,$nmbagente,$puestoagente,$copiamail,$direccion,$_POST['observadir'],NULL,$_POST['almacen'], $envio,$retencion, $_POST['moneda'], $_POST['preciodolares']);
       $this->model->updatecotiza();
 
       $this->model->calculaimporte($_GET['idcotiza']);
@@ -550,7 +547,9 @@
       //$this->model->updatecotiza();
       //$this->model->calculaimporte($_GET['idcotiza']);
 
-      $this->model->SetData($_GET['idcotiza'],$_GET['tablero'],$this->model->folio,$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"A","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail,$this->model->direnvio,$this->model->observadir,NULL,$_POST['almacen'], "0");
+      $unidadmedida = $_POST['unidad_medida'];
+
+      $this->model->SetData($_GET['idcotiza'],$_GET['tablero'],$this->model->folio, $unidadmedida, $_POST['dretencion'],$_POST['nmbac'],$_POST['ffin'],$_POST['descripcion'],$iva,$total,"A","0",$_POST['destino'],$_POST['telefono'],$_POST['correo'],$_POST['responsable'],$_POST['descuento'],$_POST['montodescuento'],$nmbagente,$puestoagente,$copiamail,$this->model->direnvio,$this->model->observadir,NULL,$_POST['almacen'], "0");
       $this->model->finalcotiza($_POST['mensaje']); 
       //$this->model->sendmailcotiza($_GET['idcotiza']);
 
@@ -702,7 +701,9 @@
         if($_POST['tablero']){
           $this->model->tablero = $_POST['tablero'];
         }else{
-          $table->setdata(NULL,$_POST['nmbt'],$folio,$cliente,$this->model->responsable,$fini[0],$fini[1],1,date('Y-m-d',strtotime($fini[0].' +15 days')),1,"R", "0");
+          $unidadmedida = $_POST['unidad_medida'];
+
+          $table->setdata(NULL,$_POST['nmbt'],$folio,$unidadmedida,$_POST['dretencion'],$cliente,$this->model->responsable,$fini[0],$fini[1],1,date('Y-m-d',strtotime($fini[0].' +15 days')),1,"R", "0");
           $table->insert();
           $this->model->tablero = $table->idt;
         }
@@ -850,8 +851,10 @@
           $descuento = $this->model->descuento;
         }
 
+        $unidadmedida = $_POST['unidad_medida'];
+
         $this->model->cliente = busca($this->model->tablero,'crm_tableros','ct_id','ct_cliente');
-        $remis->setdata(NULL,$this->model->tablero,$folioint,$this->model->cliente,$this->model->almacen,$descuento,$this->model->nmb,$this->model->maildestino,$this->model->responsable,date('Y-m-d H:i:s', strtotime('+ 10 days')),$this->model->diva, $this->model->precioenvio);
+        $remis->setdata(NULL,$this->model->tablero,$folioint,$unidadmedida,$_POST['dretencion'],$this->model->cliente,$this->model->almacen,$descuento,$this->model->nmb,$this->model->maildestino,$this->model->responsable,date('Y-m-d H:i:s', strtotime('+ 10 days')),$this->model->diva, $this->model->precioenvio);
         $remis->insert();
 
         $sqlcd = 'SELECT * FROM crm_cotizacionesd WHERE cdm_cotizacion = "'.$this->model->id.'" ORDER BY cdm_id';
@@ -1498,7 +1501,9 @@
       if(isset($_POST['total'])) $total="1";
       else $total= "0";
 
-      $remis->setdata(NULL,$this->model->tablero,$folioint,$this->model->cliente,$_POST['almacen'],$this->model->descuento,$this->model->nmb,$_POST['correo'],$_POST['responsable'],$_POST['ffin'],$diva, "0");
+      $unidadmedida = $_POST['unidad_medida'];
+
+      $remis->setdata(NULL,$this->model->tablero,$folioint,$unidadmedida,$_POST['dretencion'],$this->model->cliente,$_POST['almacen'],$this->model->descuento,$this->model->nmb,$_POST['correo'],$_POST['responsable'],$_POST['ffin'],$diva, "0");
       $remis->insert();
       
       $sqlcd = 'SELECT * FROM crm_cotizacionesd WHERE cdm_cotizacion = "'.$this->model->id.'" ORDER BY cdm_id';
@@ -1630,6 +1635,12 @@
         }
       } */
 
+        if(!isset($_POST['chf_especial'])){
+          $especial = 0;
+        } else {
+          $especial = $_POST['chf_especial'];
+        }
+
       $sqlupd = 'UPDATE crm_cotizaciones SET cc_tarifario = "'.$_POST['chf_tarifario'].'",
                                               cc_tanques = "'.$_POST['chf_tanques'].'",
                                               cc_combustible = "'.$_POST['chf_combustible'].'",
@@ -1642,9 +1653,11 @@
                                               cc_subtotal ="'.$_POST['chf_costo_total'].'",
                                               cc_km = "'.$_POST['chf_km'].'",
                                               cc_tipokm = "'.$_POST['km_mode'].'",
+                                              cc_retencion = "'.$_POST['chf_retencion'].'",
+                                              cc_iva = "'.$_POST['chf_iva'].'",
+                                              cc_especial = "'.$especial.'",
                                               cc_mtotal = "'.$_POST['chf_costo_venta'].'" WHERE cc_id = "'.$cotiza.'"
-                                              ';
-      
+                                              ';      
       setq($sqlupd);                                        
 
       redirect("?modulo=cotizaciones&accion=show&id=".$cotiza);
@@ -1659,7 +1672,8 @@
                                               cc_largo = "'.$_POST['largo'].'",
                                               cc_ancho = "'.$_POST['ancho'].'",
                                               cc_alto = "'.$_POST['alto'].'",
-                                              cc_descmercancia = "'.$_POST['descripcion'].'"
+                                              cc_descmercancia = "'.$_POST['descripcion'].'",
+                                              cc_unidad_medida = "'.$_POST['unidad_medida'].'"
                                                WHERE cc_id = "'.$cotiza.'"';
       
       setq($sqlupd);                                        
@@ -1747,7 +1761,7 @@
   }
 
   class modelcotizaciones{
-    function result($fini, $ffin, $proveedor, $estatus) {
+    function result($fini, $ffin, $proveedor, $estatus, $vendedor) {
     $bloque = 50;
     $prov = clearvmayus($proveedor);
     $sqlf = '';
@@ -1774,6 +1788,9 @@
                  )';
     }
 
+    if ($vendedor) {
+      $sql .= ' AND cc_agente = "'.$vendedor.'"';
+    }
     // Filtro por estatus
     if ($estatus) {
         if ($estatus == "A") {
@@ -1834,6 +1851,7 @@
       $this->moneda = $row['cc_moneda'];
       $this->preciodolares = $row['cc_preciodolares'];
       $this->retencion = $row['cc_retencion'];
+      $this->dretencion = $row['cc_dretencion'];
       $this->unidadmercancia= $row['cc_unidades'];
       $this->pesomercancia = $row['cc_peso'];
       $this->largomercancia = $row['cc_largo'];
@@ -1842,8 +1860,16 @@
       $this->descmercancia = $row['cc_descmercancia'];
       $this->tipokm = $row['cc_tipokm'];
       $this->dirdestino = $row['cc_dirdestino'];
+      $this->unidadmedida = $row['cc_unidad_medida'];
+      $this->especial = $row['cc_especial'];
     }
-    function SetData($id,$cliente,$foliocot,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$retencion, $moneda = 'MXN', $preciodolares = '1',$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
+    function SetData($id,$cliente,$foliocot,$unidadmedida,$dretencion,$nmbac,$ffin,$descripcion,$diva,$total,$estatus,$probabilidad,$destino,$telefono,$correo,$responsable,$descuento,$montodescuento,$nmbagente,$puestoagente,$copiamail,$direnvio,$observadir,$uuid,$almacen,$envio,$retencion, $moneda = 'MXN', $preciodolares = '1',$tablaprod=NULL,$firma=NULL,$cuentas=NULL,$msi=NULL){
+      if($dretencion == ""){
+        $dretencion = "0";
+      } else {
+        $dretencion = "1";
+      }
+
       $this->id = clearvmayus($id);
       $this->cliente = clearvmayus($cliente);
       $this->foliocot = clearvmayus($foliocot);
@@ -1873,8 +1899,10 @@
       $this->almacen = $almacen;
       $this->envio = $envio; 
       $this->retencion = $retencion; 
+      $this->dretencion = $dretencion;
       $this->moneda = $moneda; 
       $this->preciodolares = $preciodolares; 
+      $this->unidad_medida = $unidadmedida;
     }
 
     function insertcotiza(){
@@ -1897,6 +1925,7 @@
               cc_agente = "'.$this->responsable.'",
               cc_diva = "'.$this->diva.'",
               cc_retencion = "'.$this->retencion.'",
+              cc_dretencion = "'.$this->dretencion.'",
               cc_mtotal = "'.$this->mtotal.'",
               cc_descuento= "'.$this->descuento.'",
               cc_montodescuento= "'.$this->montodescuento.'",
@@ -1929,6 +1958,7 @@
               cc_agente = "'.$this->responsable.'",
               cc_diva = "'.$this->diva.'",
               cc_retencion = "'.$this->retencion.'",
+              cc_dretencion = "'.$this->dretencion.'",
               cc_mtotal = "'.$this->mtotal.'",
               cc_descuento = "'.$this->descuento.'",
               cc_montodescuento = "'.$this->montodescuento.'",
@@ -2713,7 +2743,7 @@
       </script>
       <?php
     }
-    function browse($fini,$ffin,$proveedor,$estatus) {
+    function browse($fini,$ffin,$proveedor,$estatus,$vendedor) {
 
       ?>
       <script language="JavaScript">
@@ -2806,15 +2836,15 @@
 
 
         $filtro = '
-          <form class="" role="form" method="post" action="?modulo=remisiones&accion=index" id="filtro">
+          <form class="" role="form" method="post" action="?modulo=cotizaciones&accion=index" id="filtro">
             <div class="mb-5">
               <label for="">Cliente</label>
               <input type="text" name="cliente" id="cliente" placeholder="Nombre del cliente" class="form-control" value="'.$proveedor.'" />
             </div>';
             $filtro .='<div class="mb-5">
                 <label for="tipom">Asesor</label>';
-            if($grupo == "GERENCIA" || $grupo == "ADMIN" || $grupo == "FINANZAS"){
-              $sqlvd = 'SELECT * FROM usuarios WHERE u_grupo = "GERENCIA" OR u_grupo = "VENTAS"';
+            //if($grupo == "GERENCIA" || $grupo == "ADMIN" || $grupo == "FINANZAS"){
+              $sqlvd = 'SELECT * FROM usuarios WHERE u_grupo != "CHOFER"';
               $resultvd = setq($sqlvd);
               $filtro .= '<select id="vendedor" name="vendedor" class="form-control">
               <option value="" selected>TODOS</option>';
@@ -2824,10 +2854,12 @@
                 $filtro.='<option value="'.$rowvd['u_id'].'" '.$sel.'>'.$rowvd['u_nmb'].' '.$rowvd['u_apellidos'].'</option>';
               }
               $filtro .= '</select>';
+              /*
             } else {
               $nmb = busca($_SESSION['uid'], 'usuarios', 'u_id', 'CONCAT(u_nmb, " ", u_apellidos)');
               $filtro .= '<input type="text" name="vendedor" id="vendedor" class="form-control" value="'.$nmb.'" readonly/>';
             }
+              */
             $filtro .= '</div>';
             $filtro .='<div class="mb-5">
               <label for="tipom">Desde</label>
@@ -2923,7 +2955,7 @@
                 } else{
                   $proveedor = 'Sin proveedor externo';
                 }
-                $lastm = $row['cc_nmbagente'];
+                $lastm = $row['cc_agente'];
                 $nmb = busca($row['cc_cliente'],'crm_clientes','c_id','c_nmb');
                 $apellidos = busca($row['cc_cliente'],'crm_clientes','c_id','c_apellidos');
                 $nmbcl = $nmb.' '.$apellidos;
@@ -3124,6 +3156,11 @@
 
       toolbar($_GET['modulo'].' - '.$this->model->folio,$izquierda);
 
+          echo '
+    	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    ';
       echo '<div class="modal fade text-xs-left" id="historial" tabindex="-1" role="dialog" aria-labelledby="myModalLabel33" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
           <div class="modal-content">
@@ -3335,9 +3372,18 @@ while($rsTf && $rowTf = $rsTf->fetch_assoc()){
 }
 
 if($this->model->estatus != "N") $readonly = "readonly";
+
+$especial = (float)$this->model->especial;
+
+//die("Especial: ".$this->model->especial);
+if($especial == 0){
+  $precioTotal = (float)$this->model->mtotal;
+} else {  
+  $precioTotal = $especial;
+}
 ?>
 <div class="card mt-6" style="text-align: right;">
-  <h1 class="mt-3 me-3">Total de la cotización: $<?php echo number_format($this->model->mtotal, 2); ?></h1>
+  <h1 class="mt-3 me-3">Total de la cotización: $<?php echo number_format($precioTotal, 2); ?></h1>
 </div>  
 <div class="card mt-3">
   <div class="card-header mt-10" >
@@ -3369,10 +3415,55 @@ if($this->model->estatus != "N") $readonly = "readonly";
       <label class="form-label">Volumen</label>
       <input type="number" id="volumendim" name="volumen" min="0" step="0.01" class="form-control" placeholder="Volumen total" value="" readonly>
     </div>
+    <div class="col-md-4">
+      <label class="form-label">Unidad de medida</label>
+      <select id="unidad_medida" name="unidad_medida" class="form-control" <?php echo $readonly; ?>>
+        <option value="">Seleccione una unidad</option>
+        <optgroup label="Longitud">
+          <option value="mm" <?php echo ($this->model->unidadmedida == 'mm') ? 'selected' : ''; ?>>Milímetros (mm)</option>
+          <option value="cm" <?php echo ($this->model->unidadmedida == 'cm') ? 'selected' : ''; ?>>Centímetros (cm)</option>
+          <option value="m" <?php echo ($this->model->unidadmedida == 'm') ? 'selected' : ''; ?>>Metros (m)</option>
+          <option value="km" <?php echo ($this->model->unidadmedida == 'km') ? 'selected' : ''; ?>>Kilómetros (km)</option>
+          <option value="in" <?php echo ($this->model->unidadmedida == 'in') ? 'selected' : ''; ?>>Pulgadas (in)</option>
+          <option value="ft" <?php echo ($this->model->unidadmedida == 'ft') ? 'selected' : ''; ?>>Pies (ft)</option>
+          <option value="yd" <?php echo ($this->model->unidadmedida == 'yd') ? 'selected' : ''; ?>>Yardas (yd)</option>
+        </optgroup>
+        <optgroup label="Peso / Masa">
+          <option value="mg" <?php echo ($this->model->unidadmedida == 'mg') ? 'selected' : ''; ?>>Miligramos (mg)</option>
+          <option value="g" <?php echo ($this->model->unidadmedida == 'g') ? 'selected' : ''; ?>>Gramos (g)</option>
+          <option value="kg" <?php echo ($this->model->unidadmedida == 'kg') ? 'selected' : ''; ?>>Kilogramos (kg)</option>
+          <option value="t" <?php echo ($this->model->unidadmedida == 't') ? 'selected' : ''; ?>>Toneladas (t)</option>
+          <option value="lb" <?php echo ($this->model->unidadmedida == 'lb') ? 'selected' : ''; ?>>Libras (lb)</option>
+          <option value="oz" <?php echo ($this->model->unidadmedida == 'oz') ? 'selected' : ''; ?>>Onzas (oz)</option>
+        </optgroup>
+        <optgroup label="Volumen">
+          <option value="ml" <?php echo ($this->model->unidadmedida == 'ml') ? 'selected' : ''; ?>>Mililitros (ml)</option>
+          <option value="l" <?php echo ($this->model->unidadmedida == 'l') ? 'selected' : ''; ?>>Litros (l)</option>
+          <option value="m3" <?php echo ($this->model->unidadmedida == 'm3') ? 'selected' : ''; ?>>Metros cúbicos (m³)</option>
+          <option value="gal" <?php echo ($this->model->unidadmedida == 'gal') ? 'selected' : ''; ?>>Galones (gal)</option>
+        </optgroup>
+        <optgroup label="Superficie">
+          <option value="cm2" <?php echo ($this->model->unidadmedida == 'cm2') ? 'selected' : ''; ?>>Centímetros cuadrados (cm²)</option>
+          <option value="m2" <?php echo ($this->model->unidadmedida == 'm2') ? 'selected' : ''; ?>>Metros cuadrados (m²)</option>
+          <option value="ha" <?php echo ($this->model->unidadmedida == 'ha') ? 'selected' : ''; ?>>Hectáreas (ha)</option>
+          <option value="km2" <?php echo ($this->model->unidadmedida == 'km2') ? 'selected' : ''; ?>>Kilómetros cuadrados (km²)</option>
+        </optgroup>
+        <optgroup label="Otros">
+          <option value="unidad" <?php echo ($this->model->unidadmedida == 'unidad') ? 'selected' : ''; ?>>Unidad</option>
+          <option value="caja" <?php echo ($this->model->unidadmedida == 'caja') ? 'selected' : ''; ?>>Caja</option>
+          <option value="pieza" <?php echo ($this->model->unidadmedida == 'pieza') ? 'selected' : ''; ?>>Pieza</option>
+          <option value="par" <?php echo ($this->model->unidadmedida == 'par') ? 'selected' : ''; ?>>Par</option>
+          <option value="docena" <?php echo ($this->model->unidadmedida == 'docena') ? 'selected' : ''; ?>>Docena</option>
+          <option value="paquete" <?php echo ($this->model->unidadmedida == 'paquete') ? 'selected' : ''; ?>>Paquete</option>
+        </optgroup>
+      </select>
+    </div>
+
     <div class="col-md-12">
       <label class="form-label">Descripción</label>
-      <input type="text" id="descripcion" name="descripcion" class="form-control" placeholder="Describe la mercancía" value="<?php echo $this->model->descmercancia;?>" <?php echo $readonly;?>>
+      <textarea id="descripcion" name="descripcion" class="form-control" rows="3" placeholder="Describe la mercancía" <?php echo $readonly; ?>><?php echo htmlspecialchars($this->model->descmercancia); ?></textarea>
     </div>
+
     <?php
       if($this->model->estatus == "N"){
         ?>
@@ -3385,44 +3476,113 @@ if($this->model->estatus != "N") $readonly = "readonly";
   </form>
 </div>
 
-<div class="card mt-3">
+<style>
+/* 🔧 Ajuste general para que luzca como form-control */
+.select2-container .select2-selection--single {
+  height: calc(2.4rem + 2px);
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+/* 🔹 Flecha al estilo Bootstrap */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 100%;
+  right: 10px;
+}
+
+/* 🔹 Efecto al enfocar */
+.select2-container--default .select2-selection--single:focus,
+.select2-container--default.select2-container--open .select2-selection--single {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+
+/* 🔹 Color al pasar el mouse */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: #0d6efd;
+  color: white;
+}
+
+/* 🔹 Ajustar ancho y posición */
+.select2-container {
+  width: 100% !important;
+}
+
+/* 🔹 Ajuste del texto seleccionado */
+.select2-selection__rendered {
+  color: #212529 !important;
+  line-height: 1.8rem !important;
+}
+
+/* 🔹 Borde más redondeado y limpio */
+.select2-selection--single {
+  border-radius: 0.375rem !important;
+}
+</style>
+
+<div class="card mt-3" id="divRutas" hidden>
   <div class="card-header mt-10">
     <b>Asignación de ruta</b>
   </div>
   <div class="card-body row">
     <form method="post" action="?modulo=cotizaciones&accion=updateruta&id=<?php echo $this->model->id; ?>" autocomplete="off" class="mt-2 container row">
-      <div class="col-md-6">
-        <label class="form-label">Origen</label>
-        <select class="form-control" id="origen" name="origen" onchange="checkdestino()" required>
-          <?php 
-            $sqlprov = 'SELECT * FROM ruta_origen WHERE ro_estatus = "A"';
-            $resultprov = setq($sqlprov);
-            while($rowprov = $resultprov -> fetch_array()){
-              if($this->model->motivo == $rowprov['ro_id']) $sel = 'selected';
-              else $sel = '';
-              ?>
-                <option value="<?php echo $rowprov['ro_id']; ?>" <?php echo $sel; ?>><?php echo $rowprov['ro_nombre']; ?></option>
-              <?php
-            }
-          ?>
-        </select>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Destino</label>
-        <select class="form-control" id="destino" name="destino" required>
-          <?php 
-            $sqlprov = 'SELECT * FROM ruta_destino WHERE rd_estatus = "A"';
-            $resultprov = setq($sqlprov);
-            while($rowprov = $resultprov -> fetch_array()){
-              if($this->model->dirdestino == $rowprov['rd_id']) $seld = 'selected';
-              else $seld = '';
-              ?>
-                <option value="<?php echo $rowprov['rd_id']; ?>" <?php echo $seld; ?>><?php echo $rowprov['rd_nombre']; ?></option>
-              <?php
-            }
-          ?>
-        </select>
-      </div>
+  <div class="col-md-6">
+  <label class="form-label">Origen</label>
+  <select class="form-control select2" id="origen" name="origen" onchange="checkdestino()" required>
+    <?php 
+      $idCliente = busca($_GET['id'], 'crm_cotizaciones', 'cc_id', 'cc_cliente');
+      $sqlprov = 'SELECT * FROM ruta_origen WHERE ro_estatus = "A" AND ro_idCliente = '.$idCliente;
+      $resultprov = setq($sqlprov);
+      while($rowprov = $resultprov -> fetch_array()){
+        $sel = ($this->model->motivo == $rowprov['ro_id']) ? 'selected' : '';
+        ?>
+          <option value="<?php echo $rowprov['ro_id']; ?>" <?php echo $sel; ?>>
+            <?php echo $rowprov['ro_nombre']; ?>
+          </option>
+        <?php
+      }
+    ?>
+  </select>
+</div>
+
+<div class="col-md-6">
+  <label class="form-label">Destino</label>
+  <select class="form-control select2" onchange="checkorigendestino();" id="destino" name="destino" required>
+    <?php 
+      $idCliente = busca($_GET['id'], 'crm_cotizaciones', 'cc_id', 'cc_cliente');
+      $sqlprov = 'SELECT * FROM ruta_destino WHERE rd_estatus = "A" AND rd_idCliente = '.$idCliente;
+      $resultprov = setq($sqlprov);
+      while($rowprov = $resultprov -> fetch_array()){
+        $seld = ($this->model->dirdestino == $rowprov['rd_id']) ? 'selected' : '';
+        ?>
+          <option value="<?php echo $rowprov['rd_id']; ?>" <?php echo $seld; ?>>
+            <?php echo $rowprov['rd_nombre']; ?>
+          </option>
+        <?php
+      }
+    ?>
+  </select>
+</div>
+
+<script>
+$(document).ready(function() {
+  $('#origen').select2({
+    placeholder: 'Selecciona un origen...',
+    width: '100%'
+  });
+  $('#destino').select2({
+    placeholder: 'Selecciona un destino...',
+    width: '100%'
+  });
+});
+</script>
+
       <?php
           if($this->model->estatus == "N"){
             ?>
@@ -3477,7 +3637,7 @@ if($this->model->estatus != "N") $readonly = "readonly";
         <!-- Modo KM -->
         <div class="col-md-6">
           <label class="form-label"><b>Modo de kilómetros</b></label>
-          <div class="form-check">
+          <div class="form-check" onclick="notraerdatos();">
             <input class="form-check-input" type="radio" name="km_mode" id="chf_km_manual" value="manual" <?php echo $checkman; ?> <?php echo $readonly; ?>>
             <label class="form-check-label" for="chf_km_manual">Manual</label>
           </div>
@@ -3530,8 +3690,8 @@ if($this->model->estatus != "N") $readonly = "readonly";
       <!-- Selección de unidad del tarifario -->
       <div class="row g-3" id="unidadtarifa">
         <div class="col-md-6">
-          <label class="form-label"><b>Unidad (tarifario)</b></label>
-          <select id="chf_tarifario" name="chf_tarifario" onchange="recalc();" class="form-control" <?php echo $readonly; ?>>
+          <label class="form-label"><b>Unidad</b></label>
+          <select id="chf_tarifario" name="chf_tarifario" class="form-control" <?php echo $readonly; ?>>
             <option value="">-- Selecciona una unidad --</option>
             <?php
             $check = busca($this->model->id, 'crm_cotizaciones', 'cc_id', 'cc_tarifario');           
@@ -3550,6 +3710,10 @@ if($this->model->estatus != "N") $readonly = "readonly";
         <div class="col-md-3">
           <label class="form-label">Precio combustible (global)</label>
           <input type="text" id="chf_precio" class="form-control" value="<?= number_format($precioCombustible,4,'.','') ?>" readonly>
+          <input type="hidden" id="chf_apacidad_tanque">
+          <input type="hidden" id="chf_rendimiento">
+          <input type="hidden" id="chf_var_desgaste">
+          <input type="hidden" id="chf_km_tarifario_default">
         </div>
 
         <div class="col-md-3">
@@ -3564,14 +3728,39 @@ if($this->model->estatus != "N") $readonly = "readonly";
         <div class="col-md-2"><label class="form-label">CASETAS ($)</label> <input type="number" onchange="recalc();" id="chf_casetas" name="chf_casetas" value="<?php echo $row['cc_casetas']; ?>" class="form-control" value="0" <?php echo $readonly; ?>></div>
         <div class="col-md-2"><label class="form-label">DESGASTE ($)</label> <input type="text" id="chf_desgaste" name="chf_desgaste" class="form-control" value="<?php echo $row['cc_desgaste']; ?>" readonly></div>
         <div class="col-md-2"><label class="form-label">OPERADOR ($)</label> <input type="text" id="chf_operador" name="chf_operador" class="form-control" value="<?php echo $row['cc_operador']; ?>" readonly></div>
-        <div class="col-md-2"><label class="form-label">SUBTOTAL ($)</label> <input type="text" id="chf_total" name="chf_total" class="form-control" value="<?php echo $row['cc_subtotal']; ?>" readonly></div>
+        <div class="col-md-2"><label class="form-label">COSTO ($)</label> <input type="text" id="chf_total" name="chf_total" class="form-control" value="<?php echo $row['cc_subtotal']; ?>" readonly></div>
         <div class="col-md-2" id="idextra"><label class="form-label">EXTRA (%)</label> <input type="number" onchange="recalc();" id="chf_porcentaje" name="chf_porcentaje" class="form-control" value="<?php echo $row['cc_porcentaje']; ?>" step="1" min="0"<?php echo $readonly; ?>></div>
         <div class="col-md-2 mt-2"><label class="form-label">VENTA DVL ($)</label> <input type="text" id="chf_venta" class="form-control" value ="<?php echo $row['cc_mtotal']; ?>" readonly></div>
+        
+        <?php 
+          $idCliente = busca($_GET['id'],'crm_cotizaciones','cc_id','cc_cliente');
+          $esespecial = busca($idCliente,'crm_clientes','c_id','c_especial');
+          if((int)$esespecial == 1){
+            echo '
+            <div class="col-md-2 mt-2">
+              <label class="form-label">PRECIO ESPECIAL ($)</label>
+              <input onchange="recalc();" oninput="recalc();" type="text" id="chf_especial" name="chf_especial" class="form-control"
+                    value="' . (float)$row['cc_especial'] .'">
+            </div>';
+          }
+
+        ?>
+        <div class="col-md-2 mt-2">
+          <label class="form-label">IVA 16% ($)</label>
+          <input type="text" id="chf_iva" name="chf_iva" class="form-control"
+                value="<?php echo (float)$row['cc_iva']; ; ?>" readonly>
+        </div>
+
+        <div class="col-md-2 mt-2">
+          <label class="form-label">RETENCIÓN 4% ($)</label>
+          <input type="text" id="chf_retencion" name="chf_retencion" class="form-control"
+                value="<?php echo (float)$row['cc_retencion']; ?>" readonly>
+        </div>
 
         <?php
           if($this->model->estatus == "N"){
             ?>
-              <div class="col-md-12"><center><button class="btn btn-primary" onclick="recalc();" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
+              <div class="col-md-12"><center><button type="submit" class="btn btn-primary" onclick="recalc();" id="guardar" ><i class="fa fa-save"></i> Guardar</button></center></div>
             <?php
           }  
         ?>
@@ -3586,6 +3775,9 @@ if($this->model->estatus != "N") $readonly = "readonly";
       <input type="hidden" name="chf_ruta_origen" id="chf_ruta_origen" value="">
       <input type="hidden" name="chf_ruta_destino" id="chf_ruta_destino" value="">
       <input type="hidden" name="chf_ruta_paradas" id="chf_ruta_paradas" value="[]">
+      <input type="hidden" name="chf_iva_val" id="chf_iva_val" value="">
+      <input type="hidden" name="chf_retencion_val" id="chf_retencion_val" value="">
+
 
       
     </div>
@@ -3693,6 +3885,11 @@ if($this->model->estatus != "N") $readonly = "readonly";
 </div>
 <script>
   function traerdatos(){
+    //const $sel = $('#chf_tarifario');
+    //$sel.prop('selectedIndex', 0);
+
+    document.getElementById("divRutas").hidden = false;
+
     const kmTarifario  = document.getElementById('chf_km_tarifario');
   
     if(kmTarifario.checked){  
@@ -3722,12 +3919,49 @@ if($this->model->estatus != "N") $readonly = "readonly";
           $('#chf_operador').val(datos.rt_operador || '');
           $('#chf_total').val(datos.rt_costodvl || '');
           $('#chf_porcentaje').val(0); 
-          $('#chf_venta').val(datos.rt_ventadvl || '');
+          $('#chf_venta').val(datos.rt_ventadvl * 1.15 || '');
+
+
+          var v = parseFloat(datos.rt_ventadvl * 1.15 || 0);
+          var iva = (v * 0.16);
+          var ret = (v * 0.04);
+
+          if(document.getElementById('chf_especial')){
+            // Impuestos basados en VENTA (cc_mtotal)
+            v = parseFloat(document.getElementById('chf_especial').value || 0);
+            iva = (v * 0.16);
+            ret = (v * 0.04);
+          }
+
+
+          $('#chf_iva').val(iva.toFixed(2));
+          $('#chf_retencion').val(ret.toFixed(2));
+          $('#chf_iva_val').val(iva.toFixed(2));
+          $('#chf_retencion_val').val(ret.toFixed(2));
 
         }
       });
     }
   }
+
+  function notraerdatos(){
+    //const $sel = $('#chf_tarifario');
+    //$sel.prop('selectedIndex', 0);
+
+    document.getElementById("divRutas").hidden = TRUE;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      if(document.getElementById('chf_km_tarifario').checked){
+        document.getElementById("divRutas").hidden = false;
+      } else if(document.getElementById('chf_km_manual').checked){
+        document.getElementById("divRutas").hidden = false;
+      }
+    }, 1500); // 3000 milisegundos = 3 segundos
+  });
+
+
   function checkdestino(){
     var datax = {
       origen: document.getElementById("origen").value
@@ -3758,6 +3992,25 @@ if($this->model->estatus != "N") $readonly = "readonly";
               .text(value.nombre));
           });
         }
+      }
+    });
+  }
+
+  function checkorigendestino(){
+    var datax = {
+      origen: document.getElementById("origen").value,
+      destino: document.getElementById("destino").value
+    };
+    $.ajax({
+      url: 'query/selectorigendestino.php',
+      method: 'POST',
+      dataType: 'json',
+      data: datax, // Los datos que quieres enviar
+      success: function (data) {
+        // La función que se ejecuta cuando la consulta AJAX es exitosa
+        document.getElementById("chf_km").value = data[0].rt_km;
+        document.getElementById("chf_km_mostrado").value = data[0].rt_km;
+        document.getElementById("chf_casetas").value = data[0].rt_casetas;
       }
     });
   }
@@ -3819,6 +4072,11 @@ if($this->model->estatus != "N") $readonly = "readonly";
   const outOper      = document.getElementById('chf_operador');
   const outTotal     = document.getElementById('chf_total');
   const outVenta     = document.getElementById('chf_venta');
+
+  const outIVA  = document.getElementById('chf_iva');
+  const outRet  = document.getElementById('chf_retencion');
+  const hIVA    = document.getElementById('chf_iva_val');
+  const hRet    = document.getElementById('chf_retencion_val');
 
   const hMode   = document.getElementById('chf_km_mode');
   const hKm     = document.getElementById('chf_km_total');
@@ -3891,33 +4149,56 @@ if($this->model->estatus != "N") $readonly = "readonly";
   function recalc() {
     const kmTarifario  = document.getElementById('chf_km_tarifario');
     
-    if(!kmTarifario.checked){
+    //if(!kmTarifario.checked){
       const tarId = parseInt(selTarifario.value || 0);
       const t = getTarifarioById(tarId);
 
       // Convertir entradas a decimales
-      const km = parseFloat(kmManual.checked ? kmInput.value : hKm.value) || 0;
+      var km = parseFloat(kmManual.checked ? kmInput.value : hKm.value) || 0;
       const porc = parseFloat(document.getElementById("chf_porcentaje").value) || 0;
       const outCas = parseFloat(document.getElementById("chf_casetas").value) || 0;
 
-      console.log("casetas: ", outCas);
+      const rendimiento = parseFloat(document.getElementById("chf_rendimiento").value) || 0;
+      const capacidadtanque = parseFloat(document.getElementById("chf_apacidad_tanque").value) || 0;
+      const vardesgaste = parseFloat(document.getElementById("chf_var_desgaste").value) || 0;
+      const tarifariodefault = parseFloat(document.getElementById("chf_km_tarifario_default").value) || 0;
+      const precio = parseFloat(document.getElementById("chf_precio").value) || 0;
 
-      kmMostrado.value = numFmt2(km);
-      hKm.value = km;
+      const combustible = parseFloat(document.getElementById("chf_combustible").value) || 0;
+      
+      if(kmTarifario.checked){
+        checkorigendestino();
+        km = parseFloat($('#chf_km').val());
+        console.log("km sust: ", km);
+      } else {
+        kmMostrado.value = numFmt2(km);
+        hKm.value = km;
+      }      
+
       hTarId.value = tarId || '';
 
       // Convertir también los valores del tarifario a número decimal
-      const rend = parseFloat(t.tc_rendimiento) || 0;
-      const cap  = parseFloat(t.tc_capacidad_tanque) || 0;
-      const vdes = parseFloat(t.tc_var_desgaste) || 0;
+      const rend = parseFloat(rendimiento) || 0;
+      const cap  = parseFloat(capacidadtanque) || 0;
+      const vdes = parseFloat(vardesgaste) || 0;
       const prec = parseFloat(PRECIO) || 0;
 
       // Cálculos asegurando decimales
+      console.log("rend: ", rend);
+      console.log("km: ", km);
+
       const tanq = rend > 0 ? (km / rend) : 0;
-      const comb = prec * cap * tanq;
-      const desg = km * (vdes * 10);
-      const oper = km * (vdes * 10);
+      const combustiblePrecio = precio * capacidadtanque * tanq;
+
+      //const comb = prec * cap * tanq;
+      const comb = combustiblePrecio;
+      
+      const desg = km * vardesgaste;
+
+      const oper = km * vardesgaste;
       const total = comb + outCas + desg + oper;
+
+      
       const venta = total * (1 + (porc / 100));
 
       // Mostrar resultados formateados
@@ -3926,14 +4207,86 @@ if($this->model->estatus != "N") $readonly = "readonly";
       outDesg.value    = numFmt2(desg);
       outOper.value    = numFmt2(oper);
       outTotal.value   = numFmt2(total);
-      outVenta.value   = numFmt2(venta);
+      outVenta.value   = numFmt2(venta * 1.15);
+
+      var ventaNum = parseFloat(outVenta.value) || 0;
+      var iva = ventaNum * 0.16;
+      var ret = ventaNum * 0.04;
+      if(document.getElementById('chf_especial')){
+        // Impuestos basados en VENTA (cc_mtotal)
+        ventaNum = parseFloat(document.getElementById('chf_especial').value) || 0;
+        iva = ventaNum * 0.16;
+        ret = ventaNum * 0.04;
+      }
+
+      outIVA.value = numFmt2(iva);
+      outRet.value = numFmt2(ret);
+
+      // guarda crudo en los hidden (sin formato)
+      hIVA.value = iva.toFixed(2);
+      hRet.value = ret.toFixed(2);
 
       // Guardar en inputs ocultos
       hTot.value = total;
       hVen.value = venta;
-    }
+    //}
   }
 
+
+$(function () {
+  // Cargar datos si ya hay una unidad seleccionada (modo edición)
+  const inicial = $('#chf_tarifario').val();
+  if (inicial) fetchUnidadTarifario(inicial);
+
+  // Cuando cambie la unidad, traer datos
+  $('#chf_tarifario').on('change', function () {
+    const id = $(this).val();
+    if (!id) {
+      limpiaCamposUnidad();
+      if (typeof recalc === 'function') recalc();
+      return;
+    }
+    fetchUnidadTarifario(id);
+  });
+});
+
+function fetchUnidadTarifario(id) {
+  $.ajax({
+    url: 'query/get_unidad_tarifario.php',
+    method: 'POST',
+    dataType: 'json',
+    data: { id: id },
+    success: function (res) {
+      if (!res || res.ok === false) {
+        limpiaCamposUnidad();
+        if (typeof recalc === 'function') recalc();
+        return;
+      }
+
+      // Rellena campos (ajusta IDs/names a los de tu formulario)
+      //$('#tc_unidad').val(res.tc_unidad ?? '');
+      $('#chf_km_tarifario_default').val(res.tc_km ?? '');
+      $('#chf_rendimiento').val(res.tc_rendimiento ?? '');
+      $('#chf_apacidad_tanque').val(res.tc_capacidad_tanque ?? '');
+      //$('#tc_casetas').val(res.tc_casetas ?? '');
+      $('#chf_var_desgaste').val(res.tc_var_desgaste ?? '');
+      //$('#tc_tipocombustible').val(res.tc_tipocombustible ?? '');
+      $('#chf_precio').val(res.tc_preciocombustible ?? '');
+
+      // Si tu lógica recalcula importes, llama a recalc()
+      if (typeof recalc === 'function') recalc();
+    },
+    error: function () {
+      limpiaCamposUnidad();
+      if (typeof recalc === 'function') recalc();
+    }
+  });
+}
+
+function limpiaCamposUnidad() {
+  $('#tc_unidad, #tc_km, #tc_rendimiento, #tc_capacidad_tanque, #tc_casetas, #tc_var_desgaste, #tc_tipocombustible, #tc_preciocombustible')
+    .val('');
+}
 
   ['input','change'].forEach(ev => {
     kmInput.addEventListener(ev, recalc);
@@ -4139,6 +4492,11 @@ if($this->model->estatus != "N") $readonly = "readonly";
           });
         }
 
+
+function limpiaCamposUnidad() {
+  $('#tc_unidad, #tc_km, #tc_rendimiento, #tc_capacidad_tanque, #tc_casetas, #tc_var_desgaste, #tc_tipocombustible, #tc_preciocombustible')
+    .val('');
+}
         
       </script>
       <?php
